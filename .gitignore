@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.pem
+.oci/
+
+.streamlit/secrets.toml
+banco_historico/
+*.bak*
