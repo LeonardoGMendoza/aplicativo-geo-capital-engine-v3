@@ -264,7 +264,7 @@ if visao == "Corporativo (B2B)":
                 dist = calcular_distancia(ativo["lat"], ativo["lon"], lat_nasa, lon_nasa)
                 if dist < 600:
                     alerta_disparado = True
-                    if evento["title"] == "Incêndio simulado":
+                    if "simulad" in evento["title"].lower():
                         st.warning("SIMULAÇÃO: evento fictício, não é dado da NASA")
                     st.error("🚨 **PERIGO A ATIVOS DETECTADO**")
                     st.warning(f"**Gatilho:** {evento['title']}\n\n**Ativo:** {ativo['ativo']}\n\n**Distância:** {dist:.0f} KM")
@@ -306,7 +306,7 @@ elif visao == "Impacto Social / ESG (Comunidade)":
                 dist = calcular_distancia(ativo["lat"], ativo["lon"], lat_nasa, lon_nasa)
                 if dist < 600:
                     alerta_disparado = True
-                    if evento["title"] == "Incêndio simulado":
+                    if "simulad" in evento["title"].lower():
                         st.warning("SIMULAÇÃO: evento fictício, não é dado da NASA")
                     st.error("🚨 **EMERGÊNCIA SOCIAL DETECTADA**")
                     st.warning(f"**Desastre:** {evento['title']}\n\n**Zona Afetada:** Raio de {dist:.0f} KM do complexo industrial.")
@@ -529,7 +529,7 @@ elif visao == "RAG Vetorial (Histórico)":
     from backend.oracle_rag import obter_colecao, DOCUMENTOS_DEMO
 
     st.title("📚 RAG Vetorial: Histórico de Desastres")
-    st.markdown("Base de demonstração: 3 exemplos escritos pela equipe para provar o fluxo RAG. Não são relatórios oficiais.")
+    st.markdown("Base: documentos oficiais em PDF (planos de contingência, relatório sobre Brumadinho e RIMAs), indexados em trechos no ChromaDB (cerca das 50 primeiras páginas de cada). Sem PDFs na pasta, o app usa 3 exemplos de demonstração.")
     st.markdown("---")
 
     st.write("🤖 Iniciando Banco de Dados Vetorial (ChromaDB)...")
@@ -542,9 +542,11 @@ elif visao == "RAG Vetorial (Histórico)":
 
     # Fase de INGESTÃO
     with st.expander("📥 Ver Documentos Históricos (Arquivos Base)"):
-        st.write(f"*(O banco contém {colecao.count()} documentos de exemplo indexados).*")
-        for doc in DOCUMENTOS_DEMO:
-            st.info(doc)
+        _metas = colecao.get(include=["metadatas"])["metadatas"]
+        _fontes = sorted({m.get("fonte", "?") for m in _metas})
+        st.write(f"*(O banco contém {colecao.count()} trechos indexados, vindos de {len(_fontes)} fonte(s).)*")
+        for _f in _fontes:
+            st.info(_f)
 
     # Fase de INFERÊNCIA (RAG)
     st.subheader("🔍 Nova Consulta ao Histórico")

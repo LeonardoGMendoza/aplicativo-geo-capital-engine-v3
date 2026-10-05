@@ -30,6 +30,8 @@ def _chamar_oracle_rag_cache(_config, compartment_id, prompt_sistema):
 
 import chromadb
 from chromadb.utils import embedding_functions
+import glob
+import PyPDF2
 
 DOCUMENTOS_DEMO = [
     "Exemplo de demonstração (cenário de enchente): iniciar a evacuação com antecedência nas áreas de vale e garantir água potável e energia no abrigo central desde as primeiras horas.",
@@ -38,6 +40,43 @@ DOCUMENTOS_DEMO = [
 ]
 
 METADADOS_DEMO = [{"evento": "enchente_rs"}, {"evento": "rompimento_barragem"}, {"evento": "incendio_pantanal"}]
+
+def carregar_pdfs():
+    textos_chunks = []
+    metadados = []
+    ids = []
+    contador_id = 0
+    pasta = "./documentos_oficiais"
+    
+    if not os.path.exists(pasta):
+        return [], [], []
+        
+    arquivos = glob.glob(os.path.join(pasta, "*.pdf"))
+    for arquivo in arquivos:
+        nome_base = os.path.basename(arquivo)
+        try:
+            with open(arquivo, "rb") as f:
+                leitor = PyPDF2.PdfReader(f)
+                texto_completo = ""
+                # Lendo ate 50 paginas para evitar estouro de tempo/API no hackathon
+                for i, pagina in enumerate(leitor.pages):
+                    if i > 50: break
+                    texto = pagina.extract_text()
+                    if texto: texto_completo += texto + " "
+                
+                # Chunking simples de ~1500 caracteres
+                tamanho_chunk = 1500
+                for i in range(0, len(texto_completo), tamanho_chunk):
+                    chunk = texto_completo[i:i+tamanho_chunk].strip()
+                    if len(chunk) > 100:
+                        textos_chunks.append(chunk)
+                        metadados.append({"fonte": nome_base})
+                        ids.append(f"doc_{nome_base}_{contador_id}")
+                        contador_id += 1
+        except Exception as e:
+            print(f"Erro ao ler PDF {nome_base}: {e}")
+            
+    return textos_chunks, metadados, ids
 
 def obter_colecao():
     if "oci" in st.secrets and "COHERE_API_KEY" in st.secrets["oci"]:
@@ -50,14 +89,30 @@ def obter_colecao():
         api_key=COHERE_API_KEY,
         model_name="embed-multilingual-v3.0"
     )
+    
+    # Cria uma nova colecao focada em documentos reais
     colecao = chroma_client.get_or_create_collection(
-        name="exemplos_demonstracao",
+        name="documentos_oficiais_rag",
         embedding_function=cohere_ef,
         metadata={"hnsw:space": "cosine"}
     )
+    
+    # Se a colecao estiver vazia, faz o processamento dos PDFs
     if colecao.count() == 0:
-        ids = [f"doc{i}" for i in range(len(DOCUMENTOS_DEMO))]
-        colecao.add(documents=DOCUMENTOS_DEMO, metadatas=METADADOS_DEMO, ids=ids)
+        chunks, metas, ids = carregar_pdfs()
+        if chunks:
+            # Quebra o envio em lotes de 90 para respeitar o limite da API da Cohere
+            tamanho_lote = 90
+            for i in range(0, len(chunks), tamanho_lote):
+                lote_chunks = chunks[i:i+tamanho_lote]
+                lote_metas = metas[i:i+tamanho_lote]
+                lote_ids = ids[i:i+tamanho_lote]
+                colecao.add(documents=lote_chunks, metadatas=lote_metas, ids=lote_ids)
+        else:
+            # Se nao achar PDF nenhum, insere os de demonstracao para nao quebrar
+            ids_demo = [f"demo_{i}" for i in range(len(DOCUMENTOS_DEMO))]
+            colecao.add(documents=DOCUMENTOS_DEMO, metadatas=METADADOS_DEMO, ids=ids_demo)
+            
     return colecao
 
 @st.cache_data(ttl=600)
@@ -65,7 +120,10 @@ def _consultar_historico_cache(evento_nome):
     colecao = obter_colecao()
     resultados = colecao.query(query_texts=[evento_nome], n_results=1)
     if resultados['documents'] and len(resultados['documents'][0]) > 0:
-        return resultados['documents'][0][0]
+        texto_recuperado = resultados['documents'][0][0]
+        meta = resultados['metadatas'][0][0]
+        fonte = meta.get("fonte", "Base Interna")
+        return f"{texto_recuperado} (Fonte original: {fonte})"
     return "Sem dados históricos."
 
 def gerar_recomendacao_rag(evento_nome, ativo_nome, distancia, visao):
