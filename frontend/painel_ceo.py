@@ -28,12 +28,20 @@ st.set_page_config(
 # DADOS: ATIVOS CORPORATIVOS (painel_ceo.py original)
 # ============================================================
 mapa_dados = [
+    # Ativos Originais (Brasil e Golfo do México)
     {"lat": -23.8, "lon": -42.2,  "ativo": "Plataforma Petrobras (Pre-Sal, Brasil)",    "comunidade_vizinha": "Pescadores (Litoral de SP/RJ)",             "risco_secundario": "Vazamento no Mar e Destruicao de Manguezal"},
     {"lat": 28.5,  "lon": -90.0,  "ativo": "Plataforma ExxonMobil (Golfo do Mexico)",  "comunidade_vizinha": "Vila de Pescadores de Nova Orleans",      "risco_secundario": "Vazamento Toxico (Oleoduto)"},
     {"lat": 29.0,  "lon": -88.0,  "ativo": "Plataforma Chevron (Golfo do Mexico)",      "comunidade_vizinha": "Comunidades Costeiras (Louisiana)",         "risco_secundario": "Contaminacao Hidrica (Oleoduto)"},
     {"lat": -6.0,  "lon": -50.1,  "ativo": "Mina Carajas Vale (Brasil)",                "comunidade_vizinha": "Comunidade Ribeirinha e Indigena",          "risco_secundario": "Rompimento de Barragem e Risco de Colera"},
     {"lat": -21.2, "lon": -47.8,  "ativo": "Usina Raízen (Sao Paulo)",                  "comunidade_vizinha": "Bairros Perifericos (Ribeirao Preto)",      "risco_secundario": "Fumaca Toxica e Incendios em Lavouras"},
     {"lat": 21.5,  "lon": -120.0, "ativo": "Navio Sonda BP (Pacifico)",                 "comunidade_vizinha": "Arquipelagos e Ilhas Costeiras",            "risco_secundario": "Tsunami com lixo quimico"},
+    
+    # Novos Ativos Internacionais Adicionados (Terremotos, Tornados, Enchentes)
+    {"lat": 35.6,  "lon": 139.6,  "ativo": "Fábrica Toyota (Tóquio, Japão)",            "comunidade_vizinha": "População Costeira (Japão)",                "risco_secundario": "Terremotos Fortes e Tsunamis"},
+    {"lat": -23.6, "lon": -70.4,  "ativo": "Mineradora Escondida (BHP, Chile)",         "comunidade_vizinha": "População de Antofagasta (Chile)",          "risco_secundario": "Colapso Estrutural por Terremoto (Placas Tectônicas)"},
+    {"lat": 36.1,  "lon": -120.5, "ativo": "Refinaria Chevron (Califórnia, EUA)",       "comunidade_vizinha": "Condados Costeiros (San Andreas)",          "risco_secundario": "Rompimento de Tanques por Terremoto"},
+    {"lat": 32.7,  "lon": -97.3,  "ativo": "Centro Logístico (Texas, EUA)",             "comunidade_vizinha": "Residências do 'Tornado Alley'",            "risco_secundario": "Destruição por Tornado Severo / Ciclone"},
+    {"lat": -29.9, "lon": -51.3,  "ativo": "Polo Petroquímico (Triunfo, RS)",           "comunidade_vizinha": "Região Metropolitana de Porto Alegre",      "risco_secundario": "Inundações Extremas e Parada de Produção (El Niño)"},
 ]
 df_ativos = pd.DataFrame(mapa_dados)
 
@@ -313,6 +321,39 @@ elif visao == "Impacto Social / ESG (Comunidade)":
                 break
         if not alerta_disparado:
             st.success("✅ Nenhuma comunidade em risco crítico.")
+            
+        st.markdown("---")
+        st.subheader("📲 Simulador de Alertas WhatsApp (Integração n8n/Waha)")
+        st.markdown("Dispare alertas de teste segmentados por região para validar a arquitetura.")
+        
+        webhook_url = st.text_input("URL do Webhook do n8n (Production ou Test):", value="https://n8n.sandlj.com.br/webhook/alerta-omni")
+        telefone = st.text_input("ID do Grupo ou Telefone (ex: 120...34@g.us para grupos OU 5511999999999@c.us para pessoas):", value="")
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("🚨 Alerta: Califórnia (San Andreas)", use_container_width=True):
+                payload = {"local": "Condados Costeiros (San Andreas, Califórnia)", "evento": "Terremoto de Magnitude 7.2 detectado pelas boias e sismógrafos", "telefone": telefone}
+                try:
+                    requests.post(webhook_url, json=payload)
+                    st.success("Sinal enviado ao n8n com sucesso!")
+                except Exception as e:
+                    st.error(f"Erro ao chamar Webhook: {e}")
+        with col2:
+            if st.button("🚨 Alerta: Macaé/RJ (Petrobras)", use_container_width=True):
+                payload = {"local": "Colônia Z3 de Pescadores (Macaé/RJ)", "evento": "Ciclone com Risco Crítico de Vazamento na Bacia de Campos", "telefone": telefone}
+                try:
+                    requests.post(webhook_url, json=payload)
+                    st.success("Sinal enviado ao n8n com sucesso!")
+                except Exception as e:
+                    st.error(f"Erro ao chamar Webhook: {e}")
+        with col3:
+            if st.button("🚨 Alerta: Texas (Tornados)", use_container_width=True):
+                payload = {"local": "Residências do Tornado Alley (Texas, EUA)", "evento": "Tornado Severo Categoria F4 em aproximação", "telefone": telefone}
+                try:
+                    requests.post(webhook_url, json=payload)
+                    st.success("Sinal enviado ao n8n com sucesso!")
+                except Exception as e:
+                    st.error(f"Erro ao chamar Webhook: {e}")
 
 
 # ============================================================
