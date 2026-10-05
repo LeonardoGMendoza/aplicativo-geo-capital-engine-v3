@@ -110,6 +110,12 @@ O motor de recomendação (`backend/oracle_rag.py`) funciona em dois modos:
 
 ![Modo de teste](screenshots/modo-teste.png)
 
+**Alerta por WhatsApp (protótipo)** — no fim da aba ESG, o Simulador de Alertas WhatsApp envia o evento ao n8n, que gera a mensagem (orientar, evacuar, distribuir) e a envia pelo WhatsApp via Waha. O envio é real, mas o texto é gerado por IA e **os endereços e pontos de apoio citados na mensagem são fictícios**: o protótipo ainda não usa a base real de abrigos. Na imagem, o endereço do webhook e o ID do grupo foram ocultados.
+
+![Simulador de alertas WhatsApp](screenshots/simulador-whatsapp.png)
+
+![Mensagem recebida no WhatsApp (cenário de teste)](screenshots/mensagem-whatsapp.png)
+
 ## Documentação completa
 
 Ver `docs/documentacao_oficial_pitch.md` para a documentação oficial do projeto, incluindo a base legal (CONAMA/EIA-RIMA) e o modelo de negócio detalhado.
@@ -132,7 +138,7 @@ Ver `docs/documentacao_oficial_pitch.md` para a documentação oficial do projet
 ## Limitações conhecidas
 
 - A IA generativa da Oracle roda em modo de fallback na demonstração pública: sem credencial OCI, o sistema usa uma recomendação local pré-definida.
-- O disparo real de alertas (SMS/WhatsApp) ainda não está implementado; os botões do painel exibem a confirmação na tela (simulação), sem envio real.
+- Os botões de ação do painel (bloqueio, ONGs, resgate) só exibem a confirmação na tela (simulação). O único envio real é o Simulador de Alertas WhatsApp (protótipo, via n8n e Waha), cujo texto é gerado por IA e traz endereços fictícios. SMS e sirene ainda não estão implementados.
 - O nome "RAG" no painel se refere ao motor de recomendação; a etapa de recuperação de dados (ex.: base do EIA/RIMA) é um próximo passo.
 - A base de 6 ativos e comunidades do MVP é ilustrativa e fixa no código; o estudo de caso da Bacia de Campos é um cenário de referência.
 - Os scripts `backend/central_executiva.py` e `backend/omni_engine_alertas.py` são provas de conceito isoladas, não conectadas ao painel principal.
