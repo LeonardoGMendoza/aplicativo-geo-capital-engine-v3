@@ -106,6 +106,10 @@ O motor de recomendação (`backend/oracle_rag.py`) funciona em dois modos:
 
 ![Centro de Comando ESG](screenshots/visao-esg.png)
 
+**Modo de teste (simulação)** — evento fictício (ciclone extratropical a 410 km da plataforma Petrobras), identificado na tela como simulação. Serve para demonstrar o caso da Bacia de Campos quando não há alerta real da NASA.
+
+![Modo de teste](screenshots/modo-teste.png)
+
 ## Documentação completa
 
 Ver `docs/documentacao_oficial_pitch.md` para a documentação oficial do projeto, incluindo a base legal (CONAMA/EIA-RIMA) e o modelo de negócio detalhado.
