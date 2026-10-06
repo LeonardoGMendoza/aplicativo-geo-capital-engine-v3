@@ -176,6 +176,15 @@ def mostrar_eventos_globais(eventos):
         st.dataframe(df, width='stretch')
 
 
+def obter_webhook():
+    """URL do n8n vem de segredo (Streamlit secrets) ou da variavel de ambiente N8N_WEBHOOK_URL. Nao fica no codigo nem na tela."""
+    try:
+        v = st.secrets.get("N8N_WEBHOOK_URL", "")
+    except Exception:
+        v = ""
+    return (v or os.environ.get("N8N_WEBHOOK_URL", "")).strip()
+
+
 def formatar_destino_whatsapp(texto):
     """Grupo (@g.us) ou ID com @ passa direto; numero de pessoa vira DIGITOS@c.us (acrescenta 55 se vier so DDD+numero)."""
     t = texto.strip()
@@ -192,6 +201,9 @@ def enviar_whatsapp(webhook_url, payload):
     if not payload.get("telefone"):
         st.warning("Informe o número do celular ou o ID do grupo antes de enviar.")
         return
+    if not webhook_url:
+        st.error("Canal WhatsApp não configurado neste ambiente (falta o segredo N8N_WEBHOOK_URL).")
+        return
     try:
         resp = requests.post(webhook_url, json=payload, timeout=20)
         if resp.ok:
@@ -199,7 +211,7 @@ def enviar_whatsapp(webhook_url, payload):
         else:
             st.error(f"O n8n respondeu HTTP {resp.status_code}: o alerta NAO foi enviado.")
     except Exception as e:
-        st.error(f"Erro ao chamar Webhook: {e}")
+        st.error(f"Não foi possível chamar o n8n ({type(e).__name__}). Verifique se o fluxo está ativo.")
 
 
 def gerar_recomendacao_ia_local(evento_nome, abrigo_nome, distancia_km):
@@ -376,7 +388,7 @@ elif visao == "Impacto Social / ESG (Comunidade)":
 
     with col_ia:
         st.subheader("🤖 Assistente Humanitário (RAG)")
-        webhook_url = st.text_input("URL do Webhook do n8n (Production ou Test):", value="https://n8n.sandlj.com.br/webhook/alerta-omni")
+        webhook_url = obter_webhook()
         telefone_input = st.text_input("ID do Grupo ou Telefone (Digite o ID do grupo OU apenas o número do celular):", value="")
         telefone = formatar_destino_whatsapp(telefone_input)
         if telefone:
