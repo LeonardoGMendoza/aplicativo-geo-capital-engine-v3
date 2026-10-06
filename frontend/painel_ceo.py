@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 
 # Adiciona a raiz do projeto ao Python para ele achar a pasta 'backend'
@@ -327,31 +328,52 @@ elif visao == "Impacto Social / ESG (Comunidade)":
         st.markdown("Dispare alertas de teste segmentados por região para validar a arquitetura.")
         
         webhook_url = st.text_input("URL do Webhook do n8n (Production ou Test):", value="https://n8n.sandlj.com.br/webhook/alerta-omni")
-        telefone = st.text_input("ID do Grupo ou Telefone (ex: 120...34@g.us para grupos OU 5511999999999@c.us para pessoas):", value="")
+        telefone_input = st.text_input("ID do Grupo ou Telefone (Digite o ID do grupo OU apenas o número do celular):", value="")
+        
+        # Lógica de formatação automática: 
+        # Se o usuário digitar só número (pessoa), o sistema coloca @c.us automático.
+        # Se for ID de Grupo (que já tem @g.us), o sistema mantém como está.
+        telefone = telefone_input.strip()
+        if telefone != "" and "@" not in telefone:
+            digitos = re.sub(r"\D", "", telefone)      # tira +, espacos, parenteses e hifens
+            if len(digitos) in (10, 11):               # so DDD + numero: acrescenta o pais
+                digitos = "55" + digitos
+            telefone = digitos + "@c.us"
+        if telefone:
+            st.caption(f"Destino do alerta: {telefone}")
         
         col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("🚨 Alerta: Califórnia (San Andreas)", use_container_width=True):
                 payload = {"local": "Condados Costeiros (San Andreas, Califórnia)", "evento": "Terremoto de Magnitude 7.2 detectado pelas boias e sismógrafos", "telefone": telefone}
                 try:
-                    requests.post(webhook_url, json=payload)
-                    st.success("Sinal enviado ao n8n com sucesso!")
+                    resp = requests.post(webhook_url, json=payload, timeout=20)
+                    if resp.ok:
+                        st.success(f"Sinal enviado ao n8n (HTTP {resp.status_code}). Confira o WhatsApp.")
+                    else:
+                        st.error(f"O n8n respondeu HTTP {resp.status_code}: o alerta NAO foi enviado.")
                 except Exception as e:
                     st.error(f"Erro ao chamar Webhook: {e}")
         with col2:
             if st.button("🚨 Alerta: Macaé/RJ (Petrobras)", use_container_width=True):
                 payload = {"local": "Colônia Z3 de Pescadores (Macaé/RJ)", "evento": "Ciclone com Risco Crítico de Vazamento na Bacia de Campos", "telefone": telefone}
                 try:
-                    requests.post(webhook_url, json=payload)
-                    st.success("Sinal enviado ao n8n com sucesso!")
+                    resp = requests.post(webhook_url, json=payload, timeout=20)
+                    if resp.ok:
+                        st.success(f"Sinal enviado ao n8n (HTTP {resp.status_code}). Confira o WhatsApp.")
+                    else:
+                        st.error(f"O n8n respondeu HTTP {resp.status_code}: o alerta NAO foi enviado.")
                 except Exception as e:
                     st.error(f"Erro ao chamar Webhook: {e}")
         with col3:
             if st.button("🚨 Alerta: Texas (Tornados)", use_container_width=True):
                 payload = {"local": "Residências do Tornado Alley (Texas, EUA)", "evento": "Tornado Severo Categoria F4 em aproximação", "telefone": telefone}
                 try:
-                    requests.post(webhook_url, json=payload)
-                    st.success("Sinal enviado ao n8n com sucesso!")
+                    resp = requests.post(webhook_url, json=payload, timeout=20)
+                    if resp.ok:
+                        st.success(f"Sinal enviado ao n8n (HTTP {resp.status_code}). Confira o WhatsApp.")
+                    else:
+                        st.error(f"O n8n respondeu HTTP {resp.status_code}: o alerta NAO foi enviado.")
                 except Exception as e:
                     st.error(f"Erro ao chamar Webhook: {e}")
 
@@ -557,13 +579,14 @@ elif visao == "RAG Vetorial (Histórico)":
             resultados = colecao.query(
                 query_texts=[novo_desastre],
                 n_results=1,
-                include=["documents", "distances"]
+                include=["documents", "distances", "metadatas"]
             )
             
             if resultados['documents'] and len(resultados['documents'][0]) > 0:
                 distancia = resultados['distances'][0][0]
                 st.warning(f"🚨 CONTEXTO RECUPERADO (Métrica: Cosseno, Distância matemática: {distancia:.4f})")
                 st.write(resultados['documents'][0][0])
+                st.caption(f"Fonte: {resultados['metadatas'][0][0].get('fonte', 'base interna')}")
             else:
                 st.error("Sem dados recuperados.")
 

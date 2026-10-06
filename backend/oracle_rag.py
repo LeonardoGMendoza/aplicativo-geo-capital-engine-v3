@@ -116,9 +116,9 @@ def obter_colecao():
     return colecao
 
 @st.cache_data(ttl=600)
-def _consultar_historico_cache(evento_nome):
+def _consultar_historico_cache(evento_nome, ativo_nome=""):
     colecao = obter_colecao()
-    resultados = colecao.query(query_texts=[evento_nome], n_results=1)
+    resultados = colecao.query(query_texts=[f"{evento_nome}. {ativo_nome}".strip()], n_results=1)
     if resultados['documents'] and len(resultados['documents'][0]) > 0:
         texto_recuperado = resultados['documents'][0][0]
         meta = resultados['metadatas'][0][0]
@@ -133,7 +133,7 @@ def gerar_recomendacao_rag(evento_nome, ativo_nome, distancia, visao):
     # ==========================================
     contexto_historico = "Sem dados históricos."
     try:
-        contexto_historico = _consultar_historico_cache(evento_nome)
+        contexto_historico = _consultar_historico_cache(evento_nome, ativo_nome)
     except Exception as e:
         print(f"[RAG] Erro ao buscar no banco vetorial: {e}")
 
@@ -149,11 +149,11 @@ def gerar_recomendacao_rag(evento_nome, ativo_nome, distancia, visao):
     - Distância: {distancia:.0f} KM
     - Perfil Solicitante: {visao}
 
-    EXEMPLO HISTÓRICO DE DEMONSTRAÇÃO (RECUPERADO VIA BANCO VETORIAL):
+    CONTEXTO RECUPERADO DOS DOCUMENTOS OFICIAIS (BANCO VETORIAL):
     "{contexto_historico}"
 
     INSTRUÇÃO:
-    Você deve formular uma recomendação estratégica. Utilize o exemplo histórico de demonstração para orientar a recomendação.
+    Você deve formular uma recomendação estratégica. Use o trecho recuperado apenas se for pertinente ao evento; se não for, ignore-o e não o cite.
     Se o perfil for "Corporativo (B2B)", foque na mitigação de risco patrimonial.
     Se o perfil for "Impacto Social / ESG", foque na evacuação e saúde pública.
     Limite a 2 ou 3 frases curtas. Inicie com "**Decisão RAG (IA):**".
