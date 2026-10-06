@@ -115,6 +115,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* ── spinner de busca ── */
 #spinner{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:999;background:#111827cc;padding:16px 24px;border-radius:12px;color:#f9fafb;font-size:13px;font-weight:600;text-align:center}
 #spinner.show{display:block}
+#aviso{display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:999;max-width:80%;background:#111827ee;border:1px solid #374151;padding:8px 14px;border-radius:10px;color:#f9fafb;font-size:12px;font-weight:600;text-align:center}
+#aviso.show{display:block}
 
 /* ── painel ── */
 #panel h3{color:#60a5fa;margin-bottom:5px;font-size:13px}
@@ -181,6 +183,7 @@ body.light #spinner{background:#f8fafccc;color:#0f172a}
 <div id="wrap">
   <div id="map">
     <div id="spinner">🛰️ Buscando locais<br>no OpenStreetMap…</div>
+    <div id="aviso"></div>
   </div>
   <div id="panel">
     <div class="ph">
@@ -358,56 +361,125 @@ NASA_DATA.forEach(function(p){
   dados.n.push(p);
 });
 
-/* ── BUSCA OVERPASS (locais reais do OSM) ── */
-async function buscarOverpass(lat,lon,usarFallback){
-  mostrarSpinner(true);
-  var r=10000;
-  var q='[out:json][timeout:60];('
-    +'node["amenity"~"hospital|clinic|doctors|health_post"](around:'+r+','+lat+','+lon+');'
-    +'way["amenity"~"hospital|clinic|doctors|health_post"](around:'+r+','+lat+','+lon+');'
-    +'node["healthcare"~"hospital|clinic|centre|doctor"](around:'+r+','+lat+','+lon+');'
-    +'way["healthcare"~"hospital|clinic|centre|doctor"](around:'+r+','+lat+','+lon+');'
-    +'node["name"~"UBS|UPA|AMA|Hospital|Pronto|Saúde|Delegacia|ONG|Abrigo",i](around:'+r+','+lat+','+lon+');'
-    +'way["name"~"UBS|UPA|AMA|Hospital|Pronto|Saúde|Delegacia|ONG|Abrigo",i](around:'+r+','+lat+','+lon+');'
-    +'node["amenity"="police"](around:'+r+','+lat+','+lon+');'
-    +'way["amenity"="police"](around:'+r+','+lat+','+lon+');'
-    +'node["amenity"="social_facility"](around:'+r+','+lat+','+lon+');'
-    +'way["amenity"="social_facility"](around:'+r+','+lat+','+lon+');'
-    +'node["amenity"="pharmacy"](around:'+r+','+lat+','+lon+');'
-    +'way["amenity"="pharmacy"](around:'+r+','+lat+','+lon+');'
-    +'node["shop"~"supermarket|convenience|marketplace"](around:'+r+','+lat+','+lon+');'
-    +'way["shop"~"supermarket|convenience|marketplace"](around:'+r+','+lat+','+lon+');'
-    +'node["tourism"~"hotel|hostel|guest_house"](around:'+r+','+lat+','+lon+');'
-    +'way["tourism"~"hotel|hostel|guest_house"](around:'+r+','+lat+','+lon+');'
-    +'node["social_facility"~"shelter|food_bank"](around:'+r+','+lat+','+lon+');'
-    +'way["social_facility"~"shelter|food_bank"](around:'+r+','+lat+','+lon+');'
-    +'node["amenity"="marketplace"](around:'+r+','+lat+','+lon+');'
-    +'way["amenity"="marketplace"](around:'+r+','+lat+','+lon+');'
-    +');out center;';
+/* ── BUSCA OVERPASS (locais reais do OSM, qualquer lugar do mundo) ── */
+var OVERPASS_SERVIDORES=[
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter'
+];
+var buscaAtual=0;
+var avisoTimer=null;
+var carregando=false;
+
+function mostrarAviso(msg,auto){
+  var el=document.getElementById('aviso');
+  if(avisoTimer){clearTimeout(avisoTimer);avisoTimer=null;}
+  if(!msg){el.classList.remove('show');return;}
+  el.textContent=msg; el.classList.add('show');
+  if(auto) avisoTimer=setTimeout(function(){el.classList.remove('show');},9000);
+}
+
+function noBrasil(lat,lon){return lat>-34&&lat<6&&lon>-74&&lon<-34;}
+
+/* abrigos cadastrados (todos brasileiros) so contam se estiverem perto do local buscado */
+function abrigosPerto(lat,lon){
+  return ABRIGOS_DATA.filter(function(p){
+    p.dist=hav(lat,lon,p.lat,p.lon);
+    return p.dist<80;
+  });
+}
+
+function limparLocais(lat,lon){
+  ['h','u','d','o','q','m','s2','c'].forEach(function(t){addMarkers([],t);});
+  addMarkers(abrigosPerto(lat,lon),'a');
+}
+
+function montarQueryOverpass(lat,lon,r){
+  var a='(around:'+r+','+lat+','+lon+')';
+  var q='[out:json][timeout:25];(';
+  q+='nwr["amenity"~"^(hospital|clinic|doctors|health_post|police|social_facility|pharmacy|marketplace)$"]'+a+';';
+  q+='nwr["healthcare"~"^(hospital|clinic|centre|doctor)$"]'+a+';';
+  q+='nwr["shop"~"^(supermarket|convenience|marketplace)$"]'+a+';';
+  q+='nwr["tourism"~"^(hotel|hostel|guest_house)$"]'+a+';';
+  q+='nwr["emergency"="assembly_point"]'+a+';';
+  /* termos em portugues so fazem sentido (e so valem o custo) dentro do Brasil */
+  if(noBrasil(lat,lon)) q+='nwr["name"~"UBS|UPA|AMA|Pronto|Delegacia|ONG|Abrigo",i]'+a+';';
+  q+=');out center 800;';
+  return q;
+}
+
+async function consultarOverpass(servidor,query,ms){
+  var ctrl=new AbortController();
+  var t=setTimeout(function(){ctrl.abort();},ms);
   try{
-    var resp=await fetch('https://overpass-api.de/api/interpreter',{
-      method:'POST',body:q,
-      headers:{'Content-Type':'text/plain','User-Agent':'OmniEcoRescue/1.0'},
-      signal:AbortSignal.timeout?AbortSignal.timeout(35000):undefined
-    });
+    var resp=await fetch(servidor,{method:'POST',body:'data='+encodeURIComponent(query),
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:ctrl.signal});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
     var data=await resp.json();
-    processarOverpass(data.elements,lat,lon);
-  }catch(err){
-    console.warn('Overpass falhou:',err);
-    if(usarFallback) carregarFallback(lat,lon);
-  }finally{mostrarSpinner(false);}
+    if(!data||!Array.isArray(data.elements)) throw new Error('resposta invalida');
+    return data.elements;
+  } finally {clearTimeout(t);}
+}
+
+async function buscarOverpass(lat,lon,usarFallback){
+  var id=++buscaAtual;
+  carregando=true;
+  limparLocais(lat,lon);          /* some com os pontos da cidade anterior na hora */
+  mostrarSpinner(true); mostrarAviso('');
+  try{
+    var elementos=null, servidorOk=null, raio=6000;
+    var q1=montarQueryOverpass(lat,lon,raio);
+    for(var i=0;i<OVERPASS_SERVIDORES.length;i++){
+      try{
+        elementos=await consultarOverpass(OVERPASS_SERVIDORES[i],q1,18000);
+        servidorOk=OVERPASS_SERVIDORES[i];
+        break;
+      }catch(e){console.warn('Overpass falhou em',OVERPASS_SERVIDORES[i],e);}
+      if(id!==buscaAtual) return;
+    }
+    if(id!==buscaAtual) return;
+    /* area pouco mapeada ou rural: tenta de novo com raio maior no servidor que respondeu */
+    if(elementos&&elementos.length===0){
+      try{
+        elementos=await consultarOverpass(servidorOk,montarQueryOverpass(lat,lon,20000),25000);
+        raio=20000;
+      }catch(e){console.warn('Raio maior falhou',e);}
+      if(id!==buscaAtual) return;
+    }
+    if(elementos&&elementos.length>0){
+      var n=processarOverpass(elementos,lat,lon);
+      if(n>0) mostrarAviso('✅ '+n+' locais carregados do OpenStreetMap (raio de '+(raio/1000)+' km).',true);
+      else {limparLocais(lat,lon);mostrarAviso('Nenhum local dos tipos do mapa foi encontrado nesta área. Tente um bairro ou cidade maior.');}
+    } else if(elementos){
+      limparLocais(lat,lon);
+      mostrarAviso('Nenhum local encontrado nesta área no OpenStreetMap. Tente um bairro ou cidade maior.');
+    } else {
+      /* todos os servidores falharam */
+      if(usarFallback&&carregarFallback(lat,lon)){
+        mostrarAviso('OpenStreetMap indisponível: mostrando a lista de reserva ilustrativa desta região.');
+      } else {
+        limparLocais(lat,lon);
+        mostrarAviso('Não foi possível carregar os locais agora (OpenStreetMap lento ou indisponível). Clique em Buscar de novo em instantes.');
+      }
+    }
+  } finally {
+    if(id===buscaAtual){mostrarSpinner(false);carregando=false;}
+  }
 }
 
 function processarOverpass(elements,refLat,refLon){
   var listas={a:[],h:[],u:[],d:[],o:[],q:[],m:[],s2:[],c:[]};
   var vistos=new Set();
   elements.forEach(function(el){
-    var nome=el.tags&&el.tags.name;
-    if(!nome||vistos.has(nome)) return;
-    vistos.add(nome);
+    var nome=el.tags&&(el.tags.name||el.tags['name:en']||el.tags.int_name);
+    if(!nome) return;
     var elLat=el.lat||(el.center&&el.center.lat);
     var elLon=el.lon||(el.center&&el.center.lon);
     if(!elLat||!elLon) return;
+    /* mesmo nome em lugares diferentes (redes de lojas) nao e duplicata */
+    var chave=nome+'|'+elLat.toFixed(3)+','+elLon.toFixed(3);
+    if(vistos.has(chave)) return;
+    vistos.add(chave);
     var amenity=(el.tags.amenity||'').toLowerCase();
     var hc=(el.tags.healthcare||'').toLowerCase();
     var op=(el.tags.operator||'');
@@ -418,31 +490,40 @@ function processarOverpass(elements,refLat,refLon){
     var end='';
     if(el.tags['addr:street']) end=el.tags['addr:street']+(el.tags['addr:housenumber']?', '+el.tags['addr:housenumber']:'');
     var p={nome:nome,lat:elLat,lon:elLon,endereco:end,dist:dist,id:el.id};
-    if(amenity==='pharmacy'||nome.match(/farmácia|farmacia|drogaria/i)) listas.m.push(p);
+    if(el.tags.emergency==='assembly_point') listas.a.push(p);
+    else if(amenity==='pharmacy'||nome.match(/farmácia|farmacia|drogaria/i)) listas.m.push(p);
     else if(shop==='supermarket'||shop==='convenience'||shop==='marketplace'||nome.match(/mercado|supermercado|atacadão|atacado/i)) listas.c.push(p);
     else if(tourism==='hotel'||tourism==='hostel'||tourism==='guest_house'||social==='shelter'||nome.match(/hotel|albergue|pousada|abrigo temporário/i)) listas.s2.push(p);
     else if(amenity==='marketplace'||social==='food_bank'||nome.match(/banco de alimentos|cozinha comunitária|restaurante popular|distribuição de alimentos/i)) listas.q.push(p);
     else if(amenity==='hospital'||hc==='hospital'||nome.match(/hospital/i)) listas.h.push(p);
+    else if(amenity==='clinic'||amenity==='doctors'||amenity==='health_post'||hc==='clinic'||hc==='centre'||hc==='doctor') listas.u.push(p);
     else if(/\bUPA\b/.test(nome)||/\bUPA\b/.test(op)) listas.u.push(p);
     else if(/\b(UBS|UBSF|USF|AMA)\b/.test(nome)||nome.match(/Unidade de Sa/i)||/\b(UBS|SUS)\b/.test(op)) listas.u.push(p);
     else if(amenity==='police'||nome.match(/delegacia|policia|polícia/i)) listas.d.push(p);
     else if(amenity==='social_facility'||/\bONG\b/.test(nome)||nome.match(/abrigo|refugio|ref\u00fagio|assist\u00eancia/i)) listas.o.push(p);
     else if(nome.match(/Pronto[- ]?(Socorro|Atendimento)|Sa[\u00fau]de|Cl[\u00edi]nica/i)) listas.u.push(p);
   });
+  /* abrigos cadastrados so entram se estiverem perto do local buscado */
+  abrigosPerto(refLat,refLon).forEach(function(p){listas.a.push(p);});
+  var total=0;
   /* ordena por distância e limita */
   Object.keys(listas).forEach(function(t){
     listas[t].sort(function(a,b){return a.dist-b.dist;});
     listas[t]=listas[t].slice(0,40);
+    if(t!=='a') total+=listas[t].length;
     addMarkers(listas[t],t);
   });
-  /* abrigos fixos sempre presentes */
-  addMarkers(ABRIGOS_DATA,'a');
+  return total;
 }
 
 function carregarFallback(lat,lon){
+  /* a lista de reserva e de Sao Paulo: so vale se o local buscado estiver a menos de 60 km de algum ponto dela */
   var listas={a:[],h:[],u:[],d:[],o:[],q:[],m:[],s2:[],c:[]};
+  var total=0;
   FALLBACK.forEach(function(p){
     p.dist=hav(lat,lon,p.lat,p.lon);
+    if(p.dist>60) return;
+    total++;
     if(p.tipo==='Hospital')                                    listas.h.push(p);
     else if(p.tipo==='UBS'||p.tipo==='UPA'||p.tipo==='AMA')   listas.u.push(p);
     else if(p.tipo==='Abrigo')                                 listas.a.push(p);
@@ -452,8 +533,11 @@ function carregarFallback(lat,lon){
     else if(p.tipo==='Compras')                                listas.c.push(p);
     else                                                       listas.o.push(p);
   });
+  listas.a=listas.a.concat(abrigosPerto(lat,lon));
+  total+=listas.a.length;
+  if(total===0) return false;
   Object.keys(listas).forEach(function(t){addMarkers(listas[t],t);});
-  addMarkers(ABRIGOS_DATA,'a');
+  return true;
 }
 
 /* ── GPS ── */
@@ -514,8 +598,12 @@ function toggleLayer(t,btn){
 
 /* ── MAIS PRÓXIMO ── */
 function irMaisProximo(t){
+  if(carregando){mostrarAviso('Ainda buscando locais nesta área… aguarde alguns segundos.',true);return;}
   var arr=dados[t];
-  if(!arr||!arr.length){alert('Nenhum ponto deste tipo carregado. Clique em GPS ou busque sua cidade primeiro.');return;}
+  if(!arr||!arr.length){
+    mostrarAviso('Nenhum ponto deste tipo encontrado perto de '+uLat.toFixed(3)+', '+uLng.toFixed(3)+'. Tente outro tipo ou outra área.',true);
+    return;
+  }
   var best=null,bd=Infinity;
   arr.forEach(function(p){var d=hav(uLat,uLng,p.lat,p.lon);if(d<bd){bd=d;best=p;}});
   if(best){
