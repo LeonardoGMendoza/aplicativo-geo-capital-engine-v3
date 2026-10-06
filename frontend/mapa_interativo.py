@@ -422,11 +422,48 @@ async function consultarOverpass(servidor,query,ms){
   } finally {clearTimeout(t);}
 }
 
+/* abrigos do mundo todo: pontos de encontro, abrigos sociais, centros comunitarios, prefeituras e escolas */
+async function buscarAbrigosOSM(lat,lon){
+  var a='(around:5000,'+lat+','+lon+')';
+  var q='[out:json][timeout:25];(';
+  q+='nwr["emergency"="assembly_point"]'+a+';';
+  q+='nwr["social_facility"="shelter"]'+a+';';
+  q+='nwr["amenity"~"^(community_centre|townhall|school)$"]["name"]'+a+';';
+  q+=');out center 300;';
+  var proms=OVERPASS_SERVIDORES.map(function(sv){return consultarOverpass(sv,q,25000);});
+  var els=await Promise.any(proms);
+  var out=[],vistos=new Set();
+  els.forEach(function(el){
+    var t=el.tags||{};
+    var nome=t.name||t['name:en']||t.int_name;
+    var la=el.lat||(el.center&&el.center.lat), lo=el.lon||(el.center&&el.center.lon);
+    if(!nome||!la||!lo) return;
+    var ch=nome+'|'+la.toFixed(3)+','+lo.toFixed(3);
+    if(vistos.has(ch)) return; vistos.add(ch);
+    var oficial=(t.emergency==='assembly_point'||t.social_facility==='shelter');
+    out.push({nome:nome,lat:la,lon:lo,id:el.id,dist:hav(lat,lon,la,lo),
+      tipo:oficial?'Ponto de encontro / abrigo (OpenStreetMap)':'Possível abrigo (escola ou centro comunitário): confirmar com a defesa civil local'});
+  });
+  return out;
+}
+
+function aplicarAbrigosOSM(novos,lat,lon){
+  if(!novos||!novos.length) return;
+  var atuais=(dados.a||[]).slice();
+  var mapa={};
+  atuais.concat(novos).forEach(function(p){mapa[p.nome+'|'+p.lat.toFixed(3)+','+p.lon.toFixed(3)]=p;});
+  var lista=Object.keys(mapa).map(function(k){var p=mapa[k];p.dist=hav(lat,lon,p.lat,p.lon);return p;});
+  /* pontos de encontro oficiais primeiro quando empatam em area; senao, por distancia */
+  lista.sort(function(x,y){return x.dist-y.dist;});
+  addMarkers(lista.slice(0,40),'a');
+}
+
 async function buscarOverpass(lat,lon,usarFallback){
   var id=++buscaAtual;
   carregando=true; statusBusca='';
   limparLocais(lat,lon);          /* some com os pontos da cidade anterior na hora */
   mostrarSpinner(true); mostrarAviso('');
+  var pAbr=buscarAbrigosOSM(lat,lon).catch(function(e){console.warn('Abrigos OSM falhou',e);return [];});
   try{
     var elementos=null, raio=3000, erros=[];
     /* consulta os 3 servidores ao mesmo tempo e usa o primeiro que responder */
@@ -465,6 +502,8 @@ async function buscarOverpass(lat,lon,usarFallback){
         mostrarAviso('Não foi possível carregar os locais agora. '+statusBusca+'. Clique em Buscar de novo em instantes.');
       }
     }
+    var abrigos=await pAbr;
+    if(id===buscaAtual) aplicarAbrigosOSM(abrigos,lat,lon);
   } finally {
     if(id===buscaAtual){mostrarSpinner(false);carregando=false;}
   }
