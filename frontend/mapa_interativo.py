@@ -170,7 +170,7 @@ body.light #spinner{background:#f8fafccc;color:#0f172a}
     <button class="fb fc on" onclick="toggleLayer('c',this)">🛒 Compras</button>
   </div>
   <div class="sep"></div>
-  <input id="searchbox" placeholder="🔍 Buscar cidade ou bairro…" onkeydown="if(event.key==='Enter')buscarLocal()">
+  <input id="searchbox" placeholder="🔍 Buscar qualquer cidade, bairro ou endereço…" onkeydown="if(event.key==='Enter')buscarLocal()">
   <button id="searchbtn" onclick="buscarLocal()">Buscar</button>
   <div class="sep"></div>
   <button class="gpsbtn" onclick="usarGPS()">📍 GPS</button>
@@ -481,7 +481,7 @@ async function buscarLocal(){
   if(!q) return;
   mostrarSpinner(true);
   try{
-    var r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q='+encodeURIComponent(q),
+    var r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q),
       {headers:{'User-Agent':'OmniEcoRescue/1.0'}});
     var d=await r.json();
     if(d&&d.length>0){
@@ -491,7 +491,7 @@ async function buscarLocal(){
       buscarOverpass(uLat,uLng,true);
     } else {
       mostrarSpinner(false);
-      alert('Local não encontrado. Tente um nome de bairro ou cidade do Brasil.');
+      alert('Local não encontrado. Tente outro nome (cidade, bairro ou endereço, em qualquer país).');
     }
   }catch(e){mostrarSpinner(false);alert('Erro ao buscar: '+e.message);}
 }
@@ -553,7 +553,7 @@ def render_mapa_interativo(abrigos, eventos_nasa, origem="São Paulo/SP", altura
 
     # NASA: extrai com json.dumps (escapa tudo automaticamente)
     nasa_pts = []
-    for ev in (eventos_nasa or [])[:25]:
+    for ev in (eventos_nasa or [])[:300]:
         try:
             geom = ev.get("geometry", [])
             if not geom:

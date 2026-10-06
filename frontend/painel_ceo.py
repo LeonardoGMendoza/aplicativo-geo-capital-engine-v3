@@ -119,6 +119,63 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
     return R * (2 * math.atan2(math.sqrt(a), math.sqrt(1 - a)))
 
 
+def ponto_evento(evento):
+    """Devolve (lat, lon) da ultima geometria do evento NASA, ou None. Aceita ponto e poligono."""
+    try:
+        c = evento["geometry"][-1].get("coordinates")
+        while c and isinstance(c[0], (list, tuple)):
+            c = c[0]
+        return float(c[1]), float(c[0])
+    except (KeyError, IndexError, TypeError, ValueError, AttributeError):
+        return None
+
+
+def calcular_alertas_ativos(ativos, eventos, raio_km=600):
+    """Para CADA ativo, acha o evento NASA mais proximo dentro do raio. Ordena do mais perto ao mais longe."""
+    alertas = []
+    for ativo in ativos:
+        melhor = None
+        for ev in eventos:
+            pt = ponto_evento(ev)
+            if pt is None:
+                continue
+            d = calcular_distancia(ativo["lat"], ativo["lon"], pt[0], pt[1])
+            if d < raio_km and (melhor is None or d < melhor["dist"]):
+                melhor = {"ativo": ativo, "evento": ev, "dist": d}
+        if melhor:
+            alertas.append(melhor)
+    alertas.sort(key=lambda a: a["dist"])
+    return alertas
+
+
+def escolher_alerta(alertas, total_eventos, chave):
+    """Mostra quantos ativos estao em risco e deixa escolher qual alerta ver (padrao: o mais proximo; no teste, o simulado)."""
+    padrao = next((i for i, a in enumerate(alertas) if "simulad" in a["evento"].get("title", "").lower()), 0)
+    rotulos = [f"{a['evento'].get('title', '?')} → {a['ativo']['ativo']} ({a['dist']:.0f} km)" for a in alertas]
+    st.caption(f"{len(alertas)} ativo(s) com evento NASA a menos de 600 km (de {total_eventos} eventos abertos no planeta).")
+    i = st.selectbox("Alerta exibido:", range(len(alertas)), index=padrao,
+                     format_func=lambda k: rotulos[k], key=chave)
+    return alertas[i]
+
+
+def mostrar_eventos_globais(eventos):
+    """Mapa e tabela com TODOS os eventos NASA abertos no planeta (nao so os proximos dos ativos)."""
+    linhas = []
+    for ev in eventos:
+        pt = ponto_evento(ev)
+        if pt is None:
+            continue
+        linhas.append({"Evento": ev.get("title", "?"),
+                       "Categoria": ev["categories"][0]["title"] if ev.get("categories") else "?",
+                       "lat": pt[0], "lon": pt[1]})
+    if not linhas:
+        return
+    df = pd.DataFrame(linhas)
+    with st.expander(f"🌍 Todos os eventos NASA abertos no planeta agora ({len(df)})"):
+        st.map(df, latitude="lat", longitude="lon", zoom=1, color="#ff8800")
+        st.dataframe(df, width='stretch')
+
+
 def gerar_recomendacao_ia_local(evento_nome, abrigo_nome, distancia_km):
     """
     IA de fallback embutida para a visão de Abrigos (omni_ecoresue_mvp.py original).
@@ -249,35 +306,27 @@ if visao == "Corporativo (B2B)":
     with col_mapa:
         st.subheader("🛰️ Radares Espaciais NASA vs Infraestrutura Global")
         st.map(df_ativos, zoom=1, color="#00ff00")
+        mostrar_eventos_globais(eventos_nasa)
 
         st.subheader("📈 Mercado Financeiro em Tempo Real (Yahoo Finance)")
         st.dataframe(df_cotacoes, width='stretch')
 
     with col_ia:
         st.subheader("🤖 Assistente de Risco Operacional")
-        alerta_disparado = False
-        for ativo in mapa_dados:
-            for evento in eventos_nasa[:50]:
-                try:
-                    lon_nasa, lat_nasa = evento["geometry"][-1].get("coordinates")
-                except (KeyError, IndexError, TypeError):
-                    continue
-                dist = calcular_distancia(ativo["lat"], ativo["lon"], lat_nasa, lon_nasa)
-                if dist < 600:
-                    alerta_disparado = True
-                    if "simulad" in evento["title"].lower():
-                        st.warning("SIMULAÇÃO: evento fictício, não é dado da NASA")
-                    st.error("🚨 **PERIGO A ATIVOS DETECTADO**")
-                    st.warning(f"**Gatilho:** {evento['title']}\n\n**Ativo:** {ativo['ativo']}\n\n**Distância:** {dist:.0f} KM")
-                    st.markdown("### 🏭 ALERTA PATRIMONIAL")
-                    texto_ia = gerar_recomendacao_rag(evento["title"], ativo["ativo"], dist, visao)
-                    st.info(texto_ia)
-                    if st.button("ENVIAR ORDEM DE BLOQUEIO", key="btn_corp_bloqueio"):
-                        st.success("✅ Ordem de Bloqueio enviada para a central de operacoes.")
-                    break
-            if alerta_disparado:
-                break
-        if not alerta_disparado:
+        alertas = calcular_alertas_ativos(mapa_dados, eventos_nasa)
+        if alertas:
+            sel = escolher_alerta(alertas, len(eventos_nasa), "sel_alerta_corp")
+            ativo, evento, dist = sel["ativo"], sel["evento"], sel["dist"]
+            if "simulad" in evento["title"].lower():
+                st.warning("SIMULAÇÃO: evento fictício, não é dado da NASA")
+            st.error("🚨 **PERIGO A ATIVOS DETECTADO**")
+            st.warning(f"**Gatilho:** {evento['title']}\n\n**Ativo:** {ativo['ativo']}\n\n**Distância:** {dist:.0f} KM")
+            st.markdown("### 🏭 ALERTA PATRIMONIAL")
+            texto_ia = gerar_recomendacao_rag(evento["title"], ativo["ativo"], dist, visao)
+            st.info(texto_ia)
+            if st.button("ENVIAR ORDEM DE BLOQUEIO", key="btn_corp_bloqueio"):
+                st.success("✅ Ordem de Bloqueio enviada para a central de operacoes.")
+        else:
             st.success("✅ Nenhum ativo corporativo em risco.")
 
 
@@ -294,33 +343,25 @@ elif visao == "Impacto Social / ESG (Comunidade)":
     with col_mapa:
         st.subheader("🌍 Radares Espaciais NASA vs Zonas de Vulnerabilidade")
         st.map(df_ativos, zoom=1, color="#ff0000")
+        mostrar_eventos_globais(eventos_nasa)
 
     with col_ia:
         st.subheader("🤖 Assistente Humanitário (RAG)")
-        alerta_disparado = False
-        for ativo in mapa_dados:
-            for evento in eventos_nasa[:50]:
-                try:
-                    lon_nasa, lat_nasa = evento["geometry"][-1].get("coordinates")
-                except (KeyError, IndexError, TypeError):
-                    continue
-                dist = calcular_distancia(ativo["lat"], ativo["lon"], lat_nasa, lon_nasa)
-                if dist < 600:
-                    alerta_disparado = True
-                    if "simulad" in evento["title"].lower():
-                        st.warning("SIMULAÇÃO: evento fictício, não é dado da NASA")
-                    st.error("🚨 **EMERGÊNCIA SOCIAL DETECTADA**")
-                    st.warning(f"**Desastre:** {evento['title']}\n\n**Zona Afetada:** Raio de {dist:.0f} KM do complexo industrial.")
-                    st.markdown("### 🚑 PLANO DE SAÚDE PÚBLICA")
-                    st.error(f"**Comunidade Ameaçada:** {ativo['comunidade_vizinha']}\n\n**Risco Secundário:** {ativo['risco_secundario']}")
-                    texto_ia = gerar_recomendacao_rag(evento["title"], ativo["ativo"], dist, visao)
-                    st.info(texto_ia)
-                    if st.button("ACIONAR LIDERANÇAS E ONGS", key="btn_esg_ongs"):
-                        st.success("✅ Protocolos enviados para Associações Locais e ONGs.")
-                    break
-            if alerta_disparado:
-                break
-        if not alerta_disparado:
+        alertas = calcular_alertas_ativos(mapa_dados, eventos_nasa)
+        if alertas:
+            sel = escolher_alerta(alertas, len(eventos_nasa), "sel_alerta_esg")
+            ativo, evento, dist = sel["ativo"], sel["evento"], sel["dist"]
+            if "simulad" in evento["title"].lower():
+                st.warning("SIMULAÇÃO: evento fictício, não é dado da NASA")
+            st.error("🚨 **EMERGÊNCIA SOCIAL DETECTADA**")
+            st.warning(f"**Desastre:** {evento['title']}\n\n**Zona Afetada:** Raio de {dist:.0f} KM do complexo industrial.")
+            st.markdown("### 🚑 PLANO DE SAÚDE PÚBLICA")
+            st.error(f"**Comunidade Ameaçada:** {ativo['comunidade_vizinha']}\n\n**Risco Secundário:** {ativo['risco_secundario']}")
+            texto_ia = gerar_recomendacao_rag(evento["title"], ativo["ativo"], dist, visao)
+            st.info(texto_ia)
+            if st.button("ACIONAR LIDERANÇAS E ONGS", key="btn_esg_ongs"):
+                st.success("✅ Protocolos enviados para Associações Locais e ONGs.")
+        else:
             st.success("✅ Nenhuma comunidade em risco crítico.")
             
         st.markdown("---")
@@ -425,7 +466,7 @@ elif visao == "Abrigos e Preparação":
 
             alertas_gerados = []
             for abrigo in ABRIGOS:
-                for evento in eventos_nasa[:50]:
+                for evento in eventos_nasa:
                     try:
                         coords = evento["geometry"][-1].get("coordinates")
                         if not coords:
