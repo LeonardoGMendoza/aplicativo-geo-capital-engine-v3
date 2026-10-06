@@ -214,6 +214,50 @@ def enviar_whatsapp(webhook_url, payload):
         st.error(f"Não foi possível chamar o n8n ({type(e).__name__}). Verifique se o fluxo está ativo.")
 
 
+def campo_destino_whatsapp():
+    """Campo unico de destino (grupo ou celular). A URL do n8n nao aparece: vem do segredo."""
+    webhook_url = obter_webhook()
+    entrada = st.text_input("WhatsApp - ID do Grupo ou Telefone (digite o ID do grupo OU apenas o número do celular):",
+                            value="", key="wa_destino")
+    telefone = formatar_destino_whatsapp(entrada)
+    if telefone:
+        st.caption(f"Destino do alerta: {telefone}")
+    return webhook_url, telefone
+
+
+def botao_enviar_alerta_real(ativo, evento, dist, texto_ia, webhook_url, telefone, chave):
+    """Envia por WhatsApp o alerta que esta na tela (real da NASA; se for o evento simulado, vai marcado [SIMULAÇÃO])."""
+    simulado = "simulad" in evento["title"].lower()
+    if st.button("📲 ENVIAR ESTE ALERTA POR WHATSAPP (envio real)", key=chave):
+        enviar_whatsapp(webhook_url, {
+            "local": ativo["comunidade_vizinha"],
+            "evento": ("[SIMULAÇÃO] " if simulado else "") + f"{evento['title']}, a {dist:.0f} km de {ativo['ativo']}. Risco secundário: {ativo['risco_secundario']}",
+            "recomendacao_ia": texto_ia,
+            "origem": "simulacao" if simulado else "NASA EONET",
+            "telefone": telefone,
+        })
+
+
+def simulador_whatsapp(webhook_url, telefone, ligado):
+    """Alertas de exemplo (so com o modo de teste WhatsApp ligado)."""
+    st.markdown("---")
+    st.subheader("📲 Simulador de Alertas WhatsApp (Integração n8n/Waha)")
+    if not ligado:
+        st.caption("Modo de teste WhatsApp desligado. Quando houver alerta real, use o botão 'ENVIAR ESTE ALERTA POR WHATSAPP' dentro dele. Se não houver nada real, ligue o modo de teste na barra lateral para enviar exemplos (Califórnia, Macaé/RJ, Texas).")
+        return
+    st.markdown("Modo de teste WhatsApp ligado: alertas de exemplo por região, enviados ao destino acima.")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("🚨 Alerta: Califórnia (San Andreas)", use_container_width=True):
+            enviar_whatsapp(webhook_url, {"local": "Condados Costeiros (San Andreas, Califórnia)", "evento": "Terremoto de Magnitude 7.2 detectado pelas boias e sismógrafos", "origem": "simulacao", "telefone": telefone})
+    with col2:
+        if st.button("🚨 Alerta: Macaé/RJ (Petrobras)", use_container_width=True):
+            enviar_whatsapp(webhook_url, {"local": "Colônia Z3 de Pescadores (Macaé/RJ)", "evento": "Ciclone com Risco Crítico de Vazamento na Bacia de Campos", "origem": "simulacao", "telefone": telefone})
+    with col3:
+        if st.button("🚨 Alerta: Texas (Tornados)", use_container_width=True):
+            enviar_whatsapp(webhook_url, {"local": "Residências do Tornado Alley (Texas, EUA)", "evento": "Tornado Severo Categoria F4 em aproximação", "origem": "simulacao", "telefone": telefone})
+
+
 def gerar_recomendacao_ia_local(evento_nome, abrigo_nome, distancia_km):
     """
     IA de fallback embutida para a visão de Abrigos (omni_ecoresue_mvp.py original).
@@ -315,7 +359,7 @@ st.sidebar.info("⚡ Dados NASA em tempo real\n\n📡 IA: Oracle Cloud (OCI)")
 
 modo_teste = st.sidebar.toggle("Modo de teste (simulação)", value=False)
 modo_teste_wa = False
-if visao == "Impacto Social / ESG (Comunidade)":
+if visao in ("Corporativo (B2B)", "Impacto Social / ESG (Comunidade)"):
     modo_teste_wa = st.sidebar.toggle("Modo de teste WhatsApp (alertas de exemplo)", value=False, key="wa_teste")
 if modo_teste and visao == "Abrigos e Preparação":
     # Cenario de demonstracao: enchente FICTICIA em Porto Alegre (RS), so na tela de Abrigos
@@ -354,6 +398,7 @@ if visao == "Corporativo (B2B)":
 
     with col_ia:
         st.subheader("🤖 Assistente de Risco Operacional")
+        webhook_url, telefone = campo_destino_whatsapp()
         alertas = calcular_alertas_ativos(mapa_dados, eventos_nasa)
         if alertas:
             sel = escolher_alerta(alertas, len(eventos_nasa), "sel_alerta_corp")
@@ -365,10 +410,12 @@ if visao == "Corporativo (B2B)":
             st.markdown("### 🏭 ALERTA PATRIMONIAL")
             texto_ia = gerar_recomendacao_rag(evento["title"], ativo["ativo"], dist, visao)
             st.info(texto_ia)
-            if st.button("ENVIAR ORDEM DE BLOQUEIO", key="btn_corp_bloqueio"):
-                st.success("✅ Ordem de Bloqueio enviada para a central de operacoes.")
+            if st.button("ENVIAR ORDEM DE BLOQUEIO (simulação)", key="btn_corp_bloqueio"):
+                st.info("🧪 SIMULAÇÃO: ordem de bloqueio registrada só na tela. Nenhum sistema externo foi acionado. O envio real é o botão de WhatsApp.")
+            botao_enviar_alerta_real(ativo, evento, dist, texto_ia, webhook_url, telefone, "btn_corp_whatsapp")
         else:
             st.success("✅ Nenhum ativo corporativo em risco.")
+        simulador_whatsapp(webhook_url, telefone, modo_teste_wa)
 
 
 # ============================================================
@@ -388,11 +435,7 @@ elif visao == "Impacto Social / ESG (Comunidade)":
 
     with col_ia:
         st.subheader("🤖 Assistente Humanitário (RAG)")
-        webhook_url = obter_webhook()
-        telefone_input = st.text_input("ID do Grupo ou Telefone (Digite o ID do grupo OU apenas o número do celular):", value="")
-        telefone = formatar_destino_whatsapp(telefone_input)
-        if telefone:
-            st.caption(f"Destino do alerta: {telefone}")
+        webhook_url, telefone = campo_destino_whatsapp()
         alertas = calcular_alertas_ativos(mapa_dados, eventos_nasa)
         if alertas:
             sel = escolher_alerta(alertas, len(eventos_nasa), "sel_alerta_esg")
@@ -405,36 +448,13 @@ elif visao == "Impacto Social / ESG (Comunidade)":
             st.error(f"**Comunidade Ameaçada:** {ativo['comunidade_vizinha']}\n\n**Risco Secundário:** {ativo['risco_secundario']}")
             texto_ia = gerar_recomendacao_rag(evento["title"], ativo["ativo"], dist, visao)
             st.info(texto_ia)
-            if st.button("ACIONAR LIDERANÇAS E ONGS", key="btn_esg_ongs"):
-                st.success("✅ Protocolos enviados para Associações Locais e ONGs.")
-            _simulado = "simulad" in evento["title"].lower()
-            if st.button("📲 ENVIAR ESTE ALERTA POR WHATSAPP", key="btn_esg_whatsapp"):
-                enviar_whatsapp(webhook_url, {
-                    "local": ativo["comunidade_vizinha"],
-                    "evento": ("[SIMULAÇÃO] " if _simulado else "") + f"{evento['title']}, a {dist:.0f} km de {ativo['ativo']}. Risco secundário: {ativo['risco_secundario']}",
-                    "recomendacao_ia": texto_ia,
-                    "origem": "simulacao" if _simulado else "NASA EONET",
-                    "telefone": telefone,
-                })
+            if st.button("ACIONAR LIDERANÇAS E ONGS (simulação)", key="btn_esg_ongs"):
+                st.info("🧪 SIMULAÇÃO: protocolo registrado só na tela. Nada foi enviado a ONGs ou associações. O envio real é o botão de WhatsApp.")
+            botao_enviar_alerta_real(ativo, evento, dist, texto_ia, webhook_url, telefone, "btn_esg_whatsapp")
         else:
             st.success("✅ Nenhuma comunidade em risco crítico.")
             
-        st.markdown("---")
-        st.subheader("📲 Simulador de Alertas WhatsApp (Integração n8n/Waha)")
-        if modo_teste_wa:
-            st.markdown("Modo de teste WhatsApp ligado: alertas de exemplo por região, enviados ao destino acima.")
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                if st.button("🚨 Alerta: Califórnia (San Andreas)", use_container_width=True):
-                    enviar_whatsapp(webhook_url, {"local": "Condados Costeiros (San Andreas, Califórnia)", "evento": "Terremoto de Magnitude 7.2 detectado pelas boias e sismógrafos", "origem": "simulacao", "telefone": telefone})
-            with col2:
-                if st.button("🚨 Alerta: Macaé/RJ (Petrobras)", use_container_width=True):
-                    enviar_whatsapp(webhook_url, {"local": "Colônia Z3 de Pescadores (Macaé/RJ)", "evento": "Ciclone com Risco Crítico de Vazamento na Bacia de Campos", "origem": "simulacao", "telefone": telefone})
-            with col3:
-                if st.button("🚨 Alerta: Texas (Tornados)", use_container_width=True):
-                    enviar_whatsapp(webhook_url, {"local": "Residências do Tornado Alley (Texas, EUA)", "evento": "Tornado Severo Categoria F4 em aproximação", "origem": "simulacao", "telefone": telefone})
-        else:
-            st.caption("Modo de teste WhatsApp desligado. Alertas reais da NASA: use o botão 'ENVIAR ESTE ALERTA POR WHATSAPP' dentro do alerta acima. Para enviar exemplos (Califórnia, Macaé/RJ, Texas), ligue o modo de teste na barra lateral.")
+        simulador_whatsapp(webhook_url, telefone, modo_teste_wa)
 
 # ============================================================
 # VISÃO 3: ABRIGOS E PREPARAÇÃO  —  omni_ecoresue_mvp.py original intacto
