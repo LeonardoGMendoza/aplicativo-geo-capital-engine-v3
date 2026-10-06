@@ -176,6 +176,32 @@ def mostrar_eventos_globais(eventos):
         st.dataframe(df, width='stretch')
 
 
+def formatar_destino_whatsapp(texto):
+    """Grupo (@g.us) ou ID com @ passa direto; numero de pessoa vira DIGITOS@c.us (acrescenta 55 se vier so DDD+numero)."""
+    t = texto.strip()
+    if t and "@" not in t:
+        d = re.sub(r"\D", "", t)
+        if len(d) in (10, 11):
+            d = "55" + d
+        t = d + "@c.us"
+    return t
+
+
+def enviar_whatsapp(webhook_url, payload):
+    """Envia ao n8n e so mostra sucesso se o servidor respondeu 2xx."""
+    if not payload.get("telefone"):
+        st.warning("Informe o número do celular ou o ID do grupo antes de enviar.")
+        return
+    try:
+        resp = requests.post(webhook_url, json=payload, timeout=20)
+        if resp.ok:
+            st.success(f"Sinal enviado ao n8n (HTTP {resp.status_code}). Confira o WhatsApp.")
+        else:
+            st.error(f"O n8n respondeu HTTP {resp.status_code}: o alerta NAO foi enviado.")
+    except Exception as e:
+        st.error(f"Erro ao chamar Webhook: {e}")
+
+
 def gerar_recomendacao_ia_local(evento_nome, abrigo_nome, distancia_km):
     """
     IA de fallback embutida para a visão de Abrigos (omni_ecoresue_mvp.py original).
@@ -276,6 +302,9 @@ st.sidebar.markdown("---")
 st.sidebar.info("⚡ Dados NASA em tempo real\n\n📡 IA: Oracle Cloud (OCI)")
 
 modo_teste = st.sidebar.toggle("Modo de teste (simulação)", value=False)
+modo_teste_wa = False
+if visao == "Impacto Social / ESG (Comunidade)":
+    modo_teste_wa = st.sidebar.toggle("Modo de teste WhatsApp (alertas de exemplo)", value=False, key="wa_teste")
 if modo_teste and visao == "Abrigos e Preparação":
     # Cenario de demonstracao: enchente FICTICIA em Porto Alegre (RS), so na tela de Abrigos
     eventos_nasa.insert(0, {
@@ -347,6 +376,11 @@ elif visao == "Impacto Social / ESG (Comunidade)":
 
     with col_ia:
         st.subheader("🤖 Assistente Humanitário (RAG)")
+        webhook_url = st.text_input("URL do Webhook do n8n (Production ou Test):", value="https://n8n.sandlj.com.br/webhook/alerta-omni")
+        telefone_input = st.text_input("ID do Grupo ou Telefone (Digite o ID do grupo OU apenas o número do celular):", value="")
+        telefone = formatar_destino_whatsapp(telefone_input)
+        if telefone:
+            st.caption(f"Destino do alerta: {telefone}")
         alertas = calcular_alertas_ativos(mapa_dados, eventos_nasa)
         if alertas:
             sel = escolher_alerta(alertas, len(eventos_nasa), "sel_alerta_esg")
@@ -361,63 +395,34 @@ elif visao == "Impacto Social / ESG (Comunidade)":
             st.info(texto_ia)
             if st.button("ACIONAR LIDERANÇAS E ONGS", key="btn_esg_ongs"):
                 st.success("✅ Protocolos enviados para Associações Locais e ONGs.")
+            _simulado = "simulad" in evento["title"].lower()
+            if st.button("📲 ENVIAR ESTE ALERTA POR WHATSAPP", key="btn_esg_whatsapp"):
+                enviar_whatsapp(webhook_url, {
+                    "local": ativo["comunidade_vizinha"],
+                    "evento": ("[SIMULAÇÃO] " if _simulado else "") + f"{evento['title']}, a {dist:.0f} km de {ativo['ativo']}. Risco secundário: {ativo['risco_secundario']}",
+                    "recomendacao_ia": texto_ia,
+                    "origem": "simulacao" if _simulado else "NASA EONET",
+                    "telefone": telefone,
+                })
         else:
             st.success("✅ Nenhuma comunidade em risco crítico.")
             
         st.markdown("---")
         st.subheader("📲 Simulador de Alertas WhatsApp (Integração n8n/Waha)")
-        st.markdown("Dispare alertas de teste segmentados por região para validar a arquitetura.")
-        
-        webhook_url = st.text_input("URL do Webhook do n8n (Production ou Test):", value="https://n8n.sandlj.com.br/webhook/alerta-omni")
-        telefone_input = st.text_input("ID do Grupo ou Telefone (Digite o ID do grupo OU apenas o número do celular):", value="")
-        
-        # Lógica de formatação automática: 
-        # Se o usuário digitar só número (pessoa), o sistema coloca @c.us automático.
-        # Se for ID de Grupo (que já tem @g.us), o sistema mantém como está.
-        telefone = telefone_input.strip()
-        if telefone != "" and "@" not in telefone:
-            digitos = re.sub(r"\D", "", telefone)      # tira +, espacos, parenteses e hifens
-            if len(digitos) in (10, 11):               # so DDD + numero: acrescenta o pais
-                digitos = "55" + digitos
-            telefone = digitos + "@c.us"
-        if telefone:
-            st.caption(f"Destino do alerta: {telefone}")
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("🚨 Alerta: Califórnia (San Andreas)", use_container_width=True):
-                payload = {"local": "Condados Costeiros (San Andreas, Califórnia)", "evento": "Terremoto de Magnitude 7.2 detectado pelas boias e sismógrafos", "telefone": telefone}
-                try:
-                    resp = requests.post(webhook_url, json=payload, timeout=20)
-                    if resp.ok:
-                        st.success(f"Sinal enviado ao n8n (HTTP {resp.status_code}). Confira o WhatsApp.")
-                    else:
-                        st.error(f"O n8n respondeu HTTP {resp.status_code}: o alerta NAO foi enviado.")
-                except Exception as e:
-                    st.error(f"Erro ao chamar Webhook: {e}")
-        with col2:
-            if st.button("🚨 Alerta: Macaé/RJ (Petrobras)", use_container_width=True):
-                payload = {"local": "Colônia Z3 de Pescadores (Macaé/RJ)", "evento": "Ciclone com Risco Crítico de Vazamento na Bacia de Campos", "telefone": telefone}
-                try:
-                    resp = requests.post(webhook_url, json=payload, timeout=20)
-                    if resp.ok:
-                        st.success(f"Sinal enviado ao n8n (HTTP {resp.status_code}). Confira o WhatsApp.")
-                    else:
-                        st.error(f"O n8n respondeu HTTP {resp.status_code}: o alerta NAO foi enviado.")
-                except Exception as e:
-                    st.error(f"Erro ao chamar Webhook: {e}")
-        with col3:
-            if st.button("🚨 Alerta: Texas (Tornados)", use_container_width=True):
-                payload = {"local": "Residências do Tornado Alley (Texas, EUA)", "evento": "Tornado Severo Categoria F4 em aproximação", "telefone": telefone}
-                try:
-                    resp = requests.post(webhook_url, json=payload, timeout=20)
-                    if resp.ok:
-                        st.success(f"Sinal enviado ao n8n (HTTP {resp.status_code}). Confira o WhatsApp.")
-                    else:
-                        st.error(f"O n8n respondeu HTTP {resp.status_code}: o alerta NAO foi enviado.")
-                except Exception as e:
-                    st.error(f"Erro ao chamar Webhook: {e}")
-
+        if modo_teste_wa:
+            st.markdown("Modo de teste WhatsApp ligado: alertas de exemplo por região, enviados ao destino acima.")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                if st.button("🚨 Alerta: Califórnia (San Andreas)", use_container_width=True):
+                    enviar_whatsapp(webhook_url, {"local": "Condados Costeiros (San Andreas, Califórnia)", "evento": "Terremoto de Magnitude 7.2 detectado pelas boias e sismógrafos", "origem": "simulacao", "telefone": telefone})
+            with col2:
+                if st.button("🚨 Alerta: Macaé/RJ (Petrobras)", use_container_width=True):
+                    enviar_whatsapp(webhook_url, {"local": "Colônia Z3 de Pescadores (Macaé/RJ)", "evento": "Ciclone com Risco Crítico de Vazamento na Bacia de Campos", "origem": "simulacao", "telefone": telefone})
+            with col3:
+                if st.button("🚨 Alerta: Texas (Tornados)", use_container_width=True):
+                    enviar_whatsapp(webhook_url, {"local": "Residências do Tornado Alley (Texas, EUA)", "evento": "Tornado Severo Categoria F4 em aproximação", "origem": "simulacao", "telefone": telefone})
+        else:
+            st.caption("Modo de teste WhatsApp desligado. Alertas reais da NASA: use o botão 'ENVIAR ESTE ALERTA POR WHATSAPP' dentro do alerta acima. Para enviar exemplos (Califórnia, Macaé/RJ, Texas), ligue o modo de teste na barra lateral.")
 
 # ============================================================
 # VISÃO 3: ABRIGOS E PREPARAÇÃO  —  omni_ecoresue_mvp.py original intacto
