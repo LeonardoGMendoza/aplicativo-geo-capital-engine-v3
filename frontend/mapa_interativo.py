@@ -370,6 +370,7 @@ var OVERPASS_SERVIDORES=[
 var buscaAtual=0;
 var avisoTimer=null;
 var carregando=false;
+var statusBusca='';
 
 function mostrarAviso(msg,auto){
   var el=document.getElementById('aviso');
@@ -423,31 +424,33 @@ async function consultarOverpass(servidor,query,ms){
 
 async function buscarOverpass(lat,lon,usarFallback){
   var id=++buscaAtual;
-  carregando=true;
+  carregando=true; statusBusca='';
   limparLocais(lat,lon);          /* some com os pontos da cidade anterior na hora */
   mostrarSpinner(true); mostrarAviso('');
   try{
-    var elementos=null, servidorOk=null, raio=6000;
-    var q1=montarQueryOverpass(lat,lon,raio);
-    for(var i=0;i<OVERPASS_SERVIDORES.length;i++){
-      try{
-        elementos=await consultarOverpass(OVERPASS_SERVIDORES[i],q1,18000);
-        servidorOk=OVERPASS_SERVIDORES[i];
-        break;
-      }catch(e){console.warn('Overpass falhou em',OVERPASS_SERVIDORES[i],e);}
-      if(id!==buscaAtual) return;
+    var elementos=null, raio=3000, erros=[];
+    /* consulta os 3 servidores ao mesmo tempo e usa o primeiro que responder */
+    async function corrida(r,ms){
+      var ctrls=[];
+      var proms=OVERPASS_SERVIDORES.map(function(sv){
+        return consultarOverpass(sv,montarQueryOverpass(lat,lon,r),ms).catch(function(e){
+          erros.push(sv.split('/')[2]+': '+(e.name==='AbortError'?'demorou demais':e.message));
+          throw e;
+        });
+      });
+      return Promise.any(proms);
     }
+    try{ elementos=await corrida(raio,20000); }catch(e){ elementos=null; }
     if(id!==buscaAtual) return;
-    /* area pouco mapeada ou rural: tenta de novo com raio maior no servidor que respondeu */
-    if(elementos&&elementos.length===0){
-      try{
-        elementos=await consultarOverpass(servidorOk,montarQueryOverpass(lat,lon,20000),25000);
-        raio=20000;
-      }catch(e){console.warn('Raio maior falhou',e);}
+    /* poucos resultados (area pouco mapeada ou rural): amplia o raio */
+    if(elementos&&elementos.length<10){
+      try{ var mais=await corrida(15000,30000); if(mais.length>elementos.length){elementos=mais;raio=15000;} }catch(e){}
       if(id!==buscaAtual) return;
     }
+    if(!elementos) statusBusca='Falha nos 3 servidores do OpenStreetMap ('+erros.slice(0,3).join(' | ')+')';
     if(elementos&&elementos.length>0){
       var n=processarOverpass(elementos,lat,lon);
+      statusBusca=n+' locais carregados (raio '+(raio/1000)+' km)';
       if(n>0) mostrarAviso('✅ '+n+' locais carregados do OpenStreetMap (raio de '+(raio/1000)+' km).',true);
       else {limparLocais(lat,lon);mostrarAviso('Nenhum local dos tipos do mapa foi encontrado nesta área. Tente um bairro ou cidade maior.');}
     } else if(elementos){
@@ -459,7 +462,7 @@ async function buscarOverpass(lat,lon,usarFallback){
         mostrarAviso('OpenStreetMap indisponível: mostrando a lista de reserva ilustrativa desta região.');
       } else {
         limparLocais(lat,lon);
-        mostrarAviso('Não foi possível carregar os locais agora (OpenStreetMap lento ou indisponível). Clique em Buscar de novo em instantes.');
+        mostrarAviso('Não foi possível carregar os locais agora. '+statusBusca+'. Clique em Buscar de novo em instantes.');
       }
     }
   } finally {
@@ -601,7 +604,7 @@ function irMaisProximo(t){
   if(carregando){mostrarAviso('Ainda buscando locais nesta área… aguarde alguns segundos.',true);return;}
   var arr=dados[t];
   if(!arr||!arr.length){
-    mostrarAviso('Nenhum ponto deste tipo encontrado perto de '+uLat.toFixed(3)+', '+uLng.toFixed(3)+'. Tente outro tipo ou outra área.',true);
+    mostrarAviso('Nenhum ponto deste tipo perto daqui. Status da busca: '+(statusBusca||'sem resultado')+'.',false);
     return;
   }
   var best=null,bd=Infinity;
