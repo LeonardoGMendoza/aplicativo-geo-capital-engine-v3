@@ -7,6 +7,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from .hazards_router import router as hazards_router
 from .models import EventsResponse
 from .nasa import NasaService, Settings
 from .proximity import ASSETS, DATASET_VERSION, POLICY, ProximityRequest, analyze_proximity
@@ -69,6 +70,8 @@ def create_app(service: NasaService | None = None) -> FastAPI:
         result = analyze_proximity(data, targets, body.expectedFetchedAt)
         code = 503 if result['state'] == 'unavailable' else 409 if result['state'] == 'blocked' else 200
         return JSONResponse(status_code=code, content=jsonable_encoder(result), headers={'Cache-Control': 'no-store'})
+
+    app.include_router(hazards_router)
 
     return app
 
