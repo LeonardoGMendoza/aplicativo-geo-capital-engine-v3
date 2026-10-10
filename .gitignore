@@ -6,3 +6,33 @@ __pycache__/
 .streamlit/secrets.toml
 banco_historico/
 *.bak*
+
+# Ambientes e material sensível local
+.env
+.env.*
+!.env.example
+*.key
+*.p8
+*.p12
+*.pfx
+*.jks
+*.keystore
+credentials.json
+secrets.json
+
+# Dados e arquivos gerados localmente
+*.log
+*.tmp
+*.sqlite
+*.sqlite3
+*.db
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Evidências geradas de validação
+/frontend-react/validation/*.jpg
+/frontend-react/validation/*.json
+/frontend-react/validation/*.txt

@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+.nasa-marker { display: flex; width: 30px; height: 30px; align-items: center; justify-content: center; border: 3px solid white; border-radius: 50%; color: white; font: bold 12px system-ui; box-shadow: 0 1px 5px #031b2c99; }
+.nasa-marker.is-selected { outline: 3px solid #031b2c; outline-offset: 2px; }
+.nasa-cluster-icon span { display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; border: 3px solid #5eead4; border-radius: 50%; background: #052b43; color: white; font: bold 13px system-ui; }
+.nasa-map .leaflet-container { font-family: Segoe UI, system-ui, sans-serif; background: #eaf3fa; }
+.nasa-map .leaflet-control-attribution { font-size: 10px; }
+.nasa-map .leaflet-popup-content p { margin: 4px 0; }
+.nasa-map .leaflet-marker-icon:focus-visible { outline: 3px solid #031b2c; outline-offset: 3px; }
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: #fff;
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: var(--secondary);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--secondary);
+  --color-accent-foreground: var(--foreground);
+  --color-destructive: var(--risk-critical);
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--primary);
+  --color-risk-critical: var(--risk-critical);
+  --color-risk-high: var(--risk-high);
+  --color-risk-attention: var(--risk-attention);
+  --radius-sm: .375rem;
+  --radius-md: .5rem;
+  --radius-lg: .75rem;
+  --radius-xl: .875rem;
+  --font-sans: "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+}
+:root {
+  color-scheme: light;
+  --background: #f7fbff;
+  --foreground: #11283e;
+  --card: #f8fbff;
+  --secondary: #eaf3fa;
+  --muted-foreground: #506b82;
+  --primary: #087b88;
+  --border: #d8e4ee;
+  --risk-critical: #d51f3d;
+  --risk-high: #c76b05;
+  --risk-attention: #b56a00;
+}
+@layer base {
+  * { @apply border-border; }
+  body { margin: 0; font-family: var(--font-sans); background: #031b2c; color: #edf6fd; -webkit-font-smoothing: antialiased; }
+  button:not(:disabled), a { cursor: pointer; }
+  :focus-visible { outline: 3px solid #00b5d9; outline-offset: 3px; }
+  ::selection { background: #15bbad40; }
+}
+.app-background { background: radial-gradient(ellipse at 82% 0%, #0b5674 0, transparent 40%), linear-gradient(125deg, #02192b, #06324a 65%, #031b2e); }
+.masthead { height: 88px; position: relative; border-bottom: 1px solid #1994ba65; background: linear-gradient(90deg, #031a2c, #063b54); overflow: hidden; }
+.masthead-scene { position: absolute; inset: 0 7% 0 38%; opacity: .65; mask-image: linear-gradient(90deg, transparent, #000 30%, #000 75%, transparent); }
+.sidebar { background: linear-gradient(180deg, #032439ee, #021a2eee); border-right: 1px solid #19709655; }
+.sidebar-link { color: #e4f0f7; border: 1px solid transparent; font-size: 11px; min-height: 42px; padding: 10px 12px; border-radius: 5px; display: flex; align-items: center; gap: 9px; }
+.sidebar-link:hover { background: #0a4761; }
+.sidebar-link[aria-current=page] { background: linear-gradient(90deg, #087aae, #075075); border-color: #189ace; box-shadow: inset 3px 0 #31cef1, 0 0 18px #0d96ca20; }
+.operations-main { padding: 12px 14px 20px; max-width: 1900px; margin: auto; }
+.demo-strip { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 5px 12px; padding: 7px 10px; border: 1px solid #2693b563; background: #05273dea; border-radius: 6px; font-size: 10px; color: #c6e3ef; margin-bottom: 10px; }
+.overview-layout { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 10px; }
+.primary-layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(240px, 1fr); gap: 8px; margin-top: 8px; }
+.middle-layout { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 4.5fr) minmax(230px, 2.8fr); gap: 8px; margin-top: 10px; }
+.bottom-layout { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+.light-panel { color: var(--foreground); background: linear-gradient(145deg, #fff, #f3f9fd); border: 1px solid #d6e5ee; border-radius: 10px; box-shadow: 0 3px 10px #00162525; min-width: 0; overflow: hidden; }
+.panel-heading { display: flex; align-items: flex-start; gap: 8px; padding: 11px 12px 8px; }
+.panel-heading h2 { font-size: 13px; font-weight: 750; letter-spacing: -.3px; line-height: 1.3; }
+.panel-heading p { font-size: 10px; color: #4b657d; margin-top: 2px; }
+.panel-heading-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 25px; height: 25px; border-radius: 50%; background: linear-gradient(145deg, #116488, #032b48); color: white; }
+.text-link { color: #075fba; font-size: 10px; font-weight: 500; white-space: nowrap; }
+.text-link:hover { text-decoration: underline; }
+.compact-tabs { display: flex; gap: 4px; padding: 0 10px 7px; overflow-x: auto; font-size: 10px; }
+.compact-tabs button { white-space: nowrap; padding: 6px 8px; border-bottom: 2px solid transparent; color: #49627b; }
+.compact-tabs button[aria-pressed=true] { color: #0563c9; border-color: #066cef; font-weight: 650; }
+.dark-panel { color-scheme: dark; color: #eaf6fd; --background: #052b43; --foreground: #eaf6fd; --card: #052b43; --secondary: #0a4260; --muted-foreground: #a3c7dc; --border: #176286; --primary: #1ac8ba; background: linear-gradient(145deg, #084665e8, #031e33f2); border: 1px solid #167393; border-radius: 9px; box-shadow: inset 0 0 20px #0b628222; min-width: 0; }
+.map-surface { position: relative; background: #193b35; overflow: hidden; color: #fff; }
+.map-marker { position: absolute; width: 27px; height: 27px; border-radius: 50%; border: 2px solid #fff; display: grid; place-items: center; box-shadow: 0 1px 8px #0007; transform: translate(-50%, -50%); }
+.map-marker[aria-pressed=true] { outline: 3px solid #26d7c0; outline-offset: 4px; }
+.map-caption { position: absolute; bottom: 6px; left: 7px; max-width: calc(100% - 14px); background: #021c2bdd; border-radius: 4px; padding: 4px 6px; font-size: 9px; color: #e1f1f9; }
+.mini-select { border: 1px solid #d6e4ee; border-radius: 5px; background: #f8fbfd; padding: 6px; font-size: 10px; color: #284662; min-width: 0; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+.data-table th { text-align: left; font-weight: 600; color: #395a76; background: #edf5fa; }
+.data-table th, .data-table td { padding: 7px 8px; border-bottom: 1px solid #e5eef5; }
+.metric-value { font-variant-numeric: tabular-nums; }
+.dashboard-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.nasa-entry { border-left: 4px solid #087b88; margin-bottom: 20px; }
+.nasa-entry-actions a { display: inline-flex; align-items: center; min-height: 44px; }
+.complementary-section { margin-top: 28px; }
+.overview-layout { grid-template-columns: minmax(0, 1fr); }
+.primary-layout { grid-template-columns: minmax(0, 1.8fr) minmax(300px, 1fr); gap: 16px; margin-top: 16px; }
+.middle-layout, .bottom-layout { gap: 16px; margin-top: 20px; }
+.monitoring-layout { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.8fr); gap: 16px; }
+.masthead-scene { opacity: .2; }
+.sidebar-link { font-size: 12px; min-height: 44px; }
+.operations-main { padding: 20px 24px 28px; line-height: 1.5; }
+.demo-strip { padding: 12px; gap: 8px 16px; font-size: 12px; margin-bottom: 16px; }
+.panel-heading { padding: 16px 16px 12px; gap: 12px; flex-wrap: wrap; }
+.panel-heading h2 { font-size: 16px; line-height: 1.4; }
+.panel-heading p { font-size: 12px; line-height: 1.5; margin-top: 4px; }
+.text-link { font-size: 12px; min-height: 44px; display: inline-flex; align-items: center; white-space: normal; }
+.compact-tabs { font-size: 12px; gap: 8px; padding-bottom: 12px; }
+.compact-tabs button { min-height: 44px; padding: 10px 12px; }
+.mini-select { font-size: 12px; padding: 10px; }
+.data-table { font-size: 12px; }
+.data-table th, .data-table td { padding: 10px; }
+.map-caption { font-size: 12px; }
+.map-marker { width: 44px; height: 44px; }
+.operations-main button, .operations-main input, .operations-main select, .masthead button { min-height: 44px; }
+.operations-main button { min-width: 44px; }
+.nasa-map .leaflet-control-zoom a { width: 44px; height: 44px; line-height: 44px; }
+.nasa-map .leaflet-control-attribution { font-size: 12px; }
+.nasa-marker, .nasa-cluster-icon span { width: 44px; height: 44px; }
+.operations-main p { overflow-wrap: anywhere; }
+.app-background button, [data-slot="dialog-content"] button, [data-slot="sheet-content"] button { min-width: 44px; min-height: 44px; }
+[data-slot="dialog-header"], [data-slot="sheet-header"] { padding-right: 44px; }
+.app-background footer a { display: inline-flex; align-items: center; min-height: 44px; }
+.nasa-map a.leaflet-popup-close-button { width: 44px; height: 44px; line-height: 44px; font-size: 24px; }
+.nasa-map .leaflet-popup-content { padding-top: 20px; }
+@media (max-width: 1279px) {
+  .overview-layout { grid-template-columns: 1fr; }
+  .monitoring-layout { grid-template-columns: minmax(0, 1fr); }
+  .middle-layout { grid-template-columns: 1fr 1fr; }
+  .shelter-list { grid-column: 1 / -1; }
+  .shelter-list-items { display: grid; grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 767px) {
+  .masthead { height: auto; min-height: 88px; }
+  .primary-layout, .middle-layout, .bottom-layout, .monitoring-layout { grid-template-columns: minmax(0, 1fr); }
+  .shelter-list-items { grid-template-columns: 1fr; }
+  .operations-main { padding: 10px; }
+  .panel-heading h2 { font-size: 14px; }
+  .nasa-entry-actions { width: 100%; }
+  .nasa-entry-actions > * { width: 100%; justify-content: center; }
+  .panel-heading h2 { font-size: 16px; }
+  .dashboard-heading > span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
