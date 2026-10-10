@@ -1,7 +1,32 @@
-# Omni-EcoRescue
-**Acesso ao MVP Público:** [https://aplicativo-geo-capital-engine-3k7pun8ggkjwsyvgb2pgvm.streamlit.app/](https://aplicativo-geo-capital-engine-3k7pun8ggkjwsyvgb2pgvm.streamlit.app/)
+# Omni-EcoRescue V3
 
-Sistema preditivo que cruza dados de desastres da NASA com ativos industriais globais (plataformas offshore, mineração, agronegócio) para prevenir perdas corporativas e proteger comunidades vizinhas em risco.
+## MVP React atual — 10/10/2026
+
+Aplicação React/TypeScript independente, com API FastAPI, para transformar dados e alertas em contexto de apoio à decisão humana. O painel Streamlit legado permanece preservado e não tem paridade completa com a aplicação React.
+
+| Módulo React | Estado e limites |
+|---|---|
+| Centro de Operações e Alertas | Dashboard demonstrativo; Alertas leva à única central existente |
+| Explorador NASA EONET | Consulta real, mapa e lista; eventos não confirmam risco |
+| Visão Corporativa | Triagem dos 11 ativos de referência, evento mais próximo a menos de 600 km |
+| Impacto Social | Consulta individual do ativo associado; comunidades sem localização/população verificadas |
+| Evacuação e Abrigos | Oito pontos de referência, distância em linha reta e checklist persistente; sem confirmação de vagas ou rota segura |
+| Inteligência (IA) | Evolução futura; Oracle RAG não integrado ao React |
+| Histórico e Configurações | Rotas reservadas, temporariamente ocultas no menu |
+
+Não há previsão própria, confirmação automática de risco ou acionamento operacional de emergência no React. Snapshot desatualizado/incompatível bloqueia a triagem; o estado registrado na consulta não garante disponibilidade atual. NASA e tiles OpenStreetMap podem falhar; listas/detalhes permanecem disponíveis quando o mapa falha. Não há modo offline.
+
+Execução reproduzível: [frontend React](frontend-react/README.md) (Node 22.18+, npm ci) e [API Python](backend/api/README.md) (validada com Python 3.14.3, requirements-lock.txt). Frontend local em http://127.0.0.1:5173 e API em http://127.0.0.1:8000; comandos completos e configuração segura estão nesses documentos.
+
+Validação atual: 75 testes frontend e 26 backend aprovados, TypeScript e build aprovados. Relatórios QA versionados são registros históricos; capturas/JSONs citados, ZIP e extração temporária não integram o PR. Nenhum congelamento ou publicação é declarado por este README.
+
+## Painel legado Streamlit
+
+As seções seguintes documentam o painel legado e suas integrações/protótipos. Referências a Oracle, Yahoo Finance, WhatsApp ou ações desse painel não significam integração com o React.
+
+**Versão legada publicada (Streamlit):** [https://aplicativo-geo-capital-engine-3k7pun8ggkjwsyvgb2pgvm.streamlit.app/](https://aplicativo-geo-capital-engine-3k7pun8ggkjwsyvgb2pgvm.streamlit.app/)
+
+Painel legado que cruza dados de eventos NASA com ativos industriais globais (plataformas offshore, mineração, agronegócio) para contextualizar decisões corporativas e comunitárias. Proximidade não confirma risco nem constitui previsão própria.
 
 Projeto desenvolvido para o Hackathon "Tech for Change".
 
@@ -29,7 +54,7 @@ Nas visões Corporativa e ESG, o sistema recomenda — a decisão final e o acio
 
 Bacia de Campos (RJ) — infraestrutura da Petrobras e Colônia de Pescadores Z3 de Macaé, que já possui vínculo formal com a Petrobras via Plano de Compensação Ambiental exigido pelo IBAMA.
 
-## Arquitetura
+## Arquitetura do painel legado
 
 | Camada | Tecnologia |
 |---|---|
@@ -77,7 +102,7 @@ flowchart LR
     M --> R[Rota no Waze<br/>ou Google Maps]
 ```
 
-## Como rodar localmente
+## Como rodar o painel legado localmente
 
 ```bash
 # 1. Instalar dependências
@@ -120,7 +145,7 @@ O motor de recomendação (`backend/oracle_rag.py`) funciona em dois modos:
 
 Ver `docs/documentacao_oficial_pitch.md` para a documentação oficial do projeto, incluindo a base legal (CONAMA/EIA-RIMA) e o modelo de negócio detalhado.
 
-## Status do projeto (MVP de Hackathon)
+## Status do painel legado (MVP de Hackathon)
 
 - [OK] Cálculo de risco geoespacial funcional
 - [OK] Integração real com NASA EONET e Yahoo Finance

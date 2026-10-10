@@ -1,6 +1,6 @@
-# Omni-EcoRescue — API de consulta NASA EONET
+# Omni-EcoRescue V3 — API NASA EONET e triagem de proximidade
 
-Nova triagem de ativos: `GET /api/v1/assets` e `POST /api/v1/geography/proximity`. Contratos efetivos, estados, regra do painel (<600 km, mais próximo por ativo), procedência e validação em [geographic-analysis-implementation.md](../../docs/geographic-analysis-implementation.md). `/api/v1/communities` permanece pendente. Nenhuma dependência nova.
+Estado do MVP em 10/10/2026. Triagem de 11 ativos de referência: `GET /api/v1/assets` e `POST /api/v1/geography/proximity`. Contratos efetivos, estados, regra do painel (<600 km, mais próximo por ativo), procedência e validação em [geographic-analysis-implementation.md](../../docs/geographic-analysis-implementation.md). `/api/v1/communities` permanece pendente (404). Dependências diretas e resolução completa constam dos arquivos requirements versionados.
 
 Adaptador de leitura isolado, sem importar Streamlit, motores de risco, RAG ou módulos que executem ações. O MVP permanece intacto.
 
@@ -32,7 +32,7 @@ npm run dev
 
 React: `http://127.0.0.1:5173`. O cliente usa `http://127.0.0.1:8000` por padrão. Para outra URL, copie `.env.example` para `.env.local`, ajuste `VITE_API_BASE_URL` e reinicie o Vite. Nenhum segredo deve estar em variáveis `VITE_*`.
 
-O dashboard inicia em **Simulação** e não consulta NASA até selecionar **Consultar NASA**. Apenas o novo catálogo consulta a API; os demais painéis e o mapa permanecem fictícios. **Atualizar consulta** consulta o backend, respeitando seu cache. Não há polling automático.
+O Centro de Operações inicia em **Simulação** e seus alertas/indicadores permanecem demonstrativos. Consulta NASA exige ação explícita; resumo e explorador `/mapa` usam esta API. `/corporativo` carrega o cadastro e consulta os 11 ativos em lote; `/comunidade` consulta o ativo associado à referência selecionada. `/abrigos` usa cadastro, distâncias e checklist locais, sem esta API. Consultas respeitam o cache do servidor; não há polling automático. Estado registrado numa consulta não comprova disponibilidade atual.
 
 ## Configuração de servidor
 
@@ -63,6 +63,9 @@ Depois de encerrar esse processo, `$env:NASA_EONET_ENABLED = 'true'` habilita co
 
 - `GET /api/v1/status`: HTTP 200 significa API funcionando. `nasa.enabled`, `nasa.state`, `fetchedAt`, idade e erro descrevem o estado local da integração. `unavailable` antes da primeira consulta não significa falha de saúde da API nem ausência de eventos.
 - `GET /api/v1/events`: envelope `state`, `source`, `sourceUrl`, `query`, `queriedAt`, `fetchedAt`, `ageSeconds`, `cache`, `dataQuality`, `error`, `events`, `isSimulation=false`, `riskCalculated=false`.
+- `GET /api/v1/assets`: catálogo de 11 ativos de referência, versão `panel-assets-v1`, política e descrições comunitárias sem coordenadas comunitárias verificadas.
+- `POST /api/v1/geography/proximity`: de 1 a 11 IDs únicos, `policyId` e `expectedFetchedAt`; Haversine, evento mais próximo por ativo, distância estritamente inferior a 600 km. Estados `success`, `empty`, `partial` (200), `blocked` (409), `unavailable` (503); requisição inválida retorna 422. Preserva `riskConfirmed=false`, `targetsAreReferenceData=true` e `requiresHumanConfirmation=true`.
+- Snapshot stale ou horário incompatível bloqueia a triagem, sem correspondências. Atualizar os eventos e enviar nova triagem com o `fetchedAt` válido; atualizar não força ignorar TTL/regras do cache.
 - Evento: `id`, `title`, `categories[]`, `source`, `coordinates` (latitude/longitude/método ou null), `coordinateState`, `geometryType`, `observedAt` (UTC ou null), `observationState`, `isSimulation=false`.
 
 | Estado | HTTP | Significado |
@@ -89,14 +92,14 @@ npm run typecheck
 npm run build
 ```
 
-19 testes Python com `httpx.MockTransport`/`ASGITransport`, sem internet: normalização, coordenadas ausentes/inválidas, ponto/polígono/geometrias não suportadas, datas antigas, timeout HTTP e total, erro HTTP/rede/JSON/contrato, vazio, cache válido/stale/expirado, espera entre tentativas, concorrência, serviço desabilitado, endpoints/status e CORS. Importação testada sem carregar Streamlit.
+Estado validado em 10/10/2026: **26 testes Python** e **75 testes frontend**, TypeScript e build aprovados. Testes Python usam `httpx.MockTransport`/`ASGITransport`, sem chamadas NASA reais: normalização, geometrias/datas, vazio, falhas HTTP/rede/contrato, timeout, cache válido/stale/expirado, concorrência, endpoints e CORS; proximidade cobre paridade com o cadastro/funções puras do painel, distância estrita, empate, múltiplas geometrias, parcial e bloqueio por snapshot incompatível. O painel não é importado nem executado pelos serviços da API.
 
-7 testes Node do cliente tipado, sem dependência adicional: eventos parciais, vazio, HTTP 502/503, stale inclusive vazio, contrato inválido, rede/timeout, erro HTTP inesperado e status. Testes requerem Node 22.18+ ou 24 LTS (remoção nativa de tipos TS); validado com Node 24.14.1.
+Testes frontend usam Node 22.18+ (validado com Node 24.14.1): contratos, busca/geografia, validação individual/lote, estados parciais/bloqueados/indisponíveis, procedência, cancelamento/invalidação, consistência demonstrativa, checklist e comunicação do snapshot. A regressão do cabeçalho renderiza o componente real em SSR com hooks isolados; não substitui uma suíte E2E completa.
 
-Revisão manual local: React → FastAPI com NASA desabilitada, mensagem de indisponibilidade sem afirmar ausência de risco, retorno à simulação e layout responsivo. Sucesso/vazio/stale usam fixtures nos testes; não foi feita consulta real NASA nesta validação. Build e typecheck aprovados.
+Validações manuais anteriores fizeram consultas reais NASA e testes controlados de indisponibilidade/mapas, conforme [README React](../../frontend-react/README.md). São registros anteriores, sem garantia de resultados atuais ou disponibilidade externa. Os relatórios de QA são históricos; capturas e JSONs citados são locais e não versionados.
 
-## Limites desta fase
+## Limites atuais
 
-Nenhum mapa real, cálculo de risco, envio de alerta, WhatsApp, resgate, inferência IA ou confirmação de operação. Não há paridade funcional completa React/Streamlit. Próximas fases dependem da revisão: validar regras existentes com entradas fixas, ampliar contratos e só então mapear coordenadas, revisar alertas e estabelecer decisões humanas persistidas.
+A API implementa consulta de eventos e triagem geográfica, não classificação de risco, previsão, avaliação de segurança, roteamento, disponibilidade operacional de abrigos, impacto/população comunitária, recomendação Oracle RAG ou envio de comunicação. O React possui mapas geográficos de leitura e preserva informações textuais quando o mapa falha. Não há paridade completa React/Streamlit, autenticação, persistência de snapshots ou decisões operacionais. Para a demonstração local, usar um worker; operação pública em produção exige revisão separada.
 
 Fontes de contrato: [NASA EONET v3](https://eonet.gsfc.nasa.gov/docs/v3) e [CORS FastAPI](https://fastapi.tiangolo.com/tutorial/cors/). EONET é um catálogo curado de eventos naturais, não uma leitura direta de satélites nem uma previsão validada de risco local.
