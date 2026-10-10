@@ -1,3 +1,4 @@
+import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { AssetProximityPanel } from './AssetProximityPanel'
 import type { Asset } from './proximity'
@@ -28,7 +29,7 @@ export function NasaMapExplorer({ events }: { events: NasaEvent[] }) {
     <p role="status">{unavailable ? 'Catálogo NASA indisponível. Somente os ativos de referência podem ser visualizados; triagem bloqueada.' : `${filtered.length} evento(s) no filtro · ${located.length} localização(ões) no mapa · ${filtered.length - located.length} sem localização representável.`}</p>
     <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">{categories.map(item => <span key={item.id} className="flex items-center gap-1"><span style={{ background: item.color }} className="flex size-4 items-center justify-center rounded-full font-bold text-white">{item.symbol}</span>{item.label}</span>)}<span>Contorno sólido: recente · tracejado: antiga · pontilhado: horário desconhecido</span></div>
     <div className="grid min-w-0 gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)]">
-      <Suspense fallback={<p role="status" className="flex h-[300px] items-center justify-center rounded border bg-secondary">Carregando mapa…</p>}><GeographicMap events={filtered} selectedId={visibleSelection} onSelect={selectEvent} assets={assets} selectedAssetId={selectedAssetId} onAssetSelect={setSelectedAssetId} /></Suspense>
+      <MapErrorBoundary message="Mapa indisponível. Consulte a lista, as coordenadas e os detalhes textuais; a falha do mapa não confirma nem descarta risco."><Suspense fallback={<p role="status" className="flex h-[300px] items-center justify-center rounded border bg-secondary">Carregando mapa…</p>}><GeographicMap events={filtered} selectedId={visibleSelection} onSelect={selectEvent} assets={assets} selectedAssetId={selectedAssetId} onAssetSelect={setSelectedAssetId} /></Suspense></MapErrorBoundary>
       <div className="min-w-0">
         <div aria-label="Lista de eventos NASA filtrados" className="max-h-[250px] space-y-1 overflow-y-auto rounded border bg-secondary p-1 lg:h-[340px] lg:max-h-[340px]">
           {filtered.length === 0 && <p className="p-3">{unavailable ? 'Eventos NASA indisponíveis nesta consulta. Isso não indica ausência de risco.' : 'Nenhum evento corresponde aos filtros. Isso não indica ausência de risco.'}</p>}

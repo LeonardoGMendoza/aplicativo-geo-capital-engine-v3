@@ -11,7 +11,7 @@ export function Brand() {
     <BrandSymbol className="h-12 w-11 sm:h-14 sm:w-12" decorative />
     <div>
       <p className="text-xl font-bold tracking-tight text-white sm:text-[28px]">Omni-<span className="text-[#19dfba]">EcoRescue</span></p>
-      <p className="mt-0.5 text-xs text-[#c9e5ed]">Da previsão à ação. Pessoas mais seguras.</p>
+      <p className="mt-0.5 text-xs text-[#c9e5ed]">Dados e alertas para apoiar decisões.</p>
     </div>
   </div>
 }

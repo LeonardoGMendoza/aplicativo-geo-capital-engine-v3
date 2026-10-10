@@ -9,7 +9,7 @@ export function AlertCenter({ alerts, onSelect }: { alerts: DemoAlert[]; onSelec
   const [query, setQuery] = useState('')
   const [risk, setRisk] = useState('all')
   const filtered = alerts.filter((item) => (risk === 'all' || item.risk === risk) && `${item.title} ${item.location}`.toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR')))
-  return <section className="light-panel" id="central-alertas" aria-label="Central de alertas simulados">
+  return <section className="light-panel" id="central-alertas" tabIndex={-1} aria-label="Central de alertas simulados">
     <PanelHeading title="Central de Alertas" subtitle={`${alerts.length} alertas fictícios no cenário; ${alerts.filter(item => item.isPriority).length} prioritários.`} icon={BellRing}><span className="rounded bg-violet-100 px-2 py-1 text-xs font-medium text-violet-800">Simulação ativa</span></PanelHeading>
     <div className="compact-tabs">{['Alertas ativos', 'Histórico', 'Previsões', 'Simulações'].map((item) => <button key={item} type="button" aria-pressed={tab === item} onClick={() => setTab(item)}>{item}</button>)}</div>
     {tab === 'Alertas ativos' || tab === 'Simulações' ? <>

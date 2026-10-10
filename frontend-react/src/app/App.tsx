@@ -1,4 +1,4 @@
-import { Link, Route, Routes } from 'react-router-dom'
+import { Link, Navigate, Route, Routes } from 'react-router-dom'
 import { Construction } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { OperationsPage } from '@/features/operations/OperationsPage'
@@ -30,11 +30,12 @@ export function App() {
     <NasaSessionProvider><Routes>
       <Route element={<AppLayout />}>
         <Route index element={<OperationsPage />} />
+        <Route path="/alertas" element={<Navigate to="/#central-alertas" replace />} />
         <Route path="/mapa" element={<RiskMapPage />} />
         <Route path="/corporativo" element={<CorporatePage />} />
         <Route path="/comunidade" element={<CommunityPage />} />
         <Route path="/abrigos" element={<SheltersPage />} />
-        {navigation.slice(1).filter(item => !['/mapa', '/corporativo', '/comunidade', '/abrigos'].includes(item.path)).map((item) => <Route key={item.path} path={item.path} element={<ReservedPage title={item.label} description={item.description} />} />)}
+        {navigation.slice(1).filter(item => !['/alertas', '/mapa', '/corporativo', '/comunidade', '/abrigos'].includes(item.path)).map((item) => <Route key={item.path} path={item.path} element={<ReservedPage title={item.label} description={item.description} />} />)}
         <Route path="*" element={<ReservedPage title="Página não encontrada" description="Este endereço não corresponde a uma área do protótipo." />} />
       </Route>
     </Routes></NasaSessionProvider>

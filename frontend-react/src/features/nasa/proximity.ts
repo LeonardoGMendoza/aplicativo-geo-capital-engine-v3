@@ -32,9 +32,7 @@ export async function getAssets(options?: Options): Promise<AssetCatalog> {
   return data
 }
 export async function getProximity(assetId: string, fetchedAt: string, options?: Options): Promise<ProximityResult> {
-  const data = await geographyRequest('geography/proximity', { targetIds: [assetId], expectedFetchedAt: fetchedAt, policyId: 'legacy-panel-assets-600-nearest' }, options) as ProximityResult
-  validateProximity(data, [assetId])
-  return data
+  return getProximityForAssets([assetId], fetchedAt, options)
 }
 
 function validateProximity(data: ProximityResult, ids: readonly string[]) {
