@@ -1,0 +1,7 @@
+.support-map .leaflet-container { font-family: Segoe UI, system-ui, sans-serif; background: #eaf3fa; }
+.support-page .support-map .leaflet-control-zoom a { width: 44px; height: 44px; line-height: 44px; }
+.support-page .support-map .leaflet-control-attribution { font-size: 12px; }
+.support-page .support-map .leaflet-popup-content { font-size: 12px; }
+.support-map .leaflet-popup-close-button { width: 44px !important; height: 44px !important; line-height: 44px !important; }
+.support-map .leaflet-marker-icon:focus-visible { outline: 3px solid #031b2c; outline-offset: 3px; }
+.support-page .mini-select { min-height: 44px; }

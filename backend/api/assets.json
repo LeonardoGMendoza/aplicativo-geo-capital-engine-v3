@@ -1,0 +1,134 @@
+[
+  {
+    "id": "mvp-petrobras-pre-sal",
+    "name": "Plataforma Petrobras (Pre-Sal, Brasil)",
+    "coordinates": {
+      "latitude": -23.8,
+      "longitude": -42.2
+    },
+    "communityDescription": "Pescadores (Litoral de SP/RJ)",
+    "sourceFile": "frontend/painel_ceo.py",
+    "isReferenceData": true,
+    "verifiedAt": null
+  },
+  {
+    "id": "mvp-exxon-golfo",
+    "name": "Plataforma ExxonMobil (Golfo do Mexico)",
+    "coordinates": {
+      "latitude": 28.5,
+      "longitude": -90.0
+    },
+    "communityDescription": "Vila de Pescadores de Nova Orleans",
+    "sourceFile": "frontend/painel_ceo.py",
+    "isReferenceData": true,
+    "verifiedAt": null
+  },
+  {
+    "id": "mvp-chevron-golfo",
+    "name": "Plataforma Chevron (Golfo do Mexico)",
+    "coordinates": {
+      "latitude": 29.0,
+      "longitude": -88.0
+    },
+    "communityDescription": "Comunidades Costeiras (Louisiana)",
+    "sourceFile": "frontend/painel_ceo.py",
+    "isReferenceData": true,
+    "verifiedAt": null
+  },
+  {
+    "id": "mvp-vale-carajas",
+    "name": "Mina Carajas Vale (Brasil)",
+    "coordinates": {
+      "latitude": -6.0,
+      "longitude": -50.1
+    },
+    "communityDescription": "Comunidade Ribeirinha e Indigena",
+    "sourceFile": "frontend/painel_ceo.py",
+    "isReferenceData": true,
+    "verifiedAt": null
+  },
+  {
+    "id": "mvp-raizen-sp",
+    "name": "Usina Raízen (Sao Paulo)",
+    "coordinates": {
+      "latitude": -21.2,
+      "longitude": -47.8
+    },
+    "communityDescription": "Bairros Perifericos (Ribeirao Preto)",
+    "sourceFile": "frontend/painel_ceo.py",
+    "isReferenceData": true,
+    "verifiedAt": null
+  },
+  {
+    "id": "mvp-bp-pacifico",
+    "name": "Navio Sonda BP (Pacifico)",
+    "coordinates": {
+      "latitude": 21.5,
+      "longitude": -120.0
+    },
+    "communityDescription": "Arquipelagos e Ilhas Costeiras",
+    "sourceFile": "frontend/painel_ceo.py",
+    "isReferenceData": true,
+    "verifiedAt": null
+  },
+  {
+    "id": "mvp-toyota-toquio",
+    "name": "Fábrica Toyota (Tóquio, Japão)",
+    "coordinates": {
+      "latitude": 35.6,
+      "longitude": 139.6
+    },
+    "communityDescription": "População Costeira (Japão)",
+    "sourceFile": "frontend/painel_ceo.py",
+    "isReferenceData": true,
+    "verifiedAt": null
+  },
+  {
+    "id": "mvp-bhp-escondida",
+    "name": "Mineradora Escondida (BHP, Chile)",
+    "coordinates": {
+      "latitude": -23.6,
+      "longitude": -70.4
+    },
+    "communityDescription": "População de Antofagasta (Chile)",
+    "sourceFile": "frontend/painel_ceo.py",
+    "isReferenceData": true,
+    "verifiedAt": null
+  },
+  {
+    "id": "mvp-chevron-california",
+    "name": "Refinaria Chevron (Califórnia, EUA)",
+    "coordinates": {
+      "latitude": 36.1,
+      "longitude": -120.5
+    },
+    "communityDescription": "Condados Costeiros (San Andreas)",
+    "sourceFile": "frontend/painel_ceo.py",
+    "isReferenceData": true,
+    "verifiedAt": null
+  },
+  {
+    "id": "mvp-logistica-texas",
+    "name": "Centro Logístico (Texas, EUA)",
+    "coordinates": {
+      "latitude": 32.7,
+      "longitude": -97.3
+    },
+    "communityDescription": "Residências do 'Tornado Alley'",
+    "sourceFile": "frontend/painel_ceo.py",
+    "isReferenceData": true,
+    "verifiedAt": null
+  },
+  {
+    "id": "mvp-petroquimico-triunfo",
+    "name": "Polo Petroquímico (Triunfo, RS)",
+    "coordinates": {
+      "latitude": -29.9,
+      "longitude": -51.3
+    },
+    "communityDescription": "Região Metropolitana de Porto Alegre",
+    "sourceFile": "frontend/painel_ceo.py",
+    "isReferenceData": true,
+    "verifiedAt": null
+  }
+]

@@ -1,0 +1,6 @@
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { waterTimelineDescription } from '../data/demo'
+import { visualDemo } from '../data/visual-demo'
+export default function WaterTimeline() {
+  return <div className="h-full w-full" role="img" aria-label={waterTimelineDescription()}><ResponsiveContainer width="100%" height="100%" minWidth={0}><AreaChart data={[...visualDemo.timeline]} margin={{ top: 8, right: 7, left: -25, bottom: 0 }}><CartesianGrid stroke="#24506b" vertical={false} /><XAxis dataKey="hour" tick={{ fill: '#b2d7e9', fontSize: 12 }} tickLine={false} axisLine={false} /><YAxis domain={[0, 6]} ticks={[0, 2, 4, 6]} tick={{ fill: '#b2d7e9', fontSize: 12 }} tickLine={false} axisLine={false} /><Tooltip contentStyle={{ background: '#062e46', color: '#ecf8ff', borderColor: '#217fa3', fontSize: 12 }} labelFormatter={(value) => `Simulação · ${value}`} formatter={(value) => [`${Number(value).toLocaleString('pt-BR')} m`, 'Nível fictício']} /><Area type="monotone" dataKey="level" stroke="#45adff" fill="#0879d7" fillOpacity={.18} strokeWidth={2} dot={{ r: 2, fill: '#e8f7ff' }} isAnimationActive={false} /></AreaChart></ResponsiveContainer></div>
+}
