@@ -1,12 +1,37 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import vm from 'node:vm'
+import ts from 'typescript'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { navigation, menuNavigation } from '../src/app/navigation.ts'
 import { MapErrorBoundary } from '../src/components/shared/MapErrorBoundary.ts'
 import { getProximity, getProximityForAssets } from '../src/features/nasa/proximity.ts'
+import { completed } from '../src/features/corporate/screening.ts'
 const source = path => readFileSync(new URL('../src/' + path, import.meta.url), 'utf8')
+// Render the actual page while isolating hooks/network/map from this copy regression.
+// Historical timestamps below come from Prompt 21; the blocked envelope is a test fixture.
+export function renderExpiredCorporateContext() {
+  const require = createRequire(import.meta.url)
+  const module = { exports: {} }
+  const blocked = { state: 'blocked', eventsFetchedAt: '2026-10-10T14:56:49.989684Z', analyzedAt: '2026-10-10T14:56:50Z', evaluatedPairCount: 0, riskConfirmed: false, matches: [], skipped: [], warnings: [] }
+  const dependencies = {
+    '@/components/shared/MapErrorBoundary': { MapErrorBoundary: ({ children }) => children },
+    '@/components/ui/button': { Button: ({ variant, ...props }) => createElement('button', props) },
+    '../nasa/NasaSession': { useNasaSession: () => ({ mode: 'nasa', loading: false, error: null, result: { source: 'NASA EONET', state: 'success', dataQuality: 'partial', fetchedAt: '2026-10-10T14:35:54.016225Z' } }) },
+    '../nasa/proximity': { getAssets: () => { throw new Error('SSR must not fetch') } },
+    '../nasa/geography': { formatObservation: value => value ?? 'Não disponível' },
+    './components/CorporateAssetList': { CorporateAssetList: () => null },
+    './components/CorporateAssetDetails': { CorporateAssetDetails: () => null },
+    './screening': { completed, visibleAssets: assets => assets },
+    './useCorporateScreening': { useCorporateScreening: () => ({ result: blocked, loading: false, error: null }) },
+  }
+  const compiled = ts.transpileModule(source('features/corporate/CorporatePage.tsx'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText
+  vm.runInNewContext(compiled, { module, exports: module.exports, require: name => name in dependencies ? dependencies[name] : require(name) })
+  return renderToStaticMarkup(createElement(module.exports.CorporatePage))
+}
 
 test('menu hides reserved history/settings while preserving their routes and future IA', () => {
   assert.deepEqual(menuNavigation.map(item => item.path), ['/', '/mapa', '/alertas', '/corporativo', '/comunidade', '/abrigos', '/inteligencia'])
@@ -50,6 +75,25 @@ const asset = { id: 'fixture-asset', isReferenceData: true, coordinates: { latit
 const match = { asset, event, distanceKm: 599.999, geometryApproximate: false }
 const result = { state: 'partial', source: 'NASA EONET', eventsFetchedAt: stamp, analyzedAt: stamp, policy: { id: 'legacy-panel-assets-600-nearest', radiusKm: 600, selection: 'nearest_per_target' }, evaluatedPairCount: 1, riskConfirmed: false, targetsAreReferenceData: true, isSimulation: false, requiresHumanConfirmation: true, datasetVersion: 'test-v1', matches: [match], skipped: [{ eventId: 'test-missing', reason: 'missing_coordinates' }], warnings: ['Resultado parcial de teste'] }
 const opts = (data, status = 200) => ({ baseUrl: 'http://fixture.test', fetcher: async () => new Response(JSON.stringify(data), { status }) })
+test('expired corporate snapshot remains blocked and its historical header cannot imply current availability', async () => {
+  // The server can refresh its cache while rejecting the timestamp held by React.
+  const blocked = { ...result, state: 'blocked', eventsFetchedAt: '2026-10-09T12:30:00Z', matches: [], skipped: [], evaluatedPairCount: 0, warnings: ['Cache desatualizado ou consulta diferente. Atualize o catálogo NASA antes de analisar.'] }
+  const response = await getProximityForAssets([asset.id], stamp, opts(blocked, 409))
+  assert.deepEqual(response, blocked)
+  assert.equal(response.riskConfirmed, false)
+  const html = renderExpiredCorporateContext()
+  assert.match(html, /Estado registrado na consulta: success/)
+  assert.match(html, /O estado registrado não garante disponibilidade atual/)
+  assert.match(html, /role="alert"[^>]*>Triagem bloqueada\./)
+  assert.match(html, /Atualize os eventos NASA e execute uma nova triagem com uma consulta válida/)
+  assert.match(html, /Ativos avaliados<\/p><p[^>]*>Bloqueado/)
+  assert.match(html, /pares avaliados: 0/)
+  assert.doesNotMatch(html, /Triagem concluída/)
+  const page = source('features/corporate/CorporatePage.tsx')
+  assert.match(page, /Estado registrado na consulta: \$\{nasa\.result\.state\}/)
+  assert.match(page, /O estado registrado não garante disponibilidade atual\. A triagem revalida o snapshot e pode exigir atualização dos eventos NASA\./)
+  assert.match(page, /result\?\.state === 'blocked' && <p role="alert"[^>]*>Triagem bloqueada\. O registro acima pertence à consulta anterior e não representa disponibilidade atual\. Atualize os eventos NASA e execute uma nova triagem com uma consulta válida\./)
+})
 for (const [name, query] of [['individual', (stamp, options) => getProximity(asset.id, stamp, options)], ['batch', (stamp, options) => getProximityForAssets([asset.id], stamp, options)]]) {
   test(name + ' preserves partial results, omissions, warnings and false risk', async () => {
     assert.deepEqual(await query(stamp, opts(result)), result)
