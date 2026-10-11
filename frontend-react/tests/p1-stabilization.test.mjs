@@ -33,13 +33,13 @@ export function renderExpiredCorporateContext() {
   return renderToStaticMarkup(createElement(module.exports.CorporatePage))
 }
 
-test('menu hides reserved history/settings while preserving their routes and future IA', () => {
+test('menu hides reserved history/settings while preserving their routes and the IA page', () => {
   assert.deepEqual(menuNavigation.map(item => item.path), ['/', '/mapa', '/alertas', '/corporativo', '/comunidade', '/abrigos', '/inteligencia'])
   assert.ok(navigation.some(item => item.path === '/historico'))
   assert.ok(navigation.some(item => item.path === '/configuracoes'))
   const ai = menuNavigation.find(item => item.path === '/inteligencia')
-  assert.match(ai.label, /futura/)
-  assert.match(ai.description, /Oracle RAG ainda não integrados ao React/)
+  assert.equal(ai.label, 'Inteligência (IA)')
+  assert.match(ai.description, /Oracle \(RAG\), citando PDF e página/)
 })
 
 test('legacy Alerts route targets the single existing central with keyboard focus support', () => {

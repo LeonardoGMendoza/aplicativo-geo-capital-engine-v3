@@ -4,6 +4,8 @@ __pycache__/
 .oci/
 
 .streamlit/secrets.toml
+# Chaves da IA para o servidor (gerado por deploy/gerar_ia_env.py)
+deploy/ia.env
 banco_historico/
 *.bak*
 

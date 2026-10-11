@@ -11,6 +11,9 @@ echo "== 1/4 Baixando a versão mais nova do GitHub =="
 git pull --ff-only
 
 echo "== 2/4 Subindo a API (Docker, porta 8010 só local) =="
+# Sem deploy/ia.env a API sobe normal e a tela de IA avisa que não está configurada.
+[ -f deploy/ia.env ] || { touch deploy/ia.env; echo "(aviso: deploy/ia.env não existe; IA desligada)"; }
+chmod 600 deploy/ia.env
 docker compose -f deploy/docker-compose.yml up -d --build
 docker image prune -f >/dev/null
 
@@ -30,4 +33,6 @@ sleep 3
 curl -s -o /dev/null -w "API status: %{http_code}\n" "http://127.0.0.1:8010/api/v1/status"
 curl -s -o /dev/null -w "Site:       %{http_code}\n" "$PUBLIC_URL/"
 curl -s -o /dev/null -w "Cidadao:    %{http_code}\n" "$PUBLIC_URL/cidadao"
+echo "IA:         $(curl -s "http://127.0.0.1:8010/api/v1/intelligence/status" | grep -o '"estado":"[a-z_]*"')"
+echo "            (preparando = calculando os vetores na 1a vez, ~1 min; pronto = ok; sem_chave = falta deploy/ia.env)"
 echo "Pronto: $PUBLIC_URL  e  $PUBLIC_URL/cidadao"

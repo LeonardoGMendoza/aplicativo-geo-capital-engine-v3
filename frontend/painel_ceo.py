@@ -626,10 +626,11 @@ elif visao == "Abrigos e Preparação":
 # VISÃO 4: RAG VETORIAL (Histórico)
 # ============================================================
 elif visao == "RAG Vetorial (Histórico)":
-    from backend.oracle_rag import obter_colecao, DOCUMENTOS_DEMO
+    from backend.oracle_rag import obter_colecao, DOCUMENTOS_DEMO, TRECHOS_POR_CONSULTA
+    from backend.rag_pdfs import citar
 
     st.title("📚 RAG Vetorial: Histórico de Desastres")
-    st.markdown("Base: documentos oficiais em PDF (planos de contingência, relatório sobre Brumadinho e RIMAs), indexados em trechos no ChromaDB (cerca das 50 primeiras páginas de cada). Sem PDFs na pasta, o app usa 3 exemplos de demonstração.")
+    st.markdown("Base: documentos oficiais em PDF (planos de contingência, relatório sobre Brumadinho e RIMAs), indexados por inteiro no ChromaDB, em trechos com o número da página de origem. Sem PDFs na pasta, o app usa 3 exemplos de demonstração.")
     st.markdown("---")
 
     st.write("🤖 Iniciando Banco de Dados Vetorial (ChromaDB)...")
@@ -656,15 +657,15 @@ elif visao == "RAG Vetorial (Histórico)":
         with st.spinner("Transformando texto em vetores e buscando no banco matemático..."):
             resultados = colecao.query(
                 query_texts=[novo_desastre],
-                n_results=1,
+                n_results=TRECHOS_POR_CONSULTA,
                 include=["documents", "distances", "metadatas"]
             )
             
             if resultados['documents'] and len(resultados['documents'][0]) > 0:
-                distancia = resultados['distances'][0][0]
-                st.warning(f"🚨 CONTEXTO RECUPERADO (Métrica: Cosseno, Distância matemática: {distancia:.4f})")
-                st.write(resultados['documents'][0][0])
-                st.caption(f"Fonte: {resultados['metadatas'][0][0].get('fonte', 'base interna')}")
+                st.warning(f"🚨 {len(resultados['documents'][0])} TRECHOS MAIS PARECIDOS (Métrica: Cosseno; quanto menor a distância, mais parecido)")
+                for _texto, _meta, _dist in zip(resultados['documents'][0], resultados['metadatas'][0], resultados['distances'][0]):
+                    st.markdown(f"**📄 {citar(_meta or {})}** · distância {_dist:.4f}")
+                    st.write(_texto)
             else:
                 st.error("Sem dados recuperados.")
 

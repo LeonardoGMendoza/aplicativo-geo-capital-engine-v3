@@ -7,6 +7,7 @@ import { CorporatePage } from '@/features/corporate/CorporatePage'
 import { CommunityPage } from '@/features/community/CommunityPage'
 import { SheltersPage } from '@/features/shelters/SheltersPage'
 import { CitizenPage } from '@/features/citizen/CitizenPage'
+import { IntelligencePage } from '@/features/intelligence/IntelligencePage'
 import { NasaSessionProvider } from '@/features/nasa/NasaSession'
 import { navigation } from '@/app/navigation'
 import { Button } from '@/components/ui/button'
@@ -38,7 +39,8 @@ export function App() {
         <Route path="/corporativo" element={<CorporatePage />} />
         <Route path="/comunidade" element={<CommunityPage />} />
         <Route path="/abrigos" element={<SheltersPage />} />
-        {navigation.slice(1).filter(item => !['/alertas', '/mapa', '/corporativo', '/comunidade', '/abrigos'].includes(item.path)).map((item) => <Route key={item.path} path={item.path} element={<ReservedPage title={item.label} description={item.description} />} />)}
+        <Route path="/inteligencia" element={<IntelligencePage />} />
+        {navigation.slice(1).filter(item => !['/alertas', '/mapa', '/corporativo', '/comunidade', '/abrigos', '/inteligencia'].includes(item.path)).map((item) => <Route key={item.path} path={item.path} element={<ReservedPage title={item.label} description={item.description} />} />)}
         <Route path="*" element={<ReservedPage title="Página não encontrada" description="Este endereço não corresponde a uma área do protótipo." />} />
       </Route>
     </Routes></NasaSessionProvider>

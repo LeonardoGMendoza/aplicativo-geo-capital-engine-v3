@@ -10,4 +10,12 @@ services:
     environment:
       REACT_CORS_ORIGINS: "https://omni.sandlj.com.br"
       NASA_CACHE_SECONDS: "600"
-    mem_limit: 384m
+    # Chaves da IA (Cohere + Oracle). Arquivo só no servidor, fora do GitHub.
+    # Gerado no PC com: python deploy/gerar_ia_env.py
+    env_file: ia.env
+    volumes:
+      - omni-rag:/data          # vetores da IA: calculados uma vez só
+    mem_limit: 768m             # o SDK da Oracle pesa; 384m era só para a API sem IA
+
+volumes:
+  omni-rag:

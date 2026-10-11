@@ -9,6 +9,8 @@ from fastapi.responses import JSONResponse
 
 from .hazards_router import router as hazards_router
 from .places_router import router as places_router
+from .intelligence_router import router as intelligence_router
+from .intelligence import criar_do_ambiente
 from .models import EventsResponse
 from .nasa import NasaService, Settings
 from .proximity import ASSETS, DATASET_VERSION, POLICY, ProximityRequest, analyze_proximity
@@ -23,13 +25,15 @@ def settings_from_environment() -> Settings:
                     enabled=os.getenv("NASA_EONET_ENABLED", "true").lower() == "true")
 
 
-def create_app(service: NasaService | None = None) -> FastAPI:
+def create_app(service: NasaService | None = None, inteligencia=None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        app.state.inteligencia = inteligencia if inteligencia is not None else criar_do_ambiente()
         if service is not None:
             app.state.nasa = service
             yield
         else:
+            app.state.inteligencia.iniciar()  # prepara a base de documentos em segundo plano
             async with httpx.AsyncClient(follow_redirects=False) as client:
                 app.state.nasa = NasaService(client, settings_from_environment())
                 yield
@@ -74,6 +78,7 @@ def create_app(service: NasaService | None = None) -> FastAPI:
 
     app.include_router(hazards_router)
     app.include_router(places_router)
+    app.include_router(intelligence_router)
 
     return app
 
