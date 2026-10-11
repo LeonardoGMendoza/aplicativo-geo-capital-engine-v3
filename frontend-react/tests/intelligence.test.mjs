@@ -43,3 +43,12 @@ test('page keeps the human in charge and shows where each answer came from', () 
   assert.match(page, /citacao\(t\)/)
   assert.doesNotMatch(page, /rota segura|garantid|previs(ã|a)o certeira/i)
 })
+
+test('markdown bold from the AI is shown as bold, never as raw asterisks', async () => {
+  const { partesNegrito } = await loadClient()
+  assert.deepEqual(partesNegrito('1. **Oriente a população** (brumadinho.pdf, pág. 221).'), [
+    { texto: '1. ', negrito: false }, { texto: 'Oriente a população', negrito: true }, { texto: ' (brumadinho.pdf, pág. 221).', negrito: false }])
+  assert.deepEqual(partesNegrito('Sem negrito aqui.'), [{ texto: 'Sem negrito aqui.', negrito: false }])
+  assert.ok(partesNegrito('sobra ** solta').every(p => !p.texto.includes('**')))
+  assert.match(page, /partesNegrito\(resultado\.resposta\)/)
+})

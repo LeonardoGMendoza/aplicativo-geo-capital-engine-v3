@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { BrainCircuit, FileText, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ask, citacao, estadoTexto, getStatus, nomesDocumentos, perfis, perguntasProntas } from './intelligence'
+import { ask, citacao, estadoTexto, getStatus, nomesDocumentos, partesNegrito, perfis, perguntasProntas } from './intelligence'
 import type { Perfil, Resposta, Status } from './intelligence'
 
 export function IntelligencePage() {
@@ -75,7 +75,7 @@ export function IntelligencePage() {
       <h2 id="ia-resposta" className="text-base font-semibold">{resultado.modo === 'ia' ? 'Sugestão da IA' : 'Trechos encontrados'}</h2>
       <p className="text-xs text-muted-foreground">Pergunta: {resultado.pergunta}</p>
       {resultado.modo === 'ia' && resultado.resposta
-        ? <><p className="whitespace-pre-line text-sm leading-relaxed">{resultado.resposta}</p><p className="text-xs text-muted-foreground">Gerado por {resultado.modelo}, a partir dos trechos abaixo.</p></>
+        ? <><p className="whitespace-pre-line text-sm leading-relaxed">{partesNegrito(resultado.resposta).map((p, i) => p.negrito ? <strong key={i}>{p.texto}</strong> : <span key={i}>{p.texto}</span>)}</p><p className="text-xs text-muted-foreground">Gerado por {resultado.modelo}, a partir dos trechos abaixo.</p></>
         : <p className="text-sm text-amber-900">A IA da Oracle não respondeu agora. Abaixo estão os trechos mais parecidos encontrados nos documentos.</p>}
       <p className="flex items-start gap-2 text-xs font-semibold text-[#0866d0]"><ShieldCheck className="size-4 shrink-0" aria-hidden="true" />{resultado.aviso}</p>
       <h3 className="pt-1 text-sm font-semibold">De onde veio</h3>

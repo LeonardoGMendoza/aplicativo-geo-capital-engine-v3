@@ -70,3 +70,9 @@ export function estadoTexto(s: Status | null) {
   if (s.estado === 'sem_chave') return 'A IA não está configurada neste servidor.'
   return 'A base de documentos falhou ao preparar. Tente de novo em instantes.'
 }
+
+// A IA às vezes escreve **negrito** (markdown). Separa em pedaços para a tela mostrar o negrito sem os asteriscos.
+export function partesNegrito(texto: string): { texto: string; negrito: boolean }[] {
+  return texto.split(/(\*\*[^*\n]+\*\*)/).filter(Boolean).map(parte =>
+    parte.startsWith('**') && parte.endsWith('**') && parte.length > 4 ? { texto: parte.slice(2, -2), negrito: true } : { texto: parte.replace(/\*\*/g, ''), negrito: false })
+}
