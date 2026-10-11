@@ -1,0 +1,40 @@
+/* Painel "Condições agora: El Niño" (usado dentro da tela de IA, .ia-neon). */
+.clima-topo { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.clima-topo a, .clima-fonte a { color: #075fba; text-decoration: underline; }
+.clima-atualizar { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; font: inherit; font-size: 13px; font-weight: 600; color: #0b2233; background: #f8fbfd; border: 1px solid #c9dbe6; border-radius: 8px; cursor: pointer; }
+.clima-atualizar:disabled { opacity: .6; cursor: default; }
+.clima-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.clima-bloco { border-radius: 10px; padding: 12px 14px; border: 2px solid var(--clima); background: var(--clima-bg); }
+.clima-calor { --clima: #ea580c; --clima-bg: #fff7ed; }
+.clima-chuva { --clima: #0284c7; --clima-bg: #f0f9ff; }
+.clima-bloco h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-family: 'Exo 2', 'Segoe UI', system-ui, sans-serif; font-size: 15px; font-weight: 700; color: #0b2233; }
+.clima-bloco h3 svg { color: var(--clima); }
+.clima-bloco ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.clima-bloco li { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "cidade nivel" "valor valor"; gap: 2px 8px; padding: 8px 10px; border-radius: 8px; background: #ffffffcc; border: 1px solid #e2edf3; }
+.clima-cidade { grid-area: cidade; font-size: 14px; font-weight: 600; color: #0b2233; }
+.clima-cidade small { color: #4b657d; font-weight: 500; }
+.clima-valor { grid-area: valor; font-family: 'Exo 2', 'Segoe UI', system-ui, sans-serif; font-size: 20px; font-weight: 700; color: var(--clima); }
+.clima-valor small { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 12px; font-weight: 500; color: #4b657d; }
+.clima-nivel { grid-area: nivel; align-self: center; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.clima-nivel.alto { color: #fff; background: #dc2626; }
+.clima-nivel.atencao { color: #7c2d12; background: #fed7aa; }
+.clima-nivel.normal { color: #14532d; background: #dcfce7; }
+.clima-legenda { margin: 8px 0 0; font-size: 12px; color: #4b657d; }
+.clima-fonte { margin: 10px 0 0; font-size: 12px; color: #4b657d; }
+
+/* Mapa mundial: radar de chuva + alertas GDACS */
+.mundo-controles { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 10px 0; font-size: 14px; }
+.mundo-controles label { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; cursor: pointer; }
+.mundo-controles input { width: 18px; height: 18px; accent-color: #0b8f7c; }
+.mundo-controles small { color: #4b657d; }
+.mundo-mapa { height: 420px; border-radius: 10px; overflow: hidden; border: 1px solid #d6e5ee; }
+@media (max-width: 640px) { .mundo-mapa { height: 320px; } }
+.mundo-marcador { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; background: #fff; border: 3px solid; box-shadow: 0 1px 6px #0006; }
+.mundo-marcador.vermelho { border-color: #dc2626; }
+.mundo-marcador.laranja { border-color: #f97316; }
+.mundo-lista { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+.mundo-lista li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 14px; padding: 8px 10px; border-radius: 8px; background: #f8fbfd; border: 1px solid #e2edf3; }
+.mundo-lista a { color: #075fba; text-decoration: underline; margin-left: auto; }
+.mundo-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #fff; padding: 2px 8px; border-radius: 999px; }
+.mundo-tag.vermelho { background: #dc2626; }
+.mundo-tag.laranja { background: #ea580c; }
