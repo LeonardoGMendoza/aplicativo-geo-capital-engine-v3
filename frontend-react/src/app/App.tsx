@@ -6,6 +6,7 @@ import { RiskMapPage } from '@/features/nasa/RiskMapPage'
 import { CorporatePage } from '@/features/corporate/CorporatePage'
 import { CommunityPage } from '@/features/community/CommunityPage'
 import { SheltersPage } from '@/features/shelters/SheltersPage'
+import { CitizenPage } from '@/features/citizen/CitizenPage'
 import { NasaSessionProvider } from '@/features/nasa/NasaSession'
 import { navigation } from '@/app/navigation'
 import { Button } from '@/components/ui/button'
@@ -28,6 +29,8 @@ function ReservedPage({ title, description }: { title: string; description: stri
 export function App() {
   return (
     <NasaSessionProvider><Routes>
+      {/* Tela do cidadão: celular, sem o menu da central */}
+      <Route path="/cidadao" element={<CitizenPage />} />
       <Route element={<AppLayout />}>
         <Route index element={<OperationsPage />} />
         <Route path="/alertas" element={<Navigate to="/#central-alertas" replace />} />

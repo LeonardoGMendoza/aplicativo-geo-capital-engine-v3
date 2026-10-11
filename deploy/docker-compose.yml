@@ -1,0 +1,13 @@
+# Publicação no servidor: só a API roda em container. As telas (React) são arquivos
+# estáticos servidos pelo nginx do próprio servidor em /var/www/omni.
+services:
+  omni-api:
+    build: ../backend/api
+    container_name: omni-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8010:8000"   # só o nginx do servidor acessa; não fica aberta na internet
+    environment:
+      REACT_CORS_ORIGINS: "https://omni.sandlj.com.br"
+      NASA_CACHE_SECONDS: "600"
+    mem_limit: 384m

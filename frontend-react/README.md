@@ -11,7 +11,7 @@ Estado do MVP em 10/10/2026. Aplicação React/TypeScript independente do painel
 | `/mapa` | Explorador NASA EONET com busca, categorias, lista paginada, mapa, agrupamentos e consulta individual de ativo | Consulta real via API; não confirma risco ou segurança |
 | `/corporativo` | Catálogo de 11 ativos, busca, ordenação, detalhes e triagem em lote | Ativos de referência; evento mais próximo por ativo, estritamente abaixo de 600 km; sem finanças ou ação operacional |
 | `/comunidade` | Descrições comunitárias associadas aos ativos, triagem individual e preparação editorial | Distância evento–ativo, não localização ou população comunitária verificada |
-| `/abrigos` | Oito pontos de referência, busca/filtros, distância em linha reta, detalhes e checklist de 14 itens | Sem confirmação de abertura, vagas, acesso ou rota segura |
+| `/abrigos` | **Locais próximos (OpenStreetMap)**: busca de qualquer cidade/endereço, localização do aparelho sob clique, 9 categorias com filtros, "ir para o mais próximo", mapa e rota no Waze/Google Maps a partir da posição do aparelho. Abaixo, os oito pontos de referência, busca/filtros, distância em linha reta, detalhes e checklist de 14 itens | Dados colaborativos do OSM; sem confirmação de abertura, vagas, acesso ou rota segura. Localização do aparelho exige `localhost` ou HTTPS |
 | `/inteligencia` | Área reservada, identificada no menu como evolução futura | IA e Oracle RAG não integrados ao React |
 | `/historico`, `/configuracoes` | Rotas reservadas preservadas, temporariamente ocultas no menu | Sem histórico persistido ou configuração funcional de integrações |
 

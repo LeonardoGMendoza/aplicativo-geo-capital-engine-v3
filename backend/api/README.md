@@ -32,7 +32,7 @@ npm run dev
 
 React: `http://127.0.0.1:5173`. O cliente usa `http://127.0.0.1:8000` por padrão. Para outra URL, copie `.env.example` para `.env.local`, ajuste `VITE_API_BASE_URL` e reinicie o Vite. Nenhum segredo deve estar em variáveis `VITE_*`.
 
-O Centro de Operações inicia em **Simulação** e seus alertas/indicadores permanecem demonstrativos. Consulta NASA exige ação explícita; resumo e explorador `/mapa` usam esta API. `/corporativo` carrega o cadastro e consulta os 11 ativos em lote; `/comunidade` consulta o ativo associado à referência selecionada. `/abrigos` usa cadastro, distâncias e checklist locais, sem esta API. Consultas respeitam o cache do servidor; não há polling automático. Estado registrado numa consulta não comprova disponibilidade atual.
+O Centro de Operações inicia em **Simulação** e seus alertas/indicadores permanecem demonstrativos. Consulta NASA exige ação explícita; resumo e explorador `/mapa` usam esta API. `/corporativo` carrega o cadastro e consulta os 11 ativos em lote; `/comunidade` consulta o ativo associado à referência selecionada. `/abrigos` usa cadastro, distâncias e checklist locais e, na seção **Locais próximos**, consulta `/api/v1/places/*` desta API (OpenStreetMap). Consultas respeitam o cache do servidor; não há polling automático. Estado registrado numa consulta não comprova disponibilidade atual.
 
 ## Configuração de servidor
 
@@ -66,6 +66,8 @@ Depois de encerrar esse processo, `$env:NASA_EONET_ENABLED = 'true'` habilita co
 - `GET /api/v1/assets`: catálogo de 11 ativos de referência, versão `panel-assets-v1`, política e descrições comunitárias sem coordenadas comunitárias verificadas.
 - `POST /api/v1/geography/proximity`: de 1 a 11 IDs únicos, `policyId` e `expectedFetchedAt`; Haversine, evento mais próximo por ativo, distância estritamente inferior a 600 km. Estados `success`, `empty`, `partial` (200), `blocked` (409), `unavailable` (503); requisição inválida retorna 422. Preserva `riskConfirmed=false`, `targetsAreReferenceData=true` e `requiresHumanConfirmation=true`.
 - Snapshot stale ou horário incompatível bloqueia a triagem, sem correspondências. Atualizar os eventos e enviar nova triagem com o `fetchedAt` válido; atualizar não força ignorar TTL/regras do cache.
+- `GET /api/v1/places/geocode?q=texto` (2 a 120 caracteres): busca de cidade, bairro ou endereço no Nominatim, até 5 resultados com `coordinates`. Respeita o limite de 1 requisição/s do Nominatim; cache de 24 h.
+- `GET /api/v1/places/nearby?lat=&lon=`: locais reais do OpenStreetMap (Overpass) em 9 categorias (`shelter`, `hospital`, `clinic`, `police`, `ngo`, `food`, `pharmacy`, `lodging`, `shop`), com a mesma classificação do mapa de abrigos do Streamlit (`frontend/mapa_interativo.py`). Raio de 3 km, ampliado para 15 km quando há menos de 10 serviços; até 40 por categoria, ordenados por distância em linha reta. Consulta 3 servidores Overpass em paralelo e usa o primeiro que responder. Origem arredondada para 3 casas (~100 m) no cache e na resposta; cache de 15 min e cópia `stale` por até 1 h se a fonte cair. Escolas, centros comunitários e prefeituras vêm como `shelterKind=possible` ("confirmar com a Defesa Civil"); pontos de encontro e abrigos mapeados como `mapped`. Estados `success`/`empty`/`stale` (200), `unavailable` (503), `error` (502), parâmetros inválidos (422). `isSimulation=false`, `riskCalculated=false`; não confirma funcionamento, vagas, acesso ou segurança do trajeto.
 - Evento: `id`, `title`, `categories[]`, `source`, `coordinates` (latitude/longitude/método ou null), `coordinateState`, `geometryType`, `observedAt` (UTC ou null), `observationState`, `isSimulation=false`.
 
 | Estado | HTTP | Significado |
@@ -93,6 +95,8 @@ npm run build
 ```
 
 Estado validado em 10/10/2026: **26 testes Python** e **75 testes frontend**, TypeScript e build aprovados. Testes Python usam `httpx.MockTransport`/`ASGITransport`, sem chamadas NASA reais: normalização, geometrias/datas, vazio, falhas HTTP/rede/contrato, timeout, cache válido/stale/expirado, concorrência, endpoints e CORS; proximidade cobre paridade com o cadastro/funções puras do painel, distância estrita, empate, múltiplas geometrias, parcial e bloqueio por snapshot incompatível. O painel não é importado nem executado pelos serviços da API.
+
+`tests/test_places.py` (19 testes offline) cobre classificação, duplicatas, limite por categoria, ampliação de raio, falha de um servidor, cache/stale, área vazia e geocodificação, com respostas de exemplo do Overpass/Nominatim.
 
 Testes frontend usam Node 22.18+ (validado com Node 24.14.1): contratos, busca/geografia, validação individual/lote, estados parciais/bloqueados/indisponíveis, procedência, cancelamento/invalidação, consistência demonstrativa, checklist e comunicação do snapshot. A regressão do cabeçalho renderiza o componente real em SSR com hooks isolados; não substitui uma suíte E2E completa.
 

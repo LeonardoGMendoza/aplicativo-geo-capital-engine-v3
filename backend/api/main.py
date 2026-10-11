@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .hazards_router import router as hazards_router
+from .places_router import router as places_router
 from .models import EventsResponse
 from .nasa import NasaService, Settings
 from .proximity import ASSETS, DATASET_VERSION, POLICY, ProximityRequest, analyze_proximity
@@ -72,6 +73,7 @@ def create_app(service: NasaService | None = None) -> FastAPI:
         return JSONResponse(status_code=code, content=jsonable_encoder(result), headers={'Cache-Control': 'no-store'})
 
     app.include_router(hazards_router)
+    app.include_router(places_router)
 
     return app
 
