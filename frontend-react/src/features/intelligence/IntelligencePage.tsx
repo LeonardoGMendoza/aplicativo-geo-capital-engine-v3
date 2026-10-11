@@ -70,14 +70,14 @@ export function IntelligencePage() {
       <p role="status" className={`ia-status ${classeStatus}`}>{estadoTexto(status)}</p>
       {status && !pronto && !indisponivel && status.estado !== 'erro' && <div className="ia-progress" aria-hidden="true"><span style={{ width: `${progresso}%` }} /></div>}
       <div className="ia-kpis">
-        <div className="ia-kpi" style={corKpi('#0891b2')}><FileText className="size-8" aria-hidden="true" /><div><p className="ia-kpi-num">{status?.documentos.length ?? '–'}</p><p className="ia-kpi-label">documentos oficiais</p></div></div>
-        <div className="ia-kpi" style={corKpi('#059669')}><BookOpen className="size-8" aria-hidden="true" /><div><p className="ia-kpi-num">{status ? status.paginas.toLocaleString('pt-BR') : '–'}</p><p className="ia-kpi-label">páginas lidas</p></div></div>
-        <div className="ia-kpi" style={corKpi('#7c3aed')}><Layers className="size-8" aria-hidden="true" /><div><p className="ia-kpi-num">{status ? status.trechos.toLocaleString('pt-BR') : '–'}</p><p className="ia-kpi-label">trechos na busca</p></div></div>
+        <div className="ia-kpi" style={corKpi('#0891b2')}><FileText className="size-6" aria-hidden="true" /><div><p className="ia-kpi-num">{status?.documentos.length ?? '–'}</p><p className="ia-kpi-label">documentos oficiais</p></div></div>
+        <div className="ia-kpi" style={corKpi('#059669')}><BookOpen className="size-6" aria-hidden="true" /><div><p className="ia-kpi-num">{status ? status.paginas.toLocaleString('pt-BR') : '–'}</p><p className="ia-kpi-label">páginas lidas</p></div></div>
+        <div className="ia-kpi" style={corKpi('#7c3aed')}><Layers className="size-6" aria-hidden="true" /><div><p className="ia-kpi-num">{status ? status.trechos.toLocaleString('pt-BR') : '–'}</p><p className="ia-kpi-label">trechos na busca</p></div></div>
       </div>
     </section>
 
     <section className="ia-panel space-y-4" aria-labelledby="ia-pergunta">
-      <h2 id="ia-pergunta" className="ia-panel-title"><BrainCircuit className="size-7" aria-hidden="true" />Faça uma pergunta</h2>
+      <h2 id="ia-pergunta" className="ia-panel-title"><BrainCircuit className="size-5" aria-hidden="true" />Faça uma pergunta</h2>
       <form onSubmit={submit} className="space-y-4">
         <div><label className="ia-label" htmlFor="ia-perfil">Quem está perguntando?</label>
           <select id="ia-perfil" className="ia-input" value={perfil} onChange={e => setPerfil(e.target.value as Perfil)}>{perfis.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}</select></div>
@@ -91,7 +91,7 @@ export function IntelligencePage() {
       <div><p className="ia-label">Perguntas prontas</p>
         <div className="ia-chips" aria-label="Perguntas prontas">
           {perguntasProntas.map((p, i) => { const { Icon, cor } = visualPerguntas[i % visualPerguntas.length]
-            return <button key={p} type="button" className="ia-chip" style={corChip(cor)} disabled={carregando || indisponivel} onClick={() => void enviar(p)}><Icon className="size-7" aria-hidden="true" />{p}</button> })}
+            return <button key={p} type="button" className="ia-chip" style={corChip(cor)} disabled={carregando || indisponivel} onClick={() => void enviar(p)}><Icon className="size-5" aria-hidden="true" />{p}</button> })}
         </div>
       </div>
     </section>
@@ -101,7 +101,7 @@ export function IntelligencePage() {
 
     {resultado && <section className="ia-panel space-y-4" aria-live="polite" aria-labelledby="ia-resposta">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="ia-resposta" className="ia-panel-title" style={{ marginBottom: 0 }}><Sparkles className="size-7" aria-hidden="true" />{resultado.modo === 'ia' ? 'Sugestão da IA' : 'Trechos encontrados'}</h2>
+        <h2 id="ia-resposta" className="ia-panel-title" style={{ marginBottom: 0 }}><Sparkles className="size-5" aria-hidden="true" />{resultado.modo === 'ia' ? 'Sugestão da IA' : 'Trechos encontrados'}</h2>
         {resultado.modo === 'ia' && <span className="ia-badge">● {resultado.modelo}</span>}
       </div>
       <p className="ia-muted">Pergunta: {resultado.pergunta}</p>
@@ -109,7 +109,7 @@ export function IntelligencePage() {
         ? <p className="ia-answer">{partesNegrito(resultado.resposta).map((p, i) => p.negrito ? <strong key={i}>{p.texto}</strong> : <span key={i}>{p.texto}</span>)}</p>
         : <p className="ia-warn">A IA da Oracle não respondeu agora. Abaixo estão os trechos mais parecidos encontrados nos documentos.</p>}
       <p className="ia-note"><ShieldCheck className="size-5 shrink-0" aria-hidden="true" />{resultado.aviso}</p>
-      <h3 className="ia-panel-title" style={{ fontSize: 19, marginBottom: 0 }}>De onde veio</h3>
+      <h3 className="ia-panel-title" style={{ fontSize: 15, marginBottom: 0 }}>De onde veio</h3>
       <ol className="ia-sources">{resultado.trechos.map((t, i) => <li key={`${t.fonte}-${t.pagina}-${i}`} className="ia-source">
         <p className="ia-source-head"><FileText className="size-5" aria-hidden="true" />[{i + 1}] {nomesDocumentos[t.fonte] ?? t.fonte}<span className="ia-page">{citacao(t).replace(`${t.fonte}, `, '')}</span></p>
         <p className="ia-muted">{citacao(t)}</p>
@@ -119,7 +119,7 @@ export function IntelligencePage() {
     </section>}
 
     <section className="ia-panel space-y-3" aria-labelledby="ia-base">
-      <h2 id="ia-base" className="ia-panel-title"><BookOpen className="size-7" aria-hidden="true" />Base de documentos</h2>
+      <h2 id="ia-base" className="ia-panel-title"><BookOpen className="size-5" aria-hidden="true" />Base de documentos</h2>
       {status?.documentos.length ? <ul className="ia-docs">{status.documentos.map(d => <li key={d.fonte}><span>{nomesDocumentos[d.fonte] ?? d.fonte}</span><b>{d.paginas} pág.</b></li>)}</ul> : <p className="ia-muted">Lista indisponível no momento.</p>}
       <p className="ia-muted">Como funciona: cada documento foi dividido em trechos; a pergunta é comparada com todos (Cohere, busca por semelhança) e os 3 mais parecidos vão para a IA da Oracle Cloud, que escreve a resposta citando PDF e página. Os documentos tratam de desastres passados: a resposta é apoio, não ordem.</p>
     </section>
