@@ -3,7 +3,9 @@
 .nasa-marker { display: flex; width: 30px; height: 30px; align-items: center; justify-content: center; border: 3px solid white; border-radius: 50%; color: white; font: bold 12px system-ui; box-shadow: 0 1px 5px #031b2c99; }
 .nasa-marker.is-selected { outline: 3px solid #031b2c; outline-offset: 2px; }
 .nasa-cluster-icon span { display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; border: 3px solid #5eead4; border-radius: 50%; background: #052b43; color: white; font: bold 13px system-ui; }
-.nasa-map .leaflet-container { font-family: Segoe UI, system-ui, sans-serif; background: #eaf3fa; }
+.nasa-map .leaflet-container { font-family: Segoe UI, system-ui, sans-serif; background: #1c372d; }
+/* Mapas reais com as cores do desenho do Felipe (filtro SVG em features/climate/mapaFelipe.tsx) */
+.mapa-felipe { filter: url(#omni-mapa-felipe); }
 .nasa-map .leaflet-control-attribution { font-size: 10px; }
 .nasa-map .leaflet-popup-content p { margin: 4px 0; }
 .nasa-map .leaflet-marker-icon:focus-visible { outline: 3px solid #031b2c; outline-offset: 3px; }

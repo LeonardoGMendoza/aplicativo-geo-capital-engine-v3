@@ -52,9 +52,12 @@ export default function ElNinoOceanMap({ onData, onFalhou }: { onData: (data: st
       </Rectangle>
     </MapContainer>
     <div className="nino-filme">
-      <button type="button" className="nino-play" onClick={() => setTocando(t => !t)} aria-pressed={tocando}>{tocando ? '❚❚ Pausar' : '▶ Animar'}</button>
-      <input type="range" min={0} max={ultimo} value={indice} aria-label="Data da imagem do satélite"
-        aria-valuetext={dataBR(atual)} onChange={e => { setTocando(false); setIndice(Number(e.target.value)) }} />
+      {/* Controles escondidos: aparecem ao passar o mouse no mapa ou ao chegar com o teclado (Tab). A data fica sempre visível. */}
+      <span className="nino-controles">
+        <button type="button" className="nino-play" onClick={() => setTocando(t => !t)} aria-pressed={tocando}>{tocando ? '❚❚ Pausar' : '▶ Animar'}</button>
+        <input type="range" min={0} max={ultimo} value={indice} aria-label="Data da imagem do satélite"
+          aria-valuetext={dataBR(atual)} onChange={e => { setTocando(false); setIndice(Number(e.target.value)) }} />
+      </span>
       <output className="nino-data" aria-live="off">{dataBR(atual)}{indice === ultimo && <span className="nino-recente"> · mais recente</span>}</output>
     </div>
   </div>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { divIcon } from 'leaflet'
 import type { Marker as LeafletMarker } from 'leaflet'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
+import { FiltroMapaFelipe } from '@/features/climate/mapaFelipe'
 import 'leaflet/dist/leaflet.css'
 import type { NasaEvent } from './contracts'
 import type { Asset } from './proximity'
@@ -78,7 +79,8 @@ export default function NasaGeographicMap({ events, selectedId, onSelect, assets
     {tileError && <p role="status" className="mb-1 text-amber-900">Base OpenStreetMap parcialmente indisponível. Marcadores e lista continuam disponíveis.</p>}
     <div role="region" aria-label="Mapa geográfico de eventos NASA, sem avaliação de risco" className="nasa-map relative z-0 h-[300px] overflow-hidden rounded border sm:h-[340px]">
       <MapContainer center={[10, 0]} zoom={2} minZoom={2} maxZoom={18} maxBounds={[[-85.0511287798, -180], [85.0511287798, 180]]} maxBoundsViscosity={1} scrollWheelZoom={false} className="h-full w-full">
-        <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" noWrap attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' eventHandlers={{ loading: () => setTileError(false), tileerror: () => setTileError(true) }} />
+        <FiltroMapaFelipe />
+        <TileLayer className="mapa-felipe" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" noWrap attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' eventHandlers={{ loading: () => setTileError(false), tileerror: () => setTileError(true) }} />
         <GeographicLayers events={events} selectedId={selectedId} onSelect={onSelect} />
         <AssetLayers assets={assets} selectedId={selectedAssetId} onSelect={onAssetSelect} />
       </MapContainer>

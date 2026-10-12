@@ -155,3 +155,18 @@ test('map shows only the nearest shelters and health points, counts keep the tot
   assert.equal(r.filter(x => x.tipo === 'cruz').length, NO_MAPA.cruzes)
   assert.equal(r[0].lugar.distanceKm, 1, 'o abrigo mais perto vem primeiro')
 })
+
+test('real maps use the Felipe palette (SVG filter over OpenStreetMap) and the film controls stay hidden until hover/focus', () => {
+  const filtro = source('features/climate/mapaFelipe.tsx')
+  assert.match(filtro, /<filter id="omni-mapa-felipe"/)
+  assert.match(source('styles/globals.css'), /\.mapa-felipe \{ filter: url\(#omni-mapa-felipe\); \}/)
+  for (const f of ['features/climate/CityRealMap.tsx', 'features/nasa/NasaGeographicMap.tsx']) {
+    const s = source(f)
+    assert.match(s, /<FiltroMapaFelipe \/>/, f); assert.match(s, /className="mapa-felipe"/, f)
+  }
+  const cidade = source('features/climate/CityRealMap.tsx')
+  assert.match(cidade, /ResizeObserver/); assert.match(cidade, /<Circle /, 'área colorida em volta dos eventos, como as regiões do desenho')
+  const css = source('features/climate/climate.css')
+  assert.match(css, /\.nino-controles \{[^}]*max-width: 0;[^}]*opacity: 0;/)
+  assert.match(css, /\.nino-mapa:hover \.nino-controles, \.nino-filme:focus-within \.nino-controles/)
+})

@@ -48,11 +48,11 @@
 .cidade-busca .ia-input { min-height: 40px; padding: 6px 12px; }
 .cidade-resumo { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; font-size: 13px; color: #284662; margin: 0 0 10px; }
 .cidade-resumo i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
-.cidade-mapa { height: 460px; border-radius: 10px; overflow: hidden; border: 1px solid #1d4f3f; background: #183d32; }
+.cidade-mapa { height: 460px; border-radius: 10px; overflow: hidden; border: 1px solid #1d4f3f; background: #1c372d; }
+.cidade-mapa .leaflet-container { background: #1c372d; }
 @media (max-width: 640px) { .cidade-mapa { height: 340px; } }
 /* Mapa do OpenStreetMap (sem chave) escurecido por CSS e puxado para o verde-escuro do desenho (#183d32).
    Só a camada base recebe o filtro: radar e marcadores ficam com as cores reais. */
-.cidade-mapa .cidade-base { filter: invert(1) hue-rotate(180deg) sepia(.35) hue-rotate(75deg) saturate(1.4) brightness(.78) contrast(1.05); }
 .cidade-marcador { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 2px 10px #0008; }
 .cidade-marcador svg { width: 18px; height: 18px; }
 .mundo-lista li { display: block; padding: 0; }
@@ -80,6 +80,10 @@
 .nino-legenda i { flex: 0 1 220px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #1e3a8a, #60a5fa, #f8fafc, #f87171, #991b1b); }
 /* Animação do satélite (filme dos últimos 60 dias) */
 .nino-filme { position: absolute; left: 10px; bottom: 10px; z-index: 500; display: flex; align-items: center; gap: 10px; max-width: calc(100% - 20px); padding: 6px 10px; border-radius: 10px; background: #0b1220d9; color: #fff; font-size: 13px; }
+.nino-controles { display: flex; align-items: center; gap: 10px; max-width: 0; overflow: hidden; opacity: 0; transition: max-width .25s, opacity .25s; }
+.nino-mapa:hover .nino-controles, .nino-filme:focus-within .nino-controles { max-width: 420px; opacity: 1; }
+.nino-filme { gap: 0; }
+.nino-mapa:hover .nino-filme, .nino-filme:focus-within { gap: 10px; }
 .nino-play { min-height: 32px; padding: 0 12px; border: 1px solid #ffffff55; border-radius: 8px; background: #0b8f7c; color: #fff; font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .nino-filme input[type=range] { width: 160px; min-width: 0; flex: 1 1 160px; accent-color: #f87171; }
 .nino-data { font-family: 'Exo 2', 'Segoe UI', system-ui, sans-serif; font-weight: 700; white-space: nowrap; }

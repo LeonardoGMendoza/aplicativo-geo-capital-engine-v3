@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from 'react'
 import { divIcon, latLngBounds } from 'leaflet'
-import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
+import { Circle, MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CORES, maisPertoDoCentro, marcadorHtml } from './cityMap'
+import { FiltroMapaFelipe } from './mapaFelipe'
 import type { EventoPerto, PontoMapa } from './cityMap'
 import type { Coordinates } from '../shelters/places'
 
@@ -10,8 +11,8 @@ function Enquadrar({ centro, pontos }: { centro: Coordinates; pontos: PontoMapa[
   const map = useMap()
   const chave = `${centro.latitude},${centro.longitude}|${pontos.length}`
   useEffect(() => {
-    // Enquadra a cidade e os pontos mostrados, sem afastar demais. Antes, recalcula o tamanho do mapa:
-    // dentro de painéis que crescem depois (Centro de Operações), o Leaflet achava o mapa pequeno e afastava demais.
+    // Enquadra a cidade e os pontos mostrados, sem afastar demais. Sempre que o mapa muda de tamanho
+    // (painel do Centro de Operações cresce depois de carregar), recalcula e enquadra de novo.
     const enquadrar = () => {
       map.invalidateSize()
       const todos: [number, number][] = [[centro.latitude, centro.longitude], ...pontos.map(p => [p.lugar.coordinates.latitude, p.lugar.coordinates.longitude] as [number, number])]
@@ -20,15 +21,16 @@ function Enquadrar({ centro, pontos }: { centro: Coordinates; pontos: PontoMapa[
     }
     enquadrar()
     const depois = setTimeout(enquadrar, 350)
-    return () => clearTimeout(depois)
+    let tamanho = ''
+    const obs = typeof ResizeObserver === 'function' ? new ResizeObserver(([e]) => {
+      const novo = `${Math.round(e.contentRect.width)}x${Math.round(e.contentRect.height)}`
+      if (tamanho && novo !== tamanho) enquadrar()
+      tamanho = novo
+    }) : null
+    obs?.observe(map.getContainer())
+    return () => { clearTimeout(depois); obs?.disconnect() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, chave])
-  useEffect(() => {
-    if (typeof ResizeObserver !== 'function') return
-    const obs = new ResizeObserver(() => map.invalidateSize())
-    obs.observe(map.getContainer())
-    return () => obs.disconnect()
-  }, [map])
   return null
 }
 
@@ -43,14 +45,16 @@ export default function CityRealMap({ centro, pontos: todosPontos, eventos, rada
   }), [])
   return <div className="cidade-mapa">
     <MapContainer center={[centro.latitude, centro.longitude]} zoom={14} minZoom={4} maxZoom={18} scrollWheelZoom className="h-full w-full">
+      <FiltroMapaFelipe />
       <Enquadrar centro={centro} pontos={pontos} />
-      <TileLayer className="cidade-base" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19}
+      <TileLayer className="mapa-felipe" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19}
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' />
       {radarUrl && <TileLayer url={radarUrl} opacity={0.7} maxNativeZoom={7} maxZoom={17} zIndex={5} eventHandlers={{ tileerror: onRadarFalhou }}
         attribution='Radar: <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a>' />}
       {pontos.map(p => <Marker key={p.lugar.id} position={[p.lugar.coordinates.latitude, p.lugar.coordinates.longitude]} icon={icones[p.tipo]} title={`${p.lugar.name} · ${p.rotulo}`}>
         <Popup minWidth={160} maxWidth={230}><strong>{p.lugar.name}</strong><p>{p.rotulo}{p.lugar.address ? ` · ${p.lugar.address}` : ''}</p></Popup>
       </Marker>)}
+      {eventos.map(e => <Circle key={`area-${e.evento.id}`} center={e.posicao} radius={4000} pathOptions={{ color: e.cor, weight: 2, fillColor: e.cor, fillOpacity: 0.3 }} interactive={false} />)}
       {eventos.map(e => <Marker key={e.evento.id} position={e.posicao} icon={e.cor === CORES.critico ? icones.critico : icones.atencao} zIndexOffset={800} title={e.evento.title}>
         <Popup minWidth={170} maxWidth={240}><strong>{e.evento.title}</strong><p>NASA EONET · {e.evento.categories.map(c => c.title).join(', ')}</p><p>A {Math.round(e.km)} km · observado há {e.dias < 1 ? 'menos de 1 dia' : `${Math.round(e.dias)} dia(s)`}</p></Popup>
       </Marker>)}
