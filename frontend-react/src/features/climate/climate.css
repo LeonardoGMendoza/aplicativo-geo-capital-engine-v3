@@ -74,10 +74,33 @@
 .nino-passos .quente { color: #dc2626; }
 .nino-passos .frio { color: #2563eb; }
 .nino-mapa .nino-base { filter: invert(1) hue-rotate(180deg) grayscale(.6) brightness(.55); }
-.nino-mapa { height: 360px; margin-top: 8px; border-radius: 10px; overflow: hidden; border: 1px solid #1f2937; background: #111827; }
+.nino-mapa { position: relative; height: 360px; margin-top: 8px; border-radius: 10px; overflow: hidden; border: 1px solid #1f2937; background: #111827; }
 .nino-legenda { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px; color: #4b657d; }
 .nino-legenda i { flex: 0 1 220px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #1e3a8a, #60a5fa, #f8fafc, #f87171, #991b1b); }
+/* Animação do satélite (filme dos últimos 60 dias) */
+.nino-filme { position: absolute; left: 10px; bottom: 10px; z-index: 500; display: flex; align-items: center; gap: 10px; max-width: calc(100% - 20px); padding: 6px 10px; border-radius: 10px; background: #0b1220d9; color: #fff; font-size: 13px; }
+.nino-play { min-height: 32px; padding: 0 12px; border: 1px solid #ffffff55; border-radius: 8px; background: #0b8f7c; color: #fff; font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.nino-filme input[type=range] { width: 160px; min-width: 0; flex: 1 1 160px; accent-color: #f87171; }
+.nino-data { font-family: 'Exo 2', 'Segoe UI', system-ui, sans-serif; font-weight: 700; white-space: nowrap; }
+.nino-pulso { animation: nino-pulso 1.6s ease-in-out infinite; }
+@keyframes nino-pulso { 50% { stroke-opacity: .35; stroke-width: 4px; } }
+/* Desenho "causa → efeito" animado */
+.nino-calor { animation: nino-calor 2.4s ease-in-out infinite; }
+@keyframes nino-calor { 50% { fill: #fecaca; stroke-width: 3.5px; } }
+.nino-onda { animation: nino-onda 3s linear infinite; }
+.nino-onda.lenta { animation-duration: 4.5s; }
+@keyframes nino-onda { to { transform: translateX(60px); } }
+.nino-fluxo { stroke-dasharray: 10 7; animation: nino-fluxo 1s linear infinite; }
+@keyframes nino-fluxo { to { stroke-dashoffset: -17; } }
+.nino-sol { transform-box: fill-box; transform-origin: center; animation: nino-sol 8s linear infinite; }
+@keyframes nino-sol { to { transform: rotate(360deg); } }
+.nino-gota { animation: nino-gota 1s linear infinite; }
+@keyframes nino-gota { from { transform: translateY(-4px); opacity: 0; } 30% { opacity: 1; } to { transform: translateY(12px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .nino-pulso, .nino-calor, .nino-onda, .nino-fluxo, .nino-sol, .nino-gota { animation: none; }
+  .nino-particula { display: none; }
+}
 .nino-rotulo { font-size: 12px; font-weight: 600; }
 .nino-windy { display: block; width: 100%; height: 420px; border: 0; border-radius: 10px; background: #0f172a; }
 .nino-desenho { display: block; width: 100%; max-width: 680px; height: auto; margin-top: 6px; font-family: 'Segoe UI', system-ui, sans-serif; }
-@media (max-width: 640px) { .nino-mapa { height: 280px; } .nino-windy { height: 340px; } }
+@media (max-width: 640px) { .nino-mapa { height: 300px; } .nino-filme input[type=range] { width: 90px; flex-basis: 90px; } .nino-filme { font-size: 12px; gap: 6px; } .nino-recente { display: none; } .nino-windy { height: 340px; } }

@@ -9,6 +9,13 @@ export function diasAtras(dias: number, agora = new Date()) {
   const d = new Date(Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), agora.getUTCDate() - dias))
   return d.toISOString().slice(0, 10)
 }
+// Animação: imagens reais de satélite dos últimos ~60 dias, uma a cada 5 dias (mais antiga → mais nova).
+export const ANIMACAO_PASSO_DIAS = 5
+export const ANIMACAO_QUADROS = 13
+export function datasAnimacao(atraso: number, agora = new Date()) {
+  return Array.from({ length: ANIMACAO_QUADROS }, (_, i) => diasAtras(atraso + ANIMACAO_PASSO_DIAS * (ANIMACAO_QUADROS - 1 - i), agora))
+}
+export const dataBR = (data: string) => data.split('-').reverse().join('/')
 // Região Niño 3.4 (5°N–5°S, 170°O–120°O): é onde os cientistas medem o El Niño.
 export const NINO34: [[number, number], [number, number]] = [[-5, -170], [5, -120]]
 
