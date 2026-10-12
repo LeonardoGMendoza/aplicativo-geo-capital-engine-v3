@@ -12,7 +12,9 @@ def ponto(tipo, nivel, lon, lat, **extra):
 EXEMPLO = {"type": "FeatureCollection", "features": [
     ponto("FL", "Orange", 12.5, 45.4, eventid=10, name="Flood in Italy", country="Italy", fromdate="2026-10-09T00:00:00",
           url={"report": "https://www.gdacs.org/report.aspx?eventid=10&eventtype=FL"}),
-    ponto("TC", "Red", -75.0, 25.0, eventid=20, name="Hurricane X", country="Bahamas", fromdate="2026-10-08T00:00:00"),
+    ponto("TC", "Red", -75.0, 25.0, eventid=20, name="Hurricane X", country="Bahamas", fromdate="2026-10-08T00:00:00",
+          severitydata={"severity": 185, "severitytext": "Category 3 (maximum wind speed of 185 km/h)", "severityunit": "km/h"},
+          description="Hurricane X\n  over the Bahamas", affectedcountries=[{"countryname": "Bahamas"}, {"countryname": "Cuba"}, {"nada": 1}]),
     ponto("EQ", "Green", 140.0, 36.0, eventid=30),                       # verde: fica de fora
     ponto("XX", "Red", 0, 0, eventid=40),                                 # tipo desconhecido: fora
     ponto("WF", "Orange", -60.0, -10.0, eventid=50, fromdate="2026-10-10T00:00:00", country="Brazil"),
@@ -36,6 +38,15 @@ class Parse(unittest.TestCase):
         self.assertTrue(italia["link"].startswith("https://www.gdacs.org/"))
         furacao = next(a for a in parse(EXEMPLO) if a["tipo"] == "TC")
         self.assertIn("eventid=20", furacao["link"])  # sem url no evento: monta o link do relatório
+
+    def test_detalhes_para_mostrar_no_site(self):
+        furacao = next(a for a in parse(EXEMPLO) if a["tipo"] == "TC")
+        self.assertEqual(furacao["severidade"], "Category 3 (maximum wind speed of 185 km/h)")
+        self.assertEqual(furacao["descricao"], "Hurricane X over the Bahamas")
+        self.assertEqual(furacao["paisesAfetados"], ["Bahamas", "Cuba"])
+        italia = next(a for a in parse(EXEMPLO) if a["tipo"] == "FL")
+        self.assertIsNone(italia["severidade"])
+        self.assertEqual(italia["paisesAfetados"], [])
 
     def test_formato_errado_falha(self):
         with self.assertRaises(ValueError):

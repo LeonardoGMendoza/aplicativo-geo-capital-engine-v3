@@ -1,5 +1,5 @@
 // Mapa mundial: radar de chuva (RainViewer, público, sem chave) + alertas de desastre (GDACS via nossa API).
-export type AlertaGlobal = { id: string; tipo: string; tipoNome: string; nivel: 'vermelho' | 'laranja'; nome: string; pais: string | null; inicio: string | null; fim: string | null; latitude: number; longitude: number; link: string | null }
+export type AlertaGlobal = { id: string; tipo: string; tipoNome: string; nivel: 'vermelho' | 'laranja'; nome: string; pais: string | null; inicio: string | null; fim: string | null; latitude: number; longitude: number; link: string | null; severidade?: string | null; descricao?: string | null; paisesAfetados?: string[] }
 export type RespostaAlertas = { estado: 'sucesso' | 'antigo'; fonte: string; fonteUrl: string; obtidoEm: string; alertas: AlertaGlobal[] }
 export type Radar = { tileUrl: (cor: number) => string; horario: Date }
 type Options = { baseUrl?: string; signal?: AbortSignal; fetcher?: typeof fetch }

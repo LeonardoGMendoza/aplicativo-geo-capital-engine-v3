@@ -87,3 +87,36 @@ test('screens open with real NASA data; simulation only via "Modo demonstração
   assert.match(panel, />Modo demonstração<\/Button>/)
   assert.match(panel, />Dados reais \(NASA\)<\/Button>/)
 })
+
+test('alert details open inside the site; GDACS only as a small official-source link', () => {
+  const w = source('features/climate/WorldWeather.tsx')
+  assert.match(w, /aria-expanded=\{aberto === a\.id\}/)
+  assert.match(w, /Ver no mapa/)
+  assert.match(w, /fonte oficial \(GDACS\)/)
+  assert.doesNotMatch(w, />detalhes ↗</)
+  assert.doesNotMatch(source('features/climate/WorldWeatherMap.tsx'), /Relatório no GDACS/)
+})
+
+async function loadNino() {
+  const js = ts.transpileModule(source('features/climate/elNino.ts'), { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText
+  return import('data:text/javascript;base64,' + Buffer.from(js).toString('base64'))
+}
+
+test('El Niño: NASA sea-temperature anomaly tiles by date, Niño 3.4 box and Windy layers', async () => {
+  const { urlAnomaliaMar, diasAtras, NINO34, urlWindy } = await loadNino()
+  assert.equal(diasAtras(2, new Date('2026-10-11T23:00:00Z')), '2026-10-09')
+  assert.equal(diasAtras(12, new Date('2026-03-05T01:00:00Z')), '2026-02-21')
+  assert.equal(urlAnomaliaMar('2026-10-09'), 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GHRSST_L4_MUR_Sea_Surface_Temperature_Anomalies/default/2026-10-09/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png')
+  assert.deepEqual(NINO34, [[-5, -170], [5, -120]])
+  for (const camada of ['wind', 'temp', 'rain']) assert.match(urlWindy(camada), new RegExp(`^https://embed\\.windy\\.com/embed2\\.html\\?.*overlay=${camada}`))
+})
+
+test('Clima page tells the El Niño story first, then the real forecast, city map and world alerts', () => {
+  const page = source('features/climate/ClimatePage.tsx')
+  const ordem = ['<ElNinoSection />', '<ClimatePanel />', '<CityLiveMap />', '<WorldWeather />'].map(t => page.indexOf(t))
+  assert.ok(ordem.every((v, i) => v > 0 && (i === 0 || v > ordem[i - 1])), 'ordem: causa → efeito → cidade → mundo')
+  const nino = source('features/climate/ElNinoSection.tsx')
+  assert.match(nino, /CPTEC\/INPE/); assert.match(nino, /<title id="nino-desenho-titulo">/)
+  const cidade = source('features/climate/CityLiveMap.tsx')
+  assert.match(cidade, /DADOS REAIS/); assert.match(cidade, /Não confirma risco nem rota segura/)
+})

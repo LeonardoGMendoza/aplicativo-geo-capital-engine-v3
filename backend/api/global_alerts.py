@@ -29,8 +29,11 @@ class FonteIndisponivel(Exception):
     pass
 
 
-def _texto(valor):
-    return str(valor).strip() if valor not in (None, "") else None
+def _texto(valor, limite=300):
+    if valor in (None, ""):
+        return None
+    texto = " ".join(str(valor).split())  # sem quebras nem HTML solto: só texto
+    return texto[:limite] if texto else None
 
 
 def parse(geojson):
@@ -67,6 +70,11 @@ def parse(geojson):
             "inicio": _texto(props.get("fromdate")), "fim": _texto(props.get("todate")),
             "latitude": round(lat, 4), "longitude": round(lon, 4),
             "link": link if isinstance(link, str) and link.startswith("https://") else None,
+            # Detalhes para mostrar no próprio site (quando o GDACS informa)
+            "severidade": _texto((props.get("severitydata") or {}).get("severitytext") if isinstance(props.get("severitydata"), dict) else None, 200),
+            "descricao": _texto(props.get("description"), 400),
+            "paisesAfetados": [_texto(p.get("countryname"), 60) for p in props.get("affectedcountries", []) if isinstance(p, dict) and _texto(p.get("countryname"), 60)][:10]
+            if isinstance(props.get("affectedcountries"), list) else [],
         })
     alertas.sort(key=lambda a: a["inicio"] or "", reverse=True)  # mais recentes primeiro
     alertas.sort(key=lambda a: a["nivel"] != "vermelho")  # vermelhos no topo (ordenação estável)
