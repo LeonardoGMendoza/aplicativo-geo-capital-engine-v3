@@ -1,28 +1,60 @@
 # Omni-EcoRescue V3
 
-## MVP React atual — 10/10/2026
+## Aplicação atual (React + API) — outubro/2026
 
-Aplicação React/TypeScript independente, com API FastAPI, para transformar dados e alertas em contexto de apoio à decisão humana. O painel Streamlit legado permanece preservado e não tem paridade completa com a aplicação React.
+**No ar:** central em https://omni.sandlj.com.br e tela do cidadão (celular) em https://omni.sandlj.com.br/cidadao.
 
-| Módulo React | Estado e limites |
+Aplicação React/TypeScript com API FastAPI que junta dados públicos reais em um só lugar para **apoiar** a decisão humana (Defesa Civil, empresas e comunidades). Ela não faz previsão própria e não substitui alerta oficial. Toda tela abre com **dados reais**; o cenário fictício desenhado pela equipe só aparece no botão **"Modo demonstração"**, marcado como simulação.
+
+| Tela | O que mostra (fonte real) |
 |---|---|
-| Centro de Operações e Alertas | Dashboard demonstrativo; Alertas leva à única central existente |
-| Explorador NASA EONET | Consulta real, mapa e lista; eventos não confirmam risco |
-| Visão Corporativa | Triagem dos 11 ativos de referência, evento mais próximo a menos de 600 km |
-| Impacto Social | Consulta individual do ativo associado; comunidades sem localização/população verificadas |
-| Evacuação e Abrigos | Oito pontos de referência, distância em linha reta e checklist persistente; sem confirmação de vagas ou rota segura |
-| Inteligência (IA) | Evolução futura; Oracle RAG não integrado ao React |
-| Histórico e Configurações | Rotas reservadas, temporariamente ocultas no menu |
+| Centro de Operações | Indicadores, mapa da cidade, alertas, rota de evacuação, abrigos e saúde, satélite e radar (Open-Meteo, NASA EONET, GDACS/ONU, OpenStreetMap, OSRM, NASA GIBS, RainViewer) |
+| Alertas | Lista única de alertas reais: calor/chuva previstos, eventos NASA a até 300 km de uma capital e alertas laranja/vermelho da ONU, com orientação e aviso por WhatsApp |
+| Mapa de Riscos | Eventos abertos da NASA EONET no mundo, com nomes em português e aviso à comunidade |
+| Clima ao vivo | El Niño (anomalia do mar, NASA GHRSST), previsão de calor e chuva, radar e alertas mundiais |
+| Visão Corporativa | 11 ativos de referência × eventos NASA (raio de 600 km), recomendação da IA e cotações das empresas (Yahoo Finance) |
+| Impacto Social | Comunidades vizinhas aos ativos de referência, recomendação da IA e aviso por WhatsApp |
+| Evacuação e Abrigos | Abrigos, hospitais e UBS perto de qualquer endereço (OpenStreetMap), checklist da família e telefones oficiais |
+| QR Code do cidadão | Cartaz com QR code: o cidadão acha o abrigo mais perto e se cadastra para alertas no WhatsApp |
+| Inteligência (IA) | Perguntas respondidas com trechos de documentos oficiais (RAG: embeddings Cohere + Oracle OCI Generative AI), sempre citando PDF e página |
 
-Não há previsão própria, confirmação automática de risco ou acionamento operacional de emergência no React. Snapshot desatualizado/incompatível bloqueia a triagem; o estado registrado na consulta não garante disponibilidade atual. NASA e tiles OpenStreetMap podem falhar; listas/detalhes permanecem disponíveis quando o mapa falha. Não há modo offline.
+### Como funciona o aviso por WhatsApp
 
-Execução reproduzível: [frontend React](frontend-react/README.md) (Node 22.18+, npm ci) e [API Python](backend/api/README.md) (validada com Python 3.14.3, requirements-lock.txt). Frontend local em http://127.0.0.1:5173 e API em http://127.0.0.1:8000; comandos completos e configuração segura estão nesses documentos.
+O operador escolhe um alerta, pode pedir a recomendação da IA e digita o **código do operador**. A API monta a mensagem a partir de um **modelo fixo** (versão empresa ou comunidade, com o nível calculado pela distância e pela data do evento e o link do app do cidadão) e entrega ao n8n, que só confere o token e envia pelo WAHA. A IA não escreve a mensagem: nada de endereço ou ordem inventada. Os botões "ordem de bloqueio" e "acionar lideranças" são simulação e não enviam nada.
 
-Validação atual: 75 testes frontend e 26 backend aprovados, TypeScript e build aprovados. Relatórios QA versionados são registros históricos; capturas/JSONs citados, ZIP e extração temporária não integram o PR. Nenhum congelamento ou publicação é declarado por este README.
+### Segurança e privacidade
+
+- Nenhuma chave fica no código. As credenciais ficam só no servidor, em `deploy/ia.env` (ignorado pelo Git e gerado por `deploy/gerar_ia_env.py`): `COHERE_API_KEY`, `OCI_*`, `CADASTROS_TOKEN`, `CADASTRO_WEBHOOK_URL`, `N8N_ALERTA_URL` e `OPERADOR_CODIGO`.
+- A API roda em Docker e só aceita conexões locais (`127.0.0.1:8010`), atrás do nginx com HTTPS.
+- Cadastro do cidadão (LGPD): só celular, CEP e nome opcional, com aceite explícito e opção de sair. Fica em SQLite no nosso servidor; a lista só sai com o token do servidor.
+- Limites contra abuso: perguntas à IA por minuto, cadastros por hora e envios de WhatsApp por hora.
+
+### Como rodar localmente
+
+```bash
+# API (Python 3.14, na raiz do repositório)
+python -m venv backend/api/.venv
+backend/api/.venv/Scripts/python -m pip install -r backend/api/requirements-lock.txt   # Linux/Mac: backend/api/.venv/bin/python
+backend/api/.venv/Scripts/python -m uvicorn backend.api.main:app --host 127.0.0.1 --port 8000
+
+# Telas (Node 22.18+), em outro terminal
+cd frontend-react && npm ci && npm run dev    # http://127.0.0.1:5173
+```
+
+Sem `deploy/ia.env` tudo funciona, menos a IA e o WhatsApp, que avisam que não estão configurados. Testes: `cd frontend-react && npm test && npm run typecheck` e `python -m unittest discover -s backend/api/tests -t .`. Publicação no servidor: `bash deploy/deploy.sh`.
+
+### Limites conhecidos (honestos)
+
+- Critérios do protótipo, não oficiais: calor a partir de 35 °C, chuva forte a partir de 50 mm/dia, eventos NASA dos últimos 30 dias.
+- Os 11 ativos são uma carteira de referência (empresas reais, posições aproximadas); uma empresa cliente cadastraria os próprios ativos.
+- A rota de evacuação é a mais curta pelas ruas (OSRM) e não sabe de alagamento ou bloqueio.
+- Abrigos do OpenStreetMap são mapeados por voluntários: não confirmam vaga nem funcionamento.
+- Cotações com atraso de até 15 minutos; preço e evento aparecem lado a lado, sem afirmar causa.
+- Os dados dependem da disponibilidade das fontes públicas; quando uma cai, a tela avisa e mostra a última resposta boa quando existe.
 
 ## Painel legado Streamlit
 
-As seções seguintes documentam o painel legado e suas integrações/protótipos. Referências a Oracle, Yahoo Finance, WhatsApp ou ações desse painel não significam integração com o React.
+As seções seguintes documentam o painel legado (Streamlit), primeira versão do projeto. A aplicação atual (acima) já traz para o React a NASA, a IA da Oracle, as cotações do Yahoo Finance e o WhatsApp.
 
 **Versão legada publicada (Streamlit):** [https://aplicativo-geo-capital-engine-3k7pun8ggkjwsyvgb2pgvm.streamlit.app/](https://aplicativo-geo-capital-engine-3k7pun8ggkjwsyvgb2pgvm.streamlit.app/)
 
