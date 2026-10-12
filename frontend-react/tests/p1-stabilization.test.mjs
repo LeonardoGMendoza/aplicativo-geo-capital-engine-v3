@@ -27,6 +27,8 @@ export function renderExpiredCorporateContext() {
     './components/CorporateAssetDetails': { CorporateAssetDetails: () => null },
     './screening': { completed, visibleAssets: assets => assets },
     './useCorporateScreening': { useCorporateScreening: () => ({ result: blocked, loading: false, error: null }) },
+    // O assistente automático (topo da tela) tem testes próprios; aqui só o cabeçalho histórico importa.
+    '@/features/alerts/AssistenteRisco': { AssistenteRisco: () => null },
   }
   const compiled = ts.transpileModule(source('features/corporate/CorporatePage.tsx'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText
   vm.runInNewContext(compiled, { module, exports: module.exports, require: name => name in dependencies ? dependencies[name] : require(name) })
