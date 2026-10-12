@@ -3,14 +3,15 @@
 type Options = { baseUrl?: string; signal?: AbortSignal; fetcher?: typeof fetch }
 export type PedidoWhatsApp = {
   codigo: string; destino: string; local: string; evento: string; recomendacao?: string | null; origem?: string
-  publico: 'empresa' | 'comunidade'; km: number; observadoEm: string | null; categoria?: string
+  publico: 'empresa' | 'comunidade'; km: number | null; observadoEm: string | null; categoria?: string
 }
 export type RespostaEnvio = { mensagem: string; nivel: string | null; previa: string | null }
 
 /** Pergunta para a IA, até 300 caracteres (limite da API). */
-export function perguntaDoAlerta(a: { evento: string; categoria: string; km: number; ativo: string; comunidade: string }, perfil: 'empresa' | 'comunidade') {
+export function perguntaDoAlerta(a: { evento: string; categoria: string; km: number | null; ativo: string; comunidade: string }, perfil: 'empresa' | 'comunidade') {
   const foco = perfil === 'empresa' ? 'proteger a operação, os trabalhadores e a comunidade vizinha' : 'proteger a comunidade (saúde, evacuação e abrigo)'
-  const texto = `${a.categoria || 'Evento'} "${a.evento}" a ${Math.round(a.km)} km de ${a.ativo}, perto de ${a.comunidade || 'comunidades vizinhas'}. O que fazer agora para ${foco}?`
+  const onde = a.km !== null && a.ativo ? ` a ${Math.round(a.km)} km de ${a.ativo},` : ' registrado pela NASA'
+  const texto = `${a.categoria || 'Evento'} "${a.evento}"${onde} perto de ${a.comunidade || 'comunidades vizinhas'}. O que fazer agora para ${foco}?`
   return texto.length <= 300 ? texto : texto.slice(0, 297) + '…'
 }
 

@@ -105,8 +105,10 @@ def idade_dias(observado_em, agora=None):
 
 def calcular_nivel(km, dias):
     """Regra fixa do protótipo (não é alerta oficial): perto e recente = AGIR; médio = ATENÇÃO; longe ou antigo = MONITORAR."""
-    if km is None or dias is None:
+    if dias is None:
         return "MONITORAR"
+    if km is None:  # evento escolhido no Mapa de Riscos, sem ativo de referência: só a idade conta
+        return "ATENÇÃO" if dias <= 3 else "MONITORAR"
     if km <= 50 and dias <= 3:
         return "AGIR"
     if km <= 200 and dias <= 7:
@@ -127,7 +129,7 @@ def montar_mensagem(p, agora=None):
     """Texto final do WhatsApp. Sem IA aqui: modelo fixo + recomendação da Oracle (que já cita PDF e página)."""
     dias = idade_dias(p.observadoEm, agora)
     nivel = calcular_nivel(p.km, dias)
-    distancia = f"a {round(p.km)} km" if p.km is not None else "distância não informada"
+    distancia = f" · a {round(p.km)} km" if p.km is not None else ""
     evento, local = _texto(p.evento, 300), _texto(p.local, 200)
     rec = _linhas(re.sub(r"\*\*", "", p.recomendacao or ""), 900)
     categoria = f" ({_texto(p.categoria, 60)})" if p.categoria else ""
@@ -135,7 +137,7 @@ def montar_mensagem(p, agora=None):
         linhas = [
             "🏭 *ALERTA OPERACIONAL · Omni-EcoRescue*",
             f"*Ativo:* {local}",
-            f"*Evento:* {evento}{categoria} · {distancia}",
+            f"*Evento:* {evento}{categoria}{distancia}",
             f"*Última observação ({_texto(p.origem, 40)}):* {_quando(dias, p.observadoEm)}",
             f"*Nível:* {nivel} · {NIVEIS[nivel]}",
         ]
@@ -146,7 +148,7 @@ def montar_mensagem(p, agora=None):
     else:
         linhas = [
             f"🚨 *AVISO Omni-EcoRescue* · {local}",
-            f"{evento}{categoria} · {distancia}. Última observação: {_quando(dias, p.observadoEm)}.",
+            f"{evento}{categoria}{distancia}. Última observação: {_quando(dias, p.observadoEm)}.",
             "",
             f"*Nível: {nivel}* · {NIVEIS[nivel]}",
         ]

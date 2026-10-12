@@ -9,6 +9,7 @@ import { CorporateAssetList } from './components/CorporateAssetList'
 import { CorporateAssetDetails } from './components/CorporateAssetDetails'
 import { completed, visibleAssets } from './screening'
 import { useCorporateScreening } from './useCorporateScreening'
+import { AssistenteRisco } from '@/features/alerts/AssistenteRisco'
 
 const GeographicMap = lazy(() => import('../nasa/NasaGeographicMap'))
 const states = { success: 'Triagem concluída', empty: 'Consulta completa sem correspondências', partial: 'Resultado parcial', blocked: 'Consulta bloqueada · atualize os eventos NASA', unavailable: 'Fonte indisponível' }
@@ -46,6 +47,7 @@ export function CorporatePage() {
   function refreshNasa() { screening.invalidate(); nasa.refresh() }
   return <div className="min-w-0 space-y-5">
     <header><p className="text-xs font-semibold text-[#25d3b6]">OMNI-ECORESCUE / V3</p><h1 className="mt-1 text-2xl font-semibold">Visão Corporativa</h1><p className="mt-2 text-sm text-[#b5d2e2]">Ativos de referência e triagem geográfica com eventos NASA.</p></header>
+    <AssistenteRisco perfil="empresa" />
     <section className="light-panel space-y-3 p-4" aria-labelledby="corporate-context"><h2 id="corporate-context" className="text-base font-semibold">Contexto da consulta NASA</h2>
       <p className="text-sm">Proximidade geográfica não confirma risco ou segurança. Decisões exigem avaliação humana.</p>
       <p className="text-xs text-muted-foreground">Cadastro do MVP sem verificação operacional · eventos reais NASA EONET · sem indicadores simulados nesta tela.</p>

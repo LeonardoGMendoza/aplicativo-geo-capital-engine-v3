@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { BellRing, CloudSun, Database, ExternalLink, Flame, House, Map, Search, Stethoscope, TriangleAlert } from 'lucide-react'
+import { BellRing, BrainCircuit, Building2, CloudSun, Database, ExternalLink, FileText, Flame, HeartHandshake, House, Map, MessageSquare, Search, ShieldCheck, Stethoscope, TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -9,6 +9,7 @@ import { RiskBadge } from '@/components/shared/RiskBadge'
 import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import { MetricCard } from './components/MetricCard'
 import { PanelHeading } from './components/PanelHeading'
+import { RealMonitoring } from './components/RealMonitoring'
 import { itensDaPrevisao, itensGdacs, itensNasa, orientacoes, priorizar, tituloOrientacao } from './data/real'
 import type { CidadePrevista, ItemReal } from './data/real'
 import { useNasaSession } from '@/features/nasa/NasaSession'
@@ -18,7 +19,10 @@ import { buscarAlertasGlobais, buscarRadar, RADAR_COR_TV } from '@/features/clim
 import type { AlertaGlobal } from '@/features/climate/globalWeather'
 import { cidadesMapa, CORES, eventosPerto, pontosDoMapa, RAIO_EVENTOS_KM } from '@/features/climate/cityMap'
 import type { PontoMapa } from '@/features/climate/cityMap'
-import { geocode, getNearbyPlaces } from '@/features/shelters/places'
+import { geocode, getNearbyPlaces, routeLinks } from '@/features/shelters/places'
+import { useAlertasAtivos } from '@/features/alerts/useAlertasAtivos'
+import { buscarResumo } from '@/features/citizen/cadastroAlertas'
+import type { Resumo } from '@/features/citizen/cadastroAlertas'
 import type { Coordinates } from '@/features/shelters/places'
 import '@/features/climate/climate.css'
 const CityRealMap = lazy(() => import('@/features/climate/CityRealMap'))
@@ -46,11 +50,15 @@ export function RealOperations({ onDemo }: { onDemo: () => void }) {
   const [aba, setAba] = useState<'todos' | 'brasil' | 'mundo'>('todos')
   const [filtro, setFiltro] = useState('')
   const gatilho = useRef<HTMLElement | null>(null)
+  const ativos = useAlertasAtivos()
+  const [cadastros, setCadastros] = useState<Estado<Resumo>>(vazio)
+  const [resumoAberto, setResumoAberto] = useState(false)
 
   useEffect(() => {
     const abort = new AbortController()
     buscarPrevisoes([...cidadesCalor, ...cidadesChuva], { signal: abort.signal }).then(d => !abort.signal.aborted && setPrevisao({ dados: d, erro: false })).catch(() => !abort.signal.aborted && setPrevisao({ dados: null, erro: true }))
     buscarAlertasGlobais({ signal: abort.signal }).then(r => !abort.signal.aborted && setGdacs({ dados: r.alertas, erro: false })).catch(() => !abort.signal.aborted && setGdacs({ dados: null, erro: true }))
+    buscarResumo({ signal: abort.signal }).then(r => !abort.signal.aborted && setCadastros({ dados: r, erro: false })).catch(() => !abort.signal.aborted && setCadastros({ dados: null, erro: true }))
     buscarRadar({ signal: abort.signal }).then(r => !abort.signal.aborted && setRadarUrl(r.tileUrl(RADAR_COR_TV))).catch(() => {})
     return () => abort.abort()
   }, [])
@@ -149,7 +157,7 @@ export function RealOperations({ onDemo }: { onDemo: () => void }) {
       </section>
       <section className="light-panel" aria-label="Abrigos e saúde mais perto">
         <PanelHeading title="Abrigos e saúde perto" subtitle={`${cidade.nome} · OpenStreetMap`} icon={House} />
-        <ul className="space-y-1 px-2 pb-2">{maisPerto.map(p => <li key={p.lugar.id} className="flex items-start gap-2 rounded-md p-2" style={{ background: '#f7fafc' }}><span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-white" style={{ background: p.cor }}>{p.tipo === 'casa' ? <House className="size-3.5" /> : <Stethoscope className="size-3.5" />}</span><div className="min-w-0 flex-1"><p className="text-xs font-semibold leading-tight">{p.lugar.name}</p><p className="mt-0.5 text-xs text-muted-foreground">{p.rotulo} · {p.lugar.distanceKm.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km do centro</p></div><a className="text-link" href={p.lugar.osmUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ver ${p.lugar.name} no OpenStreetMap`}><ExternalLink className="size-3.5" /></a></li>)}</ul>
+        <ul className="space-y-1 px-2 pb-2">{maisPerto.map(p => <li key={p.lugar.id} className="flex items-start gap-2 rounded-md p-2" style={{ background: '#f7fafc' }}><span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-white" style={{ background: p.cor }}>{p.tipo === 'casa' ? <House className="size-3.5" /> : <Stethoscope className="size-3.5" />}</span><div className="min-w-0 flex-1"><p className="text-xs font-semibold leading-tight">{p.lugar.name}</p><p className="mt-0.5 text-xs text-muted-foreground">{p.rotulo} · {p.lugar.distanceKm.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km do centro</p></div><a className="rounded bg-[#e4f0fb] px-2 py-1 text-xs font-medium text-[#075fb3]" href={routeLinks(p.lugar.coordinates).google} target="_blank" rel="noopener noreferrer" aria-label={`Rota até ${p.lugar.name}`}>Rota</a></li>)}</ul>
         {lugares.dados && maisPerto.length === 0 && <p className="px-3 pb-3 text-xs text-muted-foreground">Nenhum local mapeado perto do centro.</p>}
         {!lugares.dados && <p role="status" className="px-3 pb-3 text-xs text-muted-foreground">{lugares.erro ? 'OpenStreetMap indisponível agora.' : 'Buscando…'}</p>}
         <p className="px-3 pb-3 text-xs text-muted-foreground">Mapeado por voluntários: não confirma vaga nem funcionamento. <Link to="/abrigos" className="underline">Lista completa</Link></p>
@@ -160,10 +168,58 @@ export function RealOperations({ onDemo }: { onDemo: () => void }) {
       </section>
     </div>
 
-    <section className="light-panel mt-3 flex flex-wrap items-center justify-between gap-3 p-3 text-xs" aria-label="Painéis sem fonte real">
-      <p className="max-w-3xl text-muted-foreground"><strong className="text-foreground">Visão Corporativa, Impacto Social e número de pessoas</strong> não têm fonte pública em tempo real, por isso aparecem só no Modo demonstração (dados fictícios).</p>
-      <Button size="sm" variant="outline" onClick={onDemo}>Ver Modo demonstração</Button>
+    <div className="bottom-layout">
+      <section className="light-panel" aria-label="Visão corporativa com dados reais"><PanelHeading title="Visão Corporativa (B2B)" subtitle={`${ativos.catalogo?.assets.length ?? 11} ativos de referência × eventos NASA (raio 600 km)`} icon={Building2}><Link to="/corporativo" className="text-link">Ver análise</Link></PanelHeading>
+        <div className="grid grid-cols-2 gap-3 px-3 pb-3 sm:grid-cols-4">{[
+          { value: ativos.carregando ? '…' : ativos.erro ? '—' : ativos.alertas.length, text: 'Ativos com evento perto', color: '#cf2442', bg: '#fff0f3' },
+          { value: ativos.alertas[0] ? `${Math.round(ativos.alertas[0].distanceKm)} km` : ativos.carregando ? '…' : '—', text: 'Evento mais perto', color: '#ba7909', bg: '#fff7e8' },
+          { value: ativos.catalogo?.assets.length ?? '…', text: 'Ativos monitorados', color: '#056cd7', bg: '#edf5ff' },
+          { value: ativos.totalEventos?.toLocaleString('pt-BR') ?? '…', text: 'Eventos NASA no mundo', color: '#087f65', bg: '#e9f9f2' },
+        ].map(item => <div key={item.text} className="rounded px-2 py-2" style={{ background: item.bg, color: item.color }}><p className="text-xl font-bold">{item.value}</p><p className="mt-1 text-xs leading-tight">{item.text}</p><p className="mt-1 text-xs">Real</p></div>)}</div>
+        {ativos.alertas[0] && <p className="px-3 pb-3 text-xs text-muted-foreground">Mais perto: {ativos.alertas[0].event.title} → {ativos.alertas[0].asset.name}</p>}
+      </section>
+      <section className="light-panel" aria-label="Impacto social com dados reais"><PanelHeading title="Impacto Social (ESG)" subtitle="Comunidades de referência e cidadãos cadastrados" icon={HeartHandshake}><Link to="/comunidade" className="text-link">Ver comunidades</Link></PanelHeading>
+        <div className="grid grid-cols-2 gap-3 px-3 pb-3 sm:grid-cols-4">{[
+          { value: ativos.carregando ? '…' : ativos.erro ? '—' : new Set(ativos.alertas.map(m => m.asset.communityDescription)).size, text: 'Comunidades perto de evento', color: '#cf2442', bg: '#fff0f3' },
+          { value: cidadesForte ?? (previsao.erro ? '—' : '…'), text: 'Cidades com calor ou chuva forte', color: '#ba7909', bg: '#fff7e8' },
+          { value: numero(cadastros, d => d.total), text: 'Cadastrados no WhatsApp', color: '#056cd7', bg: '#edf5ff' },
+          { value: numero(cadastros, d => d.peloQr), text: 'Pelo QR code', color: '#087f65', bg: '#e9f9f2' },
+        ].map(item => <div key={item.text} className="rounded px-2 py-2" style={{ background: item.bg, color: item.color }}><p className="text-lg font-bold">{item.value}</p><p className="mt-1 text-xs leading-tight">{item.text}</p><p className="mt-1 text-xs">Real</p></div>)}</div>
+        <p className="px-3 pb-3 text-xs text-muted-foreground">Número de pessoas afetadas não tem fonte pública em tempo real: não mostramos estimativa inventada.</p>
+      </section>
+      <section className="light-panel" aria-label="Orientação e revisão humana"><PanelHeading title="Orientação e revisão humana" subtitle="Apoio à decisão · o humano decide" icon={BrainCircuit} />
+        <div className="px-3 pb-3">
+          <p className="flex items-center gap-2 text-[12px] font-bold text-[#0866d0]"><ShieldCheck className="size-6 shrink-0" />Revise o contexto antes de decidir.</p>
+          {prioritarios[0] ? <>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{orientacoes[prioritarios[0].tipo]}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Contexto: {prioritarios[0].titulo} · {prioritarios[0].local}</p>
+          </> : <p className="mt-2 text-xs text-muted-foreground">Sem alerta acima dos critérios agora.</p>}
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <button type="button" className="mini-select flex items-center gap-1" disabled={!prioritarios[0]} onClick={() => prioritarios[0] && abrir(prioritarios[0], true)}><MessageSquare className="size-3" />Prévia de aviso</button>
+            <Link to="/inteligencia" className="mini-select flex items-center gap-1"><BrainCircuit className="size-3" />Perguntar à IA</Link>
+            <button type="button" className="mini-select flex items-center gap-1" onClick={() => setResumoAberto(true)}><FileText className="size-3" />Ver resumo</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section className="complementary-section" aria-label="Informações complementares com dados reais"><h2 className="mb-3 text-lg font-semibold text-white">Informações complementares</h2>
+      <RealMonitoring cidade={cidade} previsoes={previsao.dados} radarUrl={radarUrl} />
     </section>
+
+    <Dialog open={resumoAberto} onOpenChange={setResumoAberto}><DialogContent className="max-h-[85dvh] overflow-y-auto text-foreground">
+      <DialogHeader><DialogTitle>Resumo da situação (dados reais)</DialogTitle><DialogDescription>Consultado agora em fontes públicas.</DialogDescription></DialogHeader>
+      <ul className="list-disc space-y-1 pl-5 text-sm">
+        <li>{itens.length} alertas: {itens.filter(i => i.nivel === 'critical').length} críticos, {itens.filter(i => i.nivel === 'high').length} altos, {itens.filter(i => i.nivel === 'attention').length} de atenção.</li>
+        <li>{cidadesForte ?? '—'} de 8 cidades com calor ou chuva forte nos próximos 3 dias (Open-Meteo).</li>
+        <li>{ativos.alertas.length} de {ativos.catalogo?.assets.length ?? 11} ativos de referência com evento NASA a menos de 600 km.</li>
+        <li>{gdacs.dados ? gdacs.dados.filter(a => a.nivel === 'vermelho').length : '—'} alertas vermelhos da ONU (GDACS) no mundo.</li>
+        <li>{cidade.nome}: {lugares.dados ? `${abrigos.length} abrigos/pontos de apoio e ${saude.length} hospitais/UBS mapeados` : 'locais indisponíveis agora'} (OpenStreetMap).</li>
+        <li>{cadastros.dados ? `${cadastros.dados.total} cidadãos cadastrados para alertas no WhatsApp (${cadastros.dados.peloQr} pelo QR code).` : 'Cadastros: indisponível agora.'}</li>
+      </ul>
+      <p className="text-xs text-muted-foreground">Critérios do protótipo. Não substitui alerta oficial; a decisão é humana.</p>
+      <DialogFooter><DialogClose asChild><Button>Fechar</Button></DialogClose></DialogFooter>
+    </DialogContent></Dialog>
 
     <Dialog open={detalhe !== null} onOpenChange={open => { if (!open) setDetalhe(null) }}><DialogContent className="max-h-[85dvh] overflow-y-auto text-foreground" onCloseAutoFocus={event => { event.preventDefault(); gatilho.current?.focus() }}>
       <DialogHeader><DialogTitle>{detalhe?.orientar ? 'Orientação geral' : 'Detalhes do alerta'}</DialogTitle><DialogDescription>Dados reais de fonte pública, consultados agora.</DialogDescription></DialogHeader>

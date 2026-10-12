@@ -54,3 +54,29 @@ test('Centro de Operações opens with real data and keeps the demo behind a but
   assert.doesNotMatch(real, /visualDemo|demoSnapshot|fictíci[oa] ·/, 'a versão real não usa dados do cenário fictício')
   assert.match(real, /buscarPrevisoes/); assert.match(real, /buscarAlertasGlobais/); assert.match(real, /getNearbyPlaces/); assert.match(real, /eventosPerto/)
 })
+
+test('real Centro de Operações also has the bottom row like the demo (B2B, ESG, human review) with real numbers', () => {
+  const real = source('features/operations/RealOperations.tsx')
+  for (const t of ['Visão Corporativa (B2B)', 'Impacto Social (ESG)', 'Orientação e revisão humana', 'Prévia de aviso', 'Ver resumo']) assert.ok(real.includes(t), t)
+  assert.match(real, /useAlertasAtivos\(\)/); assert.match(real, /buscarResumo/); assert.match(real, /routeLinks\(p.lugar.coordinates\)/)
+  assert.match(real, /não mostramos estimativa inventada/)
+})
+
+test('real "Informações complementares": satellite of the day, weather now, 24 h forecast and rain radar (no fictitious camera)', async () => {
+  const { urlSatelite, ladrilho, descreverTempo, diaAtras, buscarAgora } = await import('../src/features/operations/data/complementares.ts')
+  const url = urlSatelite({ latitude: -30.0346, longitude: -51.2177 }, '2026-10-11')
+  assert.match(url, /^https:\/\/gibs\.earthdata\.nasa\.gov\/wms\/epsg4326\/best\/wms\.cgi\?/)
+  assert.match(url, /BBOX=-31\.0346,-52\.5177,-29\.0346,-49\.9177/); assert.match(url, /TIME=2026-10-11/); assert.doesNotMatch(url, /key=/i)
+  const t = ladrilho({ latitude: 0, longitude: 0 }, 1)
+  assert.deepEqual([t.x, t.y, t.px, t.py], [1, 1, 0, 0])
+  assert.equal(descreverTempo(63), 'Chuva'); assert.equal(descreverTempo(null), 'Sem dado')
+  assert.equal(diaAtras(1, new Date('2026-10-12T06:00:00Z')), '2026-10-11')
+  let pedido = ''
+  const a = await buscarAgora({ latitude: -30, longitude: -51 }, { fetcher: async u => { pedido = u; return new Response(JSON.stringify({ current: { temperature_2m: 21.4, relative_humidity_2m: 80, precipitation: 1.2, wind_speed_10m: 14, weather_code: 61 }, hourly: { time: ['2026-10-12T08:00', '2026-10-12T09:00'], temperature_2m: [20, 22], precipitation: [0, 2.5] } })) } })
+  assert.match(pedido, /current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code/); assert.match(pedido, /forecast_hours=24/)
+  assert.equal(a.temperatura, 21.4); assert.deepEqual(a.horas[1], { hora: '09:00', temperatura: 22, chuva: 2.5 })
+  const comp = source('features/operations/components/RealMonitoring.tsx')
+  for (const t of ['SATÉLITE · NASA', 'Condições agora', 'Cidades monitoradas', 'Próximas 24 h', 'Radar de chuva agora']) assert.ok(comp.includes(t), t)
+  assert.doesNotMatch(comp, /fictíci|ReferenceScene|demoWater/)
+  assert.match(source('features/operations/RealOperations.tsx'), /<RealMonitoring cidade=\{cidade\}/)
+})

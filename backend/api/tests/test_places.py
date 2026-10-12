@@ -1,5 +1,6 @@
 """Testes OFFLINE (sem rede). Rodar na raiz:  python -m unittest discover -s backend/api/tests -t . -v
 Usam dados de exemplo no formato do Overpass/Nominatim. Nao provam que as fontes reais respondem."""
+import os
 import unittest
 from unittest import mock
 
@@ -197,3 +198,47 @@ class TestGeocode(Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CacheEmDiscoEAquecimento(unittest.TestCase):
+    def setUp(self):
+        import tempfile
+        self.pasta = tempfile.mkdtemp()
+        self.env = mock.patch.dict(os.environ, {"PLACES_CACHE_FILE": os.path.join(self.pasta, "places_cache.json")})
+        self.env.start()
+        places._cache.clear()
+        places._disco_lido[0] = False
+
+    def tearDown(self):
+        self.env.stop()
+        places._cache.clear()
+        places._disco_lido[0] = False
+        import shutil
+        shutil.rmtree(self.pasta)
+
+    def test_abrigos_sobrevivem_a_reinicializacao_e_overpass_fora(self):
+        elementos = [{"type": "node", "id": 1, "lat": -30.035, "lon": -51.218, "tags": {"amenity": "hospital", "name": "Hospital X"}}]
+        with mock.patch.object(places, "_race_overpass", return_value=(elementos, "https://overpass.test")):
+            r = places.get_nearby(-30.0346, -51.2177)
+        self.assertEqual(r["state"], "success")
+        self.assertTrue(os.path.exists(os.environ["PLACES_CACHE_FILE"]))
+        # "reinicia" a API: memória vazia; Overpass fora do ar; 2 dias depois → usa a cópia do disco, marcada como antiga
+        places._cache.clear()
+        places._disco_lido[0] = False
+        with mock.patch.object(places, "_race_overpass", side_effect=RuntimeError("fora")), \
+                mock.patch.object(places, "_now", return_value=places._now() + 2 * 86400):
+            r2 = places.get_nearby(-30.0346, -51.2177)
+        self.assertEqual(r2["state"], "stale")
+        self.assertEqual(r2["items"][0]["name"], "Hospital X")
+
+    def test_aquece_as_cidades_e_tenta_de_novo_so_as_que_falharam(self):
+        chamadas = []
+
+        def falso(lat, lon):
+            chamadas.append((lat, lon))
+            if (lat, lon) == places.CIDADES_DEMO[0] and chamadas.count((lat, lon)) == 1:
+                raise RuntimeError("Overpass ocupado")
+            return {}
+        with mock.patch.object(places, "get_nearby", side_effect=falso):
+            self.assertTrue(places.aquecer_cidades(tentativas=3, intervalo=0, dormir=lambda s: None))
+        self.assertEqual(len(chamadas), len(places.CIDADES_DEMO) + 1)

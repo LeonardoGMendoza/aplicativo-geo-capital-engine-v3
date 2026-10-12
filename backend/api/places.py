@@ -2,8 +2,10 @@
 Porta para a API a logica do mapa de abrigos do painel Streamlit (frontend/mapa_interativo.py).
 Fontes publicas, sem chave de API. Nao importa FastAPI (testavel offline); as rotas ficam em places_router.py.
 Segue o contrato da API do MVP: state, source, sourceUrl, queriedAt, fetchedAt, isSimulation=false, riskCalculated=false."""
+import json
 import logging
 import math
+import os
 import re
 import threading
 import time
@@ -27,6 +29,9 @@ NOMINATIM_TIMEOUT = 10
 NEARBY_TTL = 21600          # 6 h: abrigos e hospitais quase não mudam; evita esperar o Overpass na demonstração
 GEOCODE_TTL = 86400         # 1 dia
 MAX_STALE_SECONDS = 86400   # se o Overpass cair, usa a cópia de até 1 dia (marcada como antiga)
+NEARBY_MAX_STALE = 30 * 86400  # abrigos/hospitais: cópia salva em disco vale até 30 dias se o Overpass estiver fora
+# Cidades da demonstração: o servidor busca sozinho ao ligar, para a tela não esperar o Overpass na apresentação
+CIDADES_DEMO = [(-30.0346, -51.2177), (-29.4661, -51.9615), (-23.5505, -46.6333), (-23.8077, -45.4075), (-22.5112, -43.1779)]
 RADIUS_STEPS_M = (3000, 15000)   # amplia o raio quando a area tem poucos locais (zona rural)
 MIN_RESULTS = 10
 MAX_PER_CATEGORY = 40
@@ -85,10 +90,58 @@ def _get_nominatim(params):
     return r.json()
 
 
-def _cached(key, ttl, loader):
-    """Devolve (dados, fetched_ts, stale). Se a fonte falhar e houver copia com menos de 1h, devolve a copia como stale."""
+def _arquivo_cache():
+    """Só grava em disco no servidor (Docker define RAG_DATA_DIR=/data) ou se PLACES_CACHE_FILE for informado."""
+    if os.getenv("PLACES_CACHE_FILE"):
+        return os.getenv("PLACES_CACHE_FILE")
+    return os.path.join(os.environ["RAG_DATA_DIR"], "places_cache.json") if os.getenv("RAG_DATA_DIR") else None
+
+
+_disco_lido = [False]
+
+
+def _ler_disco():
+    """Abrigos/hospitais já baixados sobrevivem à reinicialização da API (volume /data do Docker)."""
+    if _disco_lido[0]:
+        return
+    _disco_lido[0] = True
+    if not _arquivo_cache():
+        return
+    try:
+        with open(_arquivo_cache(), encoding="utf-8") as f:
+            for chave, ts, dados in json.load(f):
+                k = tuple(chave)
+                if k not in _cache:
+                    _cache[k] = (ts, tuple(dados) if isinstance(dados, list) else dados)
+    except FileNotFoundError:
+        pass
+    except Exception as erro:
+        log.warning("Cache de locais em disco ignorado: %s", type(erro).__name__)
+
+
+def _salvar_disco():
+    try:
+        with _lock:
+            linhas = [[list(k), ts, list(d) if isinstance(d, tuple) else d] for k, (ts, d) in _cache.items() if k and k[0] == "nearby"]
+        caminho = _arquivo_cache()
+        if not caminho:
+            return
+        os.makedirs(os.path.dirname(os.path.abspath(caminho)), exist_ok=True)
+        tmp = caminho + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(linhas, f)
+        os.replace(tmp, caminho)
+    except Exception as erro:
+        log.warning("Não salvei o cache de locais: %s", type(erro).__name__)
+
+
+def _cached(key, ttl, loader, max_stale=None):
+    """Devolve (dados, fetched_ts, stale). Se a fonte falhar e houver cópia recente, devolve a cópia como stale."""
+    max_stale = MAX_STALE_SECONDS if max_stale is None else max_stale
     now = _now()
     with _lock:
+        if key and key[0] == "nearby":
+            _ler_disco()
         hit = _cache.get(key)
     if hit and now - hit[0] < ttl:
         return hit[1], hit[0], False
@@ -97,11 +150,13 @@ def _cached(key, ttl, loader):
     except InvalidResponse:
         raise
     except Exception as exc:
-        if hit and now - hit[0] < ttl + MAX_STALE_SECONDS:
+        if hit and now - hit[0] < ttl + max_stale:
             return hit[1], hit[0], True
         raise SourceUnavailable(type(exc).__name__) from None
     with _lock:
         _cache[key] = (now, data)
+    if key and key[0] == "nearby":
+        _salvar_disco()
     return data, now, False
 
 
@@ -272,7 +327,7 @@ def get_nearby(lat, lon):
         query = build_query(rlat, rlon, radius)
         try:
             (elements, server), ts, stale = _cached(("nearby", rlat, rlon, radius), NEARBY_TTL,
-                                                    lambda q=query: _race_overpass(q))
+                                                    lambda q=query: _race_overpass(q), NEARBY_MAX_STALE)
         except (SourceUnavailable, InvalidResponse):
             if chosen is None:
                 raise
@@ -290,6 +345,27 @@ def get_nearby(lat, lon):
             "categories": [{"id": k, "label": v, "count": counts[k]} for k, v in CATEGORIES.items()],
             "items": items, "notice": NEARBY_NOTICE,
             "attribution": "© colaboradores do OpenStreetMap (ODbL)"}
+
+
+def aquecer_cidades(tentativas=6, intervalo=300, dormir=time.sleep):
+    """Ao ligar a API: busca os abrigos das cidades da demonstração (de novo a cada 5 min se o Overpass falhar)."""
+    faltam = list(CIDADES_DEMO)
+    for rodada in range(tentativas):
+        for lat, lon in list(faltam):
+            try:
+                get_nearby(lat, lon)
+                faltam.remove((lat, lon))
+            except Exception as erro:
+                log.warning("Abrigos de %s,%s ainda indisponíveis (%s)", lat, lon, type(erro).__name__)
+        if not faltam:
+            return True
+        if rodada < tentativas - 1:
+            dormir(intervalo)
+    return False
+
+
+def aquecer_em_segundo_plano():
+    threading.Thread(target=aquecer_cidades, name="aquece-abrigos", daemon=True).start()
 
 
 # ---------- Nominatim ----------

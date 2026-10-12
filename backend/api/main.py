@@ -14,6 +14,7 @@ from .intelligence import criar_do_ambiente
 from .global_alerts import AlertasGlobais
 from .global_alerts_router import router as global_alerts_router
 from .cadastros import Cadastros
+from .places import aquecer_em_segundo_plano
 from .cadastros_router import router as cadastros_router
 from .alerta_whatsapp import router as alerta_whatsapp_router
 from .models import EventsResponse
@@ -39,6 +40,7 @@ def create_app(service: NasaService | None = None, inteligencia=None, alertas=No
             yield
         else:
             app.state.inteligencia.iniciar()  # prepara a base de documentos em segundo plano
+            aquecer_em_segundo_plano()  # abrigos das cidades da demonstração já prontos
             async with httpx.AsyncClient(follow_redirects=False) as client:
                 app.state.nasa = NasaService(client, settings_from_environment())
                 yield

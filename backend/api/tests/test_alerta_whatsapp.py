@@ -58,7 +58,9 @@ class AlertaWhatsApp(unittest.TestCase):
         self.assertEqual(calcular_nivel(150, 5), "ATENÇÃO")
         self.assertEqual(calcular_nivel(372, 400), "MONITORAR")
         self.assertEqual(calcular_nivel(30, 400), "MONITORAR", "evento antigo nunca vira AGIR")
-        self.assertEqual(calcular_nivel(None, 1), "MONITORAR")
+        self.assertEqual(calcular_nivel(None, 1), "ATENÇÃO", "evento do Mapa de Riscos (sem distância) e recente")
+        self.assertEqual(calcular_nivel(None, 30), "MONITORAR")
+        self.assertEqual(calcular_nivel(30, None), "MONITORAR", "sem data, nunca AGIR")
 
     def test_mensagem_sem_invencao_com_link_e_fonte(self):
         agora = datetime(2026, 10, 12, tzinfo=timezone.utc)
@@ -73,6 +75,8 @@ class AlertaWhatsApp(unittest.TestCase):
         self.assertIn("ALERTA OPERACIONAL", empresa)
         self.assertIn("responsável de segurança", empresa)
         self.assertNotIn("199", empresa)
+        sem_km, _ = montar_mensagem(self.pedido(km=None), agora)
+        self.assertIn("Wildfire in Brazil 1022190 (Wildfires). Última observação", sem_km)
 
     def test_limite_por_ip(self):
         t = [0.0]

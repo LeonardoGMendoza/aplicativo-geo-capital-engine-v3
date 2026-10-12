@@ -2,7 +2,7 @@ import { Component, lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { AlertActions } from '@/features/alerts/AlertActions'
+import { AssistenteRisco } from '@/features/alerts/AssistenteRisco'
 import { useNasaSession } from '../nasa/NasaSession'
 import { getAssets } from '../nasa/proximity'
 import type { AssetCatalog } from '../nasa/proximity'
@@ -47,6 +47,7 @@ export function CommunityPage() {
   function focusMap(kind: 'asset' | 'event') { setFocus(kind); mapSection.current?.scrollIntoView({ block: 'start' }); mapSection.current?.focus({ preventScroll: true }) }
   return <div className="min-w-0 space-y-5">
     <header><p className="text-xs font-semibold text-[#25d3b6]">OMNI-ECORESCUE / V3</p><h1 className="mt-1 text-2xl font-semibold">Impacto Social</h1><p className="mt-2 text-sm text-[#b5d2e2]">Contexto comunitário de referência e preparação geral.</p></header>
+    <AssistenteRisco perfil="comunidade" />
     <section className="light-panel space-y-3 p-4" aria-labelledby="community-nasa"><h2 id="community-nasa" className="text-base font-semibold">Contexto dos eventos NASA</h2>
       <p className="text-sm">Descrições comunitárias do cadastro de referência · registros reais NASA EONET. Não há avaliação comunitária nesta tela.</p>
       <p role="status" className="text-sm">{nasa.loading ? 'Consultando eventos NASA…' : nasa.mode !== 'nasa' || !nasa.result ? 'Eventos NASA não consultados.' : `Fonte: ${nasa.result.source} · estado: ${nasa.result.state} · qualidade: ${nasa.result.dataQuality} · obtenção: ${formatObservation(nasa.result.fetchedAt)}`}</p>
@@ -61,7 +62,6 @@ export function CommunityPage() {
         {catalog && <CommunityReferenceList assets={visible} selectedId={asset?.id ?? null} onSelect={select} />}
       </section>
       <div className="min-w-0 space-y-4"><CommunityContextPanel asset={asset} result={screening.result} loading={screening.loading} error={screening.error} />
-        {asset && match && <AlertActions key={`${asset.id}-${match.event.id}`} perfil="comunidade" ativo={asset.name} comunidade={asset.communityDescription} evento={match.event.title} categoria={match.event.categories.map(c => c.title).join(', ')} km={match.distanceKm} observadoEm={match.event.observedAt} />}
         <section className="light-panel space-y-3 p-4" aria-label="Consulta do ativo associado"><Button className="h-auto min-h-11 whitespace-normal text-left" disabled={!asset || !usable || screening.loading} onClick={() => void screening.consult()}>{screening.loading ? 'Consultando proximidade do ativo…' : 'Consultar proximidade do ativo associado'}</Button><p className="text-xs text-muted-foreground">Consulta somente o ativo selecionado e considera todo o catálogo NASA. Retorna o evento mais próximo a menos de 600 km; os filtros do explorador não alteram essa regra.</p></section>
       </div>
     </div>

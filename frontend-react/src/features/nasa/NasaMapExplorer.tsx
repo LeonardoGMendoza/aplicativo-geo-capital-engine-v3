@@ -1,6 +1,7 @@
 import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { AssetProximityPanel } from './AssetProximityPanel'
+import { AlertActions } from '@/features/alerts/AlertActions'
 import type { Asset } from './proximity'
 import { useNasaSession } from './NasaSession'
 import type { NasaEvent } from './contracts'
@@ -41,6 +42,10 @@ export function NasaMapExplorer({ events }: { events: NasaEvent[] }) {
         {selected && <div role="status" className="mt-1 rounded border border-primary/30 p-2 text-xs"><strong>{selected.title}</strong><p>{selected.id} · origem: {selected.source}</p><p>Observação: {formatObservation(selected.observedAt)}</p><p>{selected.coordinates ? `Lat/Lon: ${selected.coordinates.latitude.toFixed(4)}, ${selected.coordinates.longitude.toFixed(4)}` : `Localização indisponível (${selected.coordinateState})`}</p>{selected.coordinates?.method === 'first_polygon_vertex' && <p>Primeiro vértice do polígono; não é centroide.</p>}{!mapPosition(selected) && <p>Não é possível centralizar este evento no mapa.</p>}</div>}
       </div>
     </div>
+    {selected && <section className="light-panel space-y-2 p-3" aria-label="Avisar a comunidade sobre o evento selecionado">
+      <h3 className="text-sm font-semibold">Avisar a comunidade sobre este evento</h3>
+      <AlertActions key={selected.id} perfil="comunidade" ativo="" comunidade={selected.coordinates ? `Região do evento (${selected.coordinates.latitude.toFixed(2)}, ${selected.coordinates.longitude.toFixed(2)})` : ''} evento={selected.title} categoria={selected.categories.map(c => c.title).join(', ')} km={null} observadoEm={selected.observedAt} />
+    </section>}
     <AssetProximityPanel fetchedAt={result?.fetchedAt ?? null} usable={result?.state === 'success' || result?.state === 'empty'} selectedId={selectedAssetId} onAssets={setAssets} onSelected={setSelectedAssetId} />
   </div>
 }
