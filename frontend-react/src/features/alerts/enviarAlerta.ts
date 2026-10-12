@@ -1,7 +1,11 @@
 // Ações sobre um alerta real (evento NASA perto de um ativo), como no painel Streamlit:
 // pergunta à IA (RAG) e envio REAL por WhatsApp via nossa API → n8n (exige o código do operador).
 type Options = { baseUrl?: string; signal?: AbortSignal; fetcher?: typeof fetch }
-export type PedidoWhatsApp = { codigo: string; destino: string; local: string; evento: string; recomendacao?: string | null; origem?: string }
+export type PedidoWhatsApp = {
+  codigo: string; destino: string; local: string; evento: string; recomendacao?: string | null; origem?: string
+  publico: 'empresa' | 'comunidade'; km: number; observadoEm: string | null; categoria?: string
+}
+export type RespostaEnvio = { mensagem: string; nivel: string | null; previa: string | null }
 
 /** Pergunta para a IA, até 300 caracteres (limite da API). */
 export function perguntaDoAlerta(a: { evento: string; categoria: string; km: number; ativo: string; comunidade: string }, perfil: 'empresa' | 'comunidade') {
@@ -10,7 +14,8 @@ export function perguntaDoAlerta(a: { evento: string; categoria: string; km: num
   return texto.length <= 300 ? texto : texto.slice(0, 297) + '…'
 }
 
-export async function enviarWhatsApp(pedido: PedidoWhatsApp, options: Options = {}): Promise<string> {
+/** A mensagem é montada pela API (modelo fixo + IA Oracle com fonte + link do app). Devolve a prévia do que foi enviado. */
+export async function enviarWhatsApp(pedido: PedidoWhatsApp, options: Options = {}): Promise<RespostaEnvio> {
   const base = (options.baseUrl ?? import.meta.env?.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000').replace(/\/$/, '')
   const signal = options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(30_000)]) : AbortSignal.timeout(30_000)
   const response = await (options.fetcher ?? fetch)(`${base}/api/v1/alertas/whatsapp`, {
@@ -19,5 +24,5 @@ export async function enviarWhatsApp(pedido: PedidoWhatsApp, options: Options = 
   })
   const corpo = await response.json().catch(() => null)
   if (!response.ok) throw new Error(corpo?.error?.message ?? 'Não foi possível enviar agora.')
-  return corpo?.mensagem ?? 'Alerta enviado.'
+  return { mensagem: corpo?.mensagem ?? 'Alerta enviado.', nivel: corpo?.nivel ?? null, previa: corpo?.previa ?? null }
 }

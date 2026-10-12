@@ -5,10 +5,10 @@ import { ask, citacao } from '@/features/intelligence/intelligence'
 import type { Resposta } from '@/features/intelligence/intelligence'
 import { enviarWhatsApp, perguntaDoAlerta } from './enviarAlerta'
 
-type Props = { ativo: string; comunidade: string; evento: string; categoria: string; km: number; perfil: 'empresa' | 'comunidade' }
+type Props = { ativo: string; comunidade: string; evento: string; categoria: string; km: number; perfil: 'empresa' | 'comunidade'; observadoEm: string | null }
 
 /** Painel de ação do alerta (igual ao Streamlit): recomendação da IA, ação simulada e envio REAL por WhatsApp. */
-export function AlertActions({ ativo, comunidade, evento, categoria, km, perfil }: Props) {
+export function AlertActions({ ativo, comunidade, evento, categoria, km, perfil, observadoEm }: Props) {
   const [ia, setIa] = useState<Resposta | null>(null)
   const [iaCarregando, setIaCarregando] = useState(false)
   const [iaErro, setIaErro] = useState<string | null>(null)
@@ -16,9 +16,8 @@ export function AlertActions({ ativo, comunidade, evento, categoria, km, perfil 
   const [destino, setDestino] = useState('')
   const [codigo, setCodigo] = useState('')
   const [enviando, setEnviando] = useState(false)
-  const [envio, setEnvio] = useState<{ ok: boolean; texto: string } | null>(null)
-  const local = perfil === 'empresa' ? `${ativo} (comunidade vizinha: ${comunidade || 'não informada'})` : comunidade || ativo
-  const textoEvento = `${evento}, a ${Math.round(km)} km de ${ativo}`
+  const [envio, setEnvio] = useState<{ ok: boolean; texto: string; previa?: string | null } | null>(null)
+  const local = perfil === 'empresa' ? ativo : comunidade || ativo
   const recomendacao = ia?.resposta ?? (ia ? ia.trechos.map(t => `${t.texto.slice(0, 200)} (${citacao(t)})`).join(' ') : null)
 
   async function pedirIa() {
@@ -30,7 +29,10 @@ export function AlertActions({ ativo, comunidade, evento, categoria, km, perfil 
   async function enviar(event: FormEvent) {
     event.preventDefault()
     setEnviando(true); setEnvio(null)
-    try { setEnvio({ ok: true, texto: await enviarWhatsApp({ codigo, destino, local, evento: textoEvento, recomendacao }) }) }
+    try {
+      const r = await enviarWhatsApp({ codigo, destino, local, evento, recomendacao, publico: perfil, km, observadoEm, categoria })
+      setEnvio({ ok: true, texto: r.mensagem, previa: r.previa })
+    }
     catch (e) { setEnvio({ ok: false, texto: e instanceof Error ? e.message : 'Não foi possível enviar.' }) }
     finally { setEnviando(false) }
   }
@@ -59,9 +61,10 @@ export function AlertActions({ ativo, comunidade, evento, categoria, km, perfil 
       <p className="font-semibold text-emerald-900">📲 Enviar este alerta por WhatsApp (envio real)</p>
       <label className="block">Celular com DDD ou ID do grupo<input className="mini-select mt-1 w-full" value={destino} onChange={e => setDestino(e.target.value)} placeholder="(51) 99999-1234 ou 1203…@g.us" maxLength={60} /></label>
       <label className="block">Código do operador<input className="mini-select mt-1 w-full" type="password" autoComplete="off" value={codigo} onChange={e => setCodigo(e.target.value)} maxLength={100} /></label>
-      <p className="text-xs text-muted-foreground">{recomendacao ? 'A recomendação da IA vai junto na mensagem.' : 'Dica: gere a recomendação da IA antes, para ela ir junto.'} Só quem tem o código consegue enviar.</p>
+      <p className="text-xs text-muted-foreground">A mensagem segue um modelo fixo para {perfil === 'empresa' ? 'a empresa (técnica)' : 'a comunidade (simples)'}, com o nível calculado pela distância e pela data do evento e o link do app de rotas. {recomendacao ? 'A recomendação da IA (com PDF e página) vai junto.' : 'Dica: gere a recomendação da IA antes, para ela ir junto.'} Só quem tem o código consegue enviar.</p>
       <Button type="submit" size="sm" disabled={enviando || destino.trim().length < 8 || codigo.trim().length < 6}>{enviando ? 'Enviando…' : '📲 ENVIAR ESTE ALERTA POR WHATSAPP'}</Button>
       {envio && <p role={envio.ok ? 'status' : 'alert'} className={envio.ok ? 'text-emerald-800' : 'text-red-800'}>{envio.ok ? '✅ ' : ''}{envio.texto}</p>}
+      {envio?.previa && <details open><summary className="cursor-pointer text-xs">Mensagem enviada</summary><pre className="mt-1 whitespace-pre-wrap rounded bg-[#e7f6ec] p-2 font-sans text-xs text-[#0b2233]">{envio.previa.replace(/\*/g, '')}</pre></details>}
     </form>
   </section>
 }
