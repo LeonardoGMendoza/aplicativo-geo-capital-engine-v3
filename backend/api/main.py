@@ -13,6 +13,8 @@ from .intelligence_router import router as intelligence_router
 from .intelligence import criar_do_ambiente
 from .global_alerts import AlertasGlobais
 from .global_alerts_router import router as global_alerts_router
+from .cadastros import Cadastros
+from .cadastros_router import router as cadastros_router
 from .models import EventsResponse
 from .nasa import NasaService, Settings
 from .proximity import ASSETS, DATASET_VERSION, POLICY, ProximityRequest, analyze_proximity
@@ -27,7 +29,7 @@ def settings_from_environment() -> Settings:
                     enabled=os.getenv("NASA_EONET_ENABLED", "true").lower() == "true")
 
 
-def create_app(service: NasaService | None = None, inteligencia=None, alertas=None) -> FastAPI:
+def create_app(service: NasaService | None = None, inteligencia=None, alertas=None, cadastros=None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         app.state.inteligencia = inteligencia if inteligencia is not None else criar_do_ambiente()
@@ -42,6 +44,7 @@ def create_app(service: NasaService | None = None, inteligencia=None, alertas=No
 
     app = FastAPI(title="Omni-EcoRescue API", version="0.1.0", lifespan=lifespan)
     app.state.alertas = alertas if alertas is not None else AlertasGlobais()
+    app.state.cadastros = cadastros if cadastros is not None else Cadastros()
     origins = [origin.strip() for origin in os.getenv("REACT_CORS_ORIGINS", "http://127.0.0.1:5173,http://localhost:5173").split(",") if origin.strip()]
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False,
                        allow_methods=["GET", "POST"], allow_headers=["Accept", "Content-Type"])
@@ -83,6 +86,7 @@ def create_app(service: NasaService | None = None, inteligencia=None, alertas=No
     app.include_router(places_router)
     app.include_router(intelligence_router)
     app.include_router(global_alerts_router)
+    app.include_router(cadastros_router)
 
     return app
 

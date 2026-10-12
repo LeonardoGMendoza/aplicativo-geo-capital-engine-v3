@@ -34,7 +34,7 @@ export function renderExpiredCorporateContext() {
 }
 
 test('menu hides reserved history/settings while preserving their routes and the IA page', () => {
-  assert.deepEqual(menuNavigation.map(item => item.path), ['/', '/mapa', '/clima', '/alertas', '/corporativo', '/comunidade', '/abrigos', '/inteligencia'])
+  assert.deepEqual(menuNavigation.map(item => item.path), ['/', '/mapa', '/clima', '/alertas', '/corporativo', '/comunidade', '/abrigos', '/qrcode', '/inteligencia'])
   assert.ok(navigation.some(item => item.path === '/historico'))
   assert.ok(navigation.some(item => item.path === '/configuracoes'))
   const ai = menuNavigation.find(item => item.path === '/inteligencia')

@@ -1,0 +1,22 @@
+/* Página do QR code: cartaz para imprimir (A4) e painel lateral. */
+.qr-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 340px); gap: 12px; align-items: start; }
+.qr-cartaz { background: #fff; color: #031b2c; border-radius: 14px; padding: 28px 24px; text-align: center; box-shadow: 0 4px 16px #00162540; max-width: 560px; width: 100%; justify-self: center; }
+.qr-marca { font-size: 26px; font-weight: 800; letter-spacing: -.3px; }
+.qr-marca span { color: #0b8f7c; }
+.qr-cartaz h2 { font-size: 22px; font-weight: 800; margin: 6px 0 12px; }
+.qr-imagem { display: block; width: min(100%, 320px); height: auto; margin: 0 auto; border: 6px solid #0b8f7c; border-radius: 12px; }
+.qr-cartaz ul { list-style: none; margin: 16px auto 0; padding: 0; display: grid; gap: 8px; text-align: left; max-width: 380px; font-size: 17px; font-weight: 600; }
+.qr-link { margin-top: 14px; font-size: 15px; font-weight: 700; color: #075fba; word-break: break-all; }
+.qr-gratis { margin-top: 4px; font-size: 14px; color: #4b657d; }
+.qr-botao { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid #25617c; background: #0b8f7c; color: #fff; font-size: 13px; font-weight: 600; }
+.qr-numero { font-size: 34px; font-weight: 800; line-height: 1; color: #087f65; }
+@media (max-width: 900px) { .qr-layout { grid-template-columns: minmax(0, 1fr); } }
+/* Impressão: só o cartaz, grande, no centro da folha */
+@media print {
+  body * { visibility: hidden !important; }
+  .qr-cartaz, .qr-cartaz * { visibility: visible !important; }
+  .qr-cartaz { position: fixed; inset: 0; margin: auto; max-width: none; box-shadow: none; border-radius: 0; padding: 40px; }
+  .qr-imagem { width: 12cm; border-width: 8px; }
+  .qr-cartaz ul { font-size: 20px; max-width: 14cm; }
+  .qr-marca { font-size: 34px; } .qr-cartaz h2 { font-size: 28px; }
+}

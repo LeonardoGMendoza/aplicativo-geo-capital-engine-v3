@@ -46,3 +46,21 @@
 .citizen-footer { font-size: 15px; color: #36536b; }
 .citizen-footer a { color: #075fba; font-weight: 700; text-decoration: underline; display: inline-block; padding: 8px 0; }
 .citizen-app :focus-visible { outline: 3px solid #19dfba; outline-offset: 3px; }
+
+/* Cadastro para alertas no WhatsApp (QR code) */
+.citizen-alerts { border: 2px solid #16a34a; }
+.citizen-whats { background: #128c4a; }
+.citizen-alerts-form label { margin-top: 10px; }
+.citizen-alerts-form input:not([type=checkbox]) { width: 100%; min-height: 56px; border: 2px solid #a9c2d3; border-radius: 12px; padding: 0 14px; font-size: 20px; color: #0b2235; background: #fff; }
+.citizen-alerts-form input[aria-invalid=true] { border-color: #dc2626; }
+.citizen-alerts-form .citizen-primary, .citizen-sair { margin-top: 14px; }
+.citizen-check { display: flex !important; gap: 10px; align-items: flex-start; margin-top: 14px !important; font-size: 15px !important; font-weight: 500 !important; color: #0b2235 !important; cursor: pointer; }
+.citizen-check input { flex: 0 0 28px; width: 28px; height: 28px; min-height: 0; padding: 0; accent-color: #128c4a; margin-top: 2px; }
+.citizen-sair { width: 100%; min-height: 56px; border-radius: 14px; background: #7f1d1d; color: #fff; font-size: 18px; font-weight: 800; }
+.citizen-sair:disabled { opacity: .55; }
+.citizen-link { display: block; margin: 14px auto 0; min-height: 44px; color: #075fba; font-size: 16px; font-weight: 700; text-decoration: underline; background: none; }
+/* O formulário de alertas usa .citizen-form: reforça as cores e tamanhos dos botões dele */
+.citizen-alerts-form input:not([type=checkbox]) { box-sizing: border-box; }
+.citizen-alerts-form button.citizen-whats { width: 100%; min-height: 60px; background: #128c4a; color: #fff; font-size: 20px; font-weight: 800; border-radius: 14px; }
+.citizen-alerts-form button.citizen-sair { width: 100%; background: #7f1d1d; }
+.citizen-alerts-form button.citizen-link { display: block; width: auto; min-width: 0; min-height: 44px; margin: 14px auto 0; padding: 0 8px; background: none; color: #075fba; font-size: 16px; font-weight: 700; text-decoration: underline; }

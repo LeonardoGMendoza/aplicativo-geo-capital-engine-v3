@@ -6,6 +6,7 @@ import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import { categoryMeta, formatDistance, nearestOf, routeLinks } from '../shelters/places'
 import type { PlaceCategory } from '../shelters/places'
 import { useNearbySearch } from './useNearbySearch'
+import { AlertsSignup } from './AlertsSignup'
 import './citizen.css'
 const NearbyPlacesMap = lazy(() => import('../shelters/NearbyPlacesMap'))
 
@@ -50,6 +51,8 @@ export function CitizenPage() {
           {emergencyNumbers.map(e => <a key={e.number} href={`tel:${e.number}`} className="citizen-call"><strong>{e.number}</strong><span>{e.label}</span></a>)}
         </div>
       </section>
+
+      <AlertsSignup />
 
       <section aria-labelledby="citizen-where" className="citizen-card">
         <h2 id="citizen-where" className="citizen-title">Onde você está?</h2>
