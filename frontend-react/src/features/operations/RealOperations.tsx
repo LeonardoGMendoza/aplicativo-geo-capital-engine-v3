@@ -124,7 +124,7 @@ export function RealOperations({ onDemo }: { onDemo: () => void }) {
               </MapErrorBoundary>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs"><span><i className="ops-bola" style={{ background: CORES.critico }} />NASA (3 dias) · <i className="ops-bola" style={{ background: CORES.atencao }} />NASA (30 dias) · <i className="ops-bola" style={{ background: CORES.abrigo }} />Abrigo · <i className="ops-bola" style={{ background: CORES.saude }} />Saúde · chuva do radar</span><Link to="/clima" className="text-link">Clima ao vivo</Link></div>
-            <p className="px-3 pb-2 text-xs text-muted-foreground">{cidade.nome} · {lugares.dados ? `${abrigos.length} abrigos/pontos de apoio e ${saude.length} hospitais/UBS mapeados` : lugares.erro ? 'locais indisponíveis' : 'buscando abrigos e saúde…'} · {nasa ? `${perto.length} evento(s) NASA a até ${RAIO_EVENTOS_KM} km` : 'consultando NASA…'}</p>
+            <p className="px-3 pb-2 text-xs text-muted-foreground">{cidade.nome} · {lugares.dados ? `${abrigos.length} abrigos/pontos de apoio e ${saude.length} hospitais/UBS mapeados (no mapa, os mais perto do centro)` : lugares.erro ? 'locais indisponíveis' : 'buscando abrigos e saúde…'} · {nasa ? `${perto.length} evento(s) NASA a até ${RAIO_EVENTOS_KM} km` : 'consultando NASA…'}</p>
           </section>
           <div className="flex min-w-0 flex-col gap-2">
             <section className="light-panel shrink-0" aria-label="Ações prioritárias com dados reais">

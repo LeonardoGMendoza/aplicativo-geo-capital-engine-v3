@@ -123,7 +123,10 @@ test('Clima page tells the El Niño story first, then the real forecast, city ma
 
 test('no map depends on a paid/keyed basemap (CARTO now asks for an API key)', () => {
   for (const f of ['CityRealMap.tsx', 'ElNinoOceanMap.tsx', 'WorldWeatherMap.tsx']) assert.doesNotMatch(source(`features/climate/${f}`), /cartocdn|api[_-]?key/i, f)
-  assert.match(source('features/climate/CityRealMap.tsx'), /fitBounds\(latLngBounds\(todos\), \{ padding: \[30, 30\], maxZoom: 15 \}\)/)
+  const mapa = source('features/climate/CityRealMap.tsx')
+  assert.match(mapa, /fitBounds\(latLngBounds\(todos\), \{ padding: \[40, 40\], maxZoom: 16 \}\)/)
+  assert.match(mapa, /invalidateSize\(\)/, 'recalcula o tamanho antes de enquadrar (painel que cresce depois)')
+  assert.match(mapa, /maisPertoDoCentro\(todosPontos\)/, 'no mapa, só os mais perto: sem amontoar')
 })
 
 test('El Niño moves: 60-day satellite film of real images and animated cause→effect drawing', async () => {
@@ -140,4 +143,15 @@ test('El Niño moves: 60-day satellite film of real images and animated cause→
   for (const c of ['nino-fluxo', 'nino-onda', 'nino-sol', 'nino-gota', 'animateMotion']) assert.match(nino, new RegExp(c))
   const css = source('features/climate/climate.css')
   assert.match(css, /prefers-reduced-motion: reduce\)[^}]*\.nino-fluxo/)
+})
+
+test('map shows only the nearest shelters and health points, counts keep the total', async () => {
+  const js = ts.transpileModule(source('features/climate/cityMap.ts').replace(/^import .*$/gm, '').replace("export function eventosPerto", "const mapPosition = () => null\nexport function eventosPerto"), { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText
+  const { maisPertoDoCentro, NO_MAPA } = await import('data:text/javascript;base64,' + Buffer.from(js).toString('base64'))
+  const p = (i, tipo, km) => ({ lugar: { id: String(i), distanceKm: km }, tipo })
+  const pontos = [...Array.from({ length: 30 }, (_, i) => p(i, 'casa', 30 - i)), ...Array.from({ length: 20 }, (_, i) => p(100 + i, 'cruz', i))]
+  const r = maisPertoDoCentro(pontos)
+  assert.equal(r.filter(x => x.tipo === 'casa').length, NO_MAPA.casas)
+  assert.equal(r.filter(x => x.tipo === 'cruz').length, NO_MAPA.cruzes)
+  assert.equal(r[0].lugar.distanceKm, 1, 'o abrigo mais perto vem primeiro')
 })

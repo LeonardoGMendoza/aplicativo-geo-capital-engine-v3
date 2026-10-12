@@ -58,3 +58,9 @@ export function pontosDoMapa(lugares: Place[]): PontoMapa[] {
   }
   return pontos.slice(0, 80)
 }
+/** No mapa, só os mais perto do centro (como no desenho do Felipe: poucos ícones, sem amontoar). Os números continuam com o total. */
+export const NO_MAPA = { casas: 12, cruzes: 8 }
+export function maisPertoDoCentro(pontos: PontoMapa[], limite = NO_MAPA): PontoMapa[] {
+  const ordem = [...pontos].sort((a, b) => a.lugar.distanceKm - b.lugar.distanceKm)
+  return [...ordem.filter(p => p.tipo === 'casa').slice(0, limite.casas), ...ordem.filter(p => p.tipo === 'cruz').slice(0, limite.cruzes)]
+}

@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { divIcon, latLngBounds } from 'leaflet'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { CORES, marcadorHtml } from './cityMap'
+import { CORES, maisPertoDoCentro, marcadorHtml } from './cityMap'
 import type { EventoPerto, PontoMapa } from './cityMap'
 import type { Coordinates } from '../shelters/places'
 
@@ -10,22 +10,36 @@ function Enquadrar({ centro, pontos }: { centro: Coordinates; pontos: PontoMapa[
   const map = useMap()
   const chave = `${centro.latitude},${centro.longitude}|${pontos.length}`
   useEffect(() => {
-    // Enquadra a cidade e todos os abrigos/hospitais encontrados (raio de busca ~3 km), sem afastar demais.
-    const todos: [number, number][] = [[centro.latitude, centro.longitude], ...pontos.map(p => [p.lugar.coordinates.latitude, p.lugar.coordinates.longitude] as [number, number])]
-    if (todos.length === 1) map.setView(todos[0], 14)
-    else map.fitBounds(latLngBounds(todos), { padding: [30, 30], maxZoom: 15 })
+    // Enquadra a cidade e os pontos mostrados, sem afastar demais. Antes, recalcula o tamanho do mapa:
+    // dentro de painéis que crescem depois (Centro de Operações), o Leaflet achava o mapa pequeno e afastava demais.
+    const enquadrar = () => {
+      map.invalidateSize()
+      const todos: [number, number][] = [[centro.latitude, centro.longitude], ...pontos.map(p => [p.lugar.coordinates.latitude, p.lugar.coordinates.longitude] as [number, number])]
+      if (todos.length === 1) map.setView(todos[0], 14)
+      else map.fitBounds(latLngBounds(todos), { padding: [40, 40], maxZoom: 16 })
+    }
+    enquadrar()
+    const depois = setTimeout(enquadrar, 350)
+    return () => clearTimeout(depois)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, chave])
+  useEffect(() => {
+    if (typeof ResizeObserver !== 'function') return
+    const obs = new ResizeObserver(() => map.invalidateSize())
+    obs.observe(map.getContainer())
+    return () => obs.disconnect()
+  }, [map])
   return null
 }
 
 /** Mapa real com a cara do desenho do Felipe: fundo escuro esverdeado, casinhas verdes, alertas vermelho/laranja. */
-export default function CityRealMap({ centro, pontos, eventos, radarUrl, onRadarFalhou }: { centro: Coordinates; pontos: PontoMapa[]; eventos: EventoPerto[]; radarUrl: string | null; onRadarFalhou: () => void }) {
+export default function CityRealMap({ centro, pontos: todosPontos, eventos, radarUrl, onRadarFalhou }: { centro: Coordinates; pontos: PontoMapa[]; eventos: EventoPerto[]; radarUrl: string | null; onRadarFalhou: () => void }) {
+  const pontos = useMemo(() => maisPertoDoCentro(todosPontos), [todosPontos])
   const icones = useMemo(() => ({
-    casa: divIcon({ className: '', html: marcadorHtml('casa', CORES.abrigo), iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14] }),
-    cruz: divIcon({ className: '', html: marcadorHtml('cruz', CORES.saude), iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14] }),
-    critico: divIcon({ className: '', html: marcadorHtml('alerta', CORES.critico), iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -16] }),
-    atencao: divIcon({ className: '', html: marcadorHtml('alerta', CORES.atencao), iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -16] }),
+    casa: divIcon({ className: '', html: marcadorHtml('casa', CORES.abrigo), iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -18] }),
+    cruz: divIcon({ className: '', html: marcadorHtml('cruz', CORES.saude), iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -18] }),
+    critico: divIcon({ className: '', html: marcadorHtml('alerta', CORES.critico), iconSize: [42, 42], iconAnchor: [21, 21], popupAnchor: [0, -20] }),
+    atencao: divIcon({ className: '', html: marcadorHtml('alerta', CORES.atencao), iconSize: [42, 42], iconAnchor: [21, 21], popupAnchor: [0, -20] }),
   }), [])
   return <div className="cidade-mapa">
     <MapContainer center={[centro.latitude, centro.longitude]} zoom={14} minZoom={4} maxZoom={18} scrollWheelZoom className="h-full w-full">
