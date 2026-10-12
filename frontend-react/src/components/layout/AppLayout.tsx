@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Activity, FlaskConical, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { Activity, FlaskConical, Menu, PanelLeftClose, PanelLeftOpen, Satellite } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { menuNavigation } from '@/app/navigation'
 import { Brand, BrandSymbol } from '@/components/shared/Brand'
@@ -7,6 +7,7 @@ import { ReferenceScene } from '@/components/shared/ReferenceScene'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { demoSnapshot, formatSnapshotTime } from '@/features/operations/data/demo'
+import { useNasaSession } from '@/features/nasa/NasaSession'
 
 function SidebarContent({ onNavigate, collapsed = false, onToggle }: { onNavigate?: () => void; collapsed?: boolean; onToggle?: () => void }) {
   return <div className="flex h-full flex-col">
@@ -17,6 +18,17 @@ function SidebarContent({ onNavigate, collapsed = false, onToggle }: { onNavigat
     <div className={`mx-3 mb-5 flex items-center gap-2 border-t border-[#25617c] pt-4 ${collapsed ? 'justify-center' : ''}`}><BrandSymbol className="h-10 w-8" /><p className={collapsed ? 'sr-only' : 'text-xs font-semibold leading-relaxed text-white'}>TECH4CHANGE<br /><span className="font-normal text-[#a2c4d4]">Dados em contexto.<br />O humano decide.</span></p></div>
   </div>
 }
+/** Canto do cabeçalho: no modo real mostra o relógio de agora; a data fixa do cenário fictício só aparece no Modo demonstração. */
+function HoraDoCabecalho() {
+  const { mode } = useNasaSession()
+  const [agora, setAgora] = useState(() => new Date().toISOString())
+  useEffect(() => { const t = setInterval(() => setAgora(new Date().toISOString()), 30000); return () => clearInterval(t) }, [])
+  if (mode === 'simulation') return <><FlaskConical className="size-5 text-[#20d8c1]" aria-hidden="true" />
+    <div><time dateTime={demoSnapshot.timestamp}>{formatSnapshotTime(demoSnapshot.timestamp)} · Brasília</time><p className="mt-1 font-semibold text-[#39e6cb]">Referência do cenário demonstrativo</p></div></>
+  return <><Satellite className="size-5 text-[#20d8c1]" aria-hidden="true" />
+    <div><time dateTime={agora}>Agora · {formatSnapshotTime(agora)} · Brasília</time><p className="mt-1 font-semibold text-[#39e6cb]">Dados reais, consultados agora</p></div></>
+}
+
 export function AppLayout() {
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -43,8 +55,7 @@ export function AppLayout() {
       </div>
       <p className="relative hidden items-center gap-3 text-xs tracking-[.22em] text-white xl:flex">DADOS + CONTEXTO = APOIO À DECISÃO<Activity className="size-6 text-[#2ce3c1]" aria-hidden="true" /></p>
       <div className="relative ml-auto flex items-center gap-3 text-xs">
-        <FlaskConical className="size-5 text-[#20d8c1]" aria-hidden="true" />
-        <div><time dateTime={demoSnapshot.timestamp}>{formatSnapshotTime(demoSnapshot.timestamp)} · Brasília</time><p className="mt-1 font-semibold text-[#39e6cb]">Referência do cenário demonstrativo</p></div>
+        <HoraDoCabecalho />
         <span className="hidden size-8 items-center justify-center rounded-full border border-[#2089b0] bg-[#075778] font-semibold sm:flex" aria-label="Perfil demonstrativo">ES</span>
       </div>
     </header>

@@ -136,3 +136,9 @@ test('real mode shows "Modo demonstração" only once and the middle row has no 
   const css = source('features/operations/real.css')
   assert.match(css, /\.ops-encher-dentro \{ position: absolute; inset: 0; overflow: auto; \}/); assert.match(css, /\.rota-caixa \{ min-height: 280px;/); assert.doesNotMatch(css, /align-items: start/)
 })
+
+test('header shows the real clock in real mode; the fixed demo date only in "Modo demonstração"', () => {
+  const layout = source('components/layout/AppLayout.tsx')
+  assert.match(layout, /if \(mode === 'simulation'\) return [^\n]*FlaskConical/)
+  assert.match(layout, /Referência do cenário demonstrativo/); assert.match(layout, /Dados reais, consultados agora/); assert.match(layout, /<HoraDoCabecalho \/>/)
+})
