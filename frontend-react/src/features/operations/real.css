@@ -6,7 +6,7 @@
 .real-strip { border-color: #25d3b670; background: #053a35ea; color: #d2f5ec; }
 .real-strip-demo { color: #9fe8d8; text-decoration: underline; font-size: inherit; }
 .ops-bola { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 4px 0 2px; vertical-align: middle; }
-.ops-real-mapa { display: flex; flex-direction: column; }
+.ops-real-mapa { display: flex; flex-direction: column; position: relative; z-index: 0; isolation: isolate; } /* o mapa (Leaflet) não passa por cima das janelas de detalhes */
 .ops-real-mapa .cidade-mapa { flex: 1; height: auto; min-height: 330px; border: 0; border-radius: 6px; }
 @media (max-width: 767px) {
   .dashboard-heading .ops-ref { display: none; }
@@ -14,3 +14,9 @@
   .ops-modo button { flex: 1; min-height: 44px; }
   .ops-real-mapa .cidade-mapa { min-height: 300px; }
 }
+/* Evacuação real: rota desenhada dentro do site, abaixo das janelas de detalhes */
+.rota-caixa { position: relative; z-index: 0; isolation: isolate; background: #1c372d; }
+.rota-mapa { height: 100%; }
+.rota-mapa .leaflet-container { height: 100%; background: #1c372d; }
+.rota-selo { position: absolute; left: 8px; bottom: 8px; z-index: 450; pointer-events: none; padding: 3px 8px; border-radius: 4px; background: #031c2ce6; color: #fff; font-size: 12px; }
+.rota-origem { display: block; width: 30px; height: 30px; border-radius: 50%; background: #0873f5; border: 3px solid #fff; box-shadow: 0 0 0 6px #0873f540, 0 2px 10px #0008; }

@@ -58,7 +58,7 @@ test('Centro de Operações opens with real data and keeps the demo behind a but
 test('real Centro de Operações also has the bottom row like the demo (B2B, ESG, human review) with real numbers', () => {
   const real = source('features/operations/RealOperations.tsx')
   for (const t of ['Visão Corporativa (B2B)', 'Impacto Social (ESG)', 'Orientação e revisão humana', 'Prévia de aviso', 'Ver resumo']) assert.ok(real.includes(t), t)
-  assert.match(real, /useAlertasAtivos\(\)/); assert.match(real, /buscarResumo/); assert.match(real, /routeLinks\(p.lugar.coordinates\)/)
+  assert.match(real, /useAlertasAtivos\(\)/); assert.match(real, /buscarResumo/); assert.match(real, /verRota\(p.lugar.id\)/)
   assert.match(real, /não mostramos estimativa inventada/)
 })
 
@@ -79,4 +79,50 @@ test('real "Informações complementares": satellite of the day, weather now, 24
   for (const t of ['SATÉLITE · NASA', 'Condições agora', 'Cidades monitoradas', 'Próximas 24 h', 'Radar de chuva agora']) assert.ok(comp.includes(t), t)
   assert.doesNotMatch(comp, /fictíci|ReferenceScene|demoWater/)
   assert.match(source('features/operations/RealOperations.tsx'), /<RealMonitoring cidade=\{cidade\}/)
+})
+
+test('satellite stays inside the site and moves (8 real days + live radar), no external link', async () => {
+  const { urlSateliteLadrilhos, diasDoFilme } = await import('../src/features/operations/data/complementares.ts')
+  assert.equal(urlSateliteLadrilhos('2026-10-11'), 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2026-10-11/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg')
+  assert.deepEqual(diasDoFilme(3, new Date('2026-10-12T06:00:00Z')), ['2026-10-09', '2026-10-10', '2026-10-11'])
+  const comp = source('features/operations/components/RealMonitoring.tsx'), sat = source('features/operations/components/SateliteAnimado.tsx')
+  assert.doesNotMatch(comp, /worldview|target="_blank"/i, 'nada abre em outro site')
+  assert.match(sat, /opacity=\{d === atual \? 1 : 0\}/); assert.match(sat, /prefers-reduced-motion/); assert.match(sat, /radarUrl && <TileLayer/)
+})
+
+test('satellite stays inside the site and moves (8 real days + live radar); 24 h chart has hover like the demo', async () => {
+  const { urlSateliteLadrilhos, diasDoFilme } = await import('../src/features/operations/data/complementares.ts')
+  assert.equal(urlSateliteLadrilhos('2026-10-11'), 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2026-10-11/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg')
+  assert.deepEqual(diasDoFilme(3, new Date('2026-10-12T06:00:00Z')), ['2026-10-09', '2026-10-10', '2026-10-11'])
+  const comp = source('features/operations/components/RealMonitoring.tsx'), sat = source('features/operations/components/SateliteAnimado.tsx')
+  assert.doesNotMatch(comp, /worldview|target="_blank"/i, 'nada abre em outro site')
+  assert.match(sat, /opacity=\{d === atual \? 1 : 0\}/); assert.match(sat, /prefers-reduced-motion/); assert.match(sat, /radarUrl && <TileLayer/)
+  const graf = source('features/operations/components/RealTimeline.tsx')
+  assert.match(graf, /from 'recharts'/); assert.match(graf, /<Tooltip /); assert.match(graf, /Previsão · /)
+  assert.match(comp, /<RealTimeline horas=\{agora.horas\} \/>/)
+})
+
+test('maps never cover the detail windows (Leaflet layers stay inside their own stacking context)', () => {
+  assert.match(source('features/climate/climate.css'), /\.cidade-mapa \{ position: relative; z-index: 0; isolation: isolate;/)
+  assert.match(source('features/operations/real.css'), /\.ops-real-mapa \{[^}]*isolation: isolate;/)
+  assert.match(source('features/operations/components/RealMonitoring.tsx'), /relative isolate z-0/)
+})
+
+test('evacuation route is real and drawn inside the site (no Google/Waze), list has proximity bars', async () => {
+  const { linhaReta, proximidade, buscarRota } = await import('../src/features/operations/data/rota.ts')
+  const r = linhaReta({ latitude: -30.03, longitude: -51.23 }, { latitude: -30.04, longitude: -51.21 })
+  assert.equal(r.calculada, false); assert.equal(r.minutos, null); assert.ok(r.km > 1.5 && r.km < 2.5)
+  assert.equal(proximidade(0, 3), 1); assert.ok(proximidade(3, 3) >= 0.08 && proximidade(3, 3) < 0.3)
+  const original = globalThis.fetch
+  try {
+    globalThis.fetch = async url => { assert.match(String(url), /router\.project-osrm\.org\/route\/v1\/driving\/-51\.230000,-30\.030000;-51\.210000,-30\.040000/); return { ok: true, json: async () => ({ code: 'Ok', routes: [{ distance: 2350, duration: 410, geometry: { coordinates: [[-51.23, -30.03], [-51.21, -30.04]] } }] }) } }
+    const ok = await buscarRota({ latitude: -30.03, longitude: -51.23 }, { latitude: -30.04, longitude: -51.21 })
+    assert.deepEqual(ok, { pontos: [[-30.03, -51.23], [-30.04, -51.21]], km: 2.35, minutos: 7, calculada: true })
+    globalThis.fetch = async () => ({ ok: false, status: 503, json: async () => ({}) })
+    assert.equal((await buscarRota({ latitude: -30.03, longitude: -51.23 }, { latitude: -30.04, longitude: -51.21 })).calculada, false)
+  } finally { globalThis.fetch = original }
+  const ops = source('features/operations/RealOperations.tsx')
+  assert.doesNotMatch(ops, /routeLinks|google\.com\/maps|waze/i)
+  assert.match(ops, /<RealEvacuacao /); assert.match(ops, /aria-label=\{`Proximidade/)
+  assert.match(source('features/operations/real.css'), /\.rota-caixa \{[^}]*isolation: isolate;/)
 })

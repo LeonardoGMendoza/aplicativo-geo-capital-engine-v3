@@ -53,3 +53,12 @@ export async function buscarAgora(c: Coordenadas, options: { signal?: AbortSigna
   const horas = Array.isArray(h.time) ? h.time.slice(0, 24).map((t: string, i: number) => ({ hora: String(t).slice(11, 16), temperatura: num(h.temperature_2m?.[i]), chuva: num(h.precipitation?.[i]) })) : []
   return { temperatura: num(atual.temperature_2m), umidade: num(atual.relative_humidity_2m), chuva: num(atual.precipitation), vento: num(atual.wind_speed_10m), codigo: num(atual.weather_code), horas }
 }
+
+/** Ladrilhos (WMTS) do satélite de um dia, para o mapa animado dentro do site (zoom até 9). */
+export function urlSateliteLadrilhos(data: string, camada = 'MODIS_Terra_CorrectedReflectance_TrueColor') {
+  return `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${camada}/default/${data}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`
+}
+/** Dias do filme do satélite: do mais antigo ao mais novo (ontem). */
+export function diasDoFilme(quantos = 8, agora = new Date()) {
+  return Array.from({ length: quantos }, (_, i) => diaAtras(quantos - i, agora))
+}
