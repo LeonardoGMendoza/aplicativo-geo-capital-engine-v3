@@ -127,11 +127,10 @@ test('evacuation route is real and drawn inside the site (no Google/Waze), list 
   assert.match(source('features/operations/real.css'), /\.rota-caixa \{[^}]*isolation: isolate;/)
 })
 
-test('real mode shows "Modo demonstração" only once and the middle panels fill their height', () => {
+test('real mode shows "Modo demonstração" only once and middle panels shrink to their content', () => {
   const ops = source('features/operations/RealOperations.tsx')
   assert.doesNotMatch(ops, /Ver Modo demonstração/)
-  assert.match(ops, /className="ops-encher"><div className="ops-encher-dentro/)
-  assert.match(source('features/operations/components/RealEvacuacao.tsx'), /rota-caixa mx-2 flex-1/)
+  assert.match(ops, /className="middle-layout ops-real-meio"/); assert.doesNotMatch(ops, /ops-encher/)
   const css = source('features/operations/real.css')
-  assert.match(css, /\.ops-encher-dentro \{ position: absolute; inset: 0; overflow: auto; \}/); assert.match(css, /\.rota-mapa \{ position: absolute; inset: 0; \}/)
+  assert.match(css, /\.ops-real-meio \{ align-items: start; \}/); assert.match(css, /\.rota-caixa \{ height: 280px;/)
 })
