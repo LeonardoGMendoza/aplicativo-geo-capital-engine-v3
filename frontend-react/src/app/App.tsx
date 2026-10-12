@@ -8,6 +8,7 @@ import { CommunityPage } from '@/features/community/CommunityPage'
 import { SheltersPage } from '@/features/shelters/SheltersPage'
 import { CitizenPage } from '@/features/citizen/CitizenPage'
 import { IntelligencePage } from '@/features/intelligence/IntelligencePage'
+import { ClimatePage } from '@/features/climate/ClimatePage'
 import { NasaSessionProvider } from '@/features/nasa/NasaSession'
 import { navigation } from '@/app/navigation'
 import { Button } from '@/components/ui/button'
@@ -29,10 +30,11 @@ function ReservedPage({ title, description }: { title: string; description: stri
 
 export function App() {
   return (
-    <NasaSessionProvider><Routes>
+    <Routes>
       {/* Tela do cidadão: celular, sem o menu da central */}
       <Route path="/cidadao" element={<CitizenPage />} />
-      <Route element={<AppLayout />}>
+      {/* A consulta NASA roda só nas telas da central, não na tela do cidadão */}
+      <Route element={<NasaSessionProvider><AppLayout /></NasaSessionProvider>}>
         <Route index element={<OperationsPage />} />
         <Route path="/alertas" element={<Navigate to="/#central-alertas" replace />} />
         <Route path="/mapa" element={<RiskMapPage />} />
@@ -40,9 +42,10 @@ export function App() {
         <Route path="/comunidade" element={<CommunityPage />} />
         <Route path="/abrigos" element={<SheltersPage />} />
         <Route path="/inteligencia" element={<IntelligencePage />} />
-        {navigation.slice(1).filter(item => !['/alertas', '/mapa', '/corporativo', '/comunidade', '/abrigos', '/inteligencia'].includes(item.path)).map((item) => <Route key={item.path} path={item.path} element={<ReservedPage title={item.label} description={item.description} />} />)}
+        <Route path="/clima" element={<ClimatePage />} />
+        {navigation.slice(1).filter(item => !['/alertas', '/mapa', '/corporativo', '/comunidade', '/abrigos', '/inteligencia', '/clima'].includes(item.path)).map((item) => <Route key={item.path} path={item.path} element={<ReservedPage title={item.label} description={item.description} />} />)}
         <Route path="*" element={<ReservedPage title="Página não encontrada" description="Este endereço não corresponde a uma área do protótipo." />} />
       </Route>
-    </Routes></NasaSessionProvider>
+    </Routes>
   )
 }

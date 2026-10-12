@@ -9,10 +9,11 @@ const css = source('features/citizen/citizen.css')
 const app = source('app/App.tsx')
 
 test('/cidadao is a standalone route outside the operations layout and menu', () => {
-  const layoutStart = app.indexOf('<Route element={<AppLayout />}>')
+  const layoutStart = app.indexOf('<Route element={<NasaSessionProvider><AppLayout /></NasaSessionProvider>}>')
   const citizenRoute = app.indexOf('<Route path="/cidadao" element={<CitizenPage />} />')
   assert.ok(citizenRoute > 0 && citizenRoute < layoutStart, 'rota do cidadão deve vir antes e fora do AppLayout')
   assert.doesNotMatch(source('app/navigation.ts'), /cidadao/)
+  assert.ok(layoutStart > 0, 'consulta NASA fica só dentro do layout da central')
 })
 
 test('emergency numbers are callable links for Defesa Civil, Bombeiros and SAMU', () => {

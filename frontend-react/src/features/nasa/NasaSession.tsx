@@ -11,7 +11,8 @@ interface Session {
 }
 const Context = createContext<Session | null>(null)
 export function NasaSessionProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<'simulation' | 'nasa'>('simulation')
+  // Abre com dados reais (NASA); a simulação fica no botão "Modo demonstração".
+  const [mode, setMode] = useState<'simulation' | 'nasa'>('nasa')
   const [attempt, setAttempt] = useState(0)
   const [result, setResult] = useState<EventsResponse | null>(null)
   const [loading, setLoading] = useState(false)

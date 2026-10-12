@@ -3,8 +3,6 @@ import type { CSSProperties, FormEvent } from 'react'
 import { BookOpen, BrainCircuit, FileText, House, Layers, Mountain, Send, ShieldCheck, Siren, Sparkles, Waves } from 'lucide-react'
 import { ask, citacao, estadoTexto, getStatus, nomesDocumentos, partesNegrito, perfis, perguntasProntas } from './intelligence'
 import type { Perfil, Resposta, Status } from './intelligence'
-import { ClimatePanel } from '../climate/ClimatePanel'
-import { WorldWeather } from '../climate/WorldWeather'
 import './intelligence.css'
 
 // Cores das perguntas prontas, no estilo dos botões de categoria da sala de controle
@@ -67,10 +65,6 @@ export function IntelligencePage() {
       <h1 className="ia-title">Inteligência (IA)</h1>
       <p className="ia-sub">Pergunte aos documentos oficiais de desastres passados. A IA sugere com a fonte e a página; o humano decide.</p>
     </header>
-
-    <ClimatePanel />
-
-    <WorldWeather />
 
     <section aria-label="Base de documentos da IA" className="space-y-3">
       <p role="status" className={`ia-status ${classeStatus}`}>{estadoTexto(status)}</p>

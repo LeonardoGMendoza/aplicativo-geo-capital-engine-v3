@@ -14,7 +14,7 @@ async function loadClient() {
 
 test('IA route renders the real page instead of the reserved placeholder', () => {
   assert.match(app, /<Route path="\/inteligencia" element={<IntelligencePage \/>} \/>/)
-  assert.match(app, /'\/abrigos', '\/inteligencia'\]\.includes/)
+  assert.match(app, /'\/abrigos', '\/inteligencia'/)
 })
 
 test('client posts the question and profile and surfaces API error messages', async () => {

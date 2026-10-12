@@ -44,7 +44,8 @@ test('panel cites sources and says it is not an official alert; IA page shows it
   assert.match(panel, /CPTEC\/INPE/)
   assert.match(panel, /Open-Meteo/)
   assert.match(panel, /não são alertas oficiais/)
-  assert.match(source('features/intelligence/IntelligencePage.tsx'), /<ClimatePanel \/>/)
+  assert.match(source('features/climate/ClimatePage.tsx'), /<ClimatePanel \/>/)
+  assert.doesNotMatch(source('features/intelligence/IntelligencePage.tsx'), /ClimatePanel/)
 })
 
 async function loadWorld() {
@@ -75,5 +76,14 @@ test('global alerts come from our API and errors show its message', async () => 
 test('world map is on the IA page and cites RainViewer and GDACS', () => {
   const w = source('features/climate/WorldWeather.tsx')
   assert.match(w, /RainViewer/); assert.match(w, /GDACS/); assert.match(w, /não substituem os avisos da Defesa Civil/)
-  assert.match(source('features/intelligence/IntelligencePage.tsx'), /<WorldWeather \/>/)
+  assert.match(source('features/climate/ClimatePage.tsx'), /<WorldWeather \/>/)
+  assert.match(source('app/App.tsx'), /<Route path="\/clima" element={<ClimatePage \/>} \/>/)
+  assert.match(source('features/climate/ClimatePage.tsx'), /Nenhum dado desta tela é simulado/)
+})
+
+test('screens open with real NASA data; simulation only via "Modo demonstração"', () => {
+  assert.match(source('features/nasa/NasaSession.tsx'), /useState<'simulation' \| 'nasa'>\('nasa'\)/)
+  const panel = source('features/nasa/NasaEventsPanel.tsx')
+  assert.match(panel, />Modo demonstração<\/Button>/)
+  assert.match(panel, />Dados reais \(NASA\)<\/Button>/)
 })
