@@ -1,4 +1,4 @@
-import { Link, Navigate, Route, Routes } from 'react-router-dom'
+import { Link, Route, Routes } from 'react-router-dom'
 import { Construction } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { OperationsPage } from '@/features/operations/OperationsPage'
@@ -10,6 +10,7 @@ import { CitizenPage } from '@/features/citizen/CitizenPage'
 import { IntelligencePage } from '@/features/intelligence/IntelligencePage'
 import { ClimatePage } from '@/features/climate/ClimatePage'
 import { QrPage } from '@/features/citizen/QrPage'
+import { AlertasPage } from '@/features/alerts/AlertasPage'
 import { NasaSessionProvider } from '@/features/nasa/NasaSession'
 import { navigation } from '@/app/navigation'
 import { Button } from '@/components/ui/button'
@@ -37,7 +38,7 @@ export function App() {
       {/* A consulta NASA roda só nas telas da central, não na tela do cidadão */}
       <Route element={<NasaSessionProvider><AppLayout /></NasaSessionProvider>}>
         <Route index element={<OperationsPage />} />
-        <Route path="/alertas" element={<Navigate to="/#central-alertas" replace />} />
+        <Route path="/alertas" element={<AlertasPage />} />
         <Route path="/mapa" element={<RiskMapPage />} />
         <Route path="/corporativo" element={<CorporatePage />} />
         <Route path="/comunidade" element={<CommunityPage />} />

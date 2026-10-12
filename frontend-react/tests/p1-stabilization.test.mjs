@@ -46,7 +46,7 @@ test('menu hides reserved history/settings while preserving their routes and the
 })
 
 test('legacy Alerts route targets the single existing central with keyboard focus support', () => {
-  assert.match(source('app/App.tsx'), /path="\/alertas" element={<Navigate to="\/#central-alertas" replace/)
+  assert.match(source('app/App.tsx'), /path="\/alertas" element={<AlertasPage \/>}/)
   assert.match(source('components/layout/AppLayout.tsx'), /central\?\.focus\(\{ preventScroll: true \}\)/)
   assert.match(source('features/operations/components/AlertCenter.tsx'), /id="central-alertas" tabIndex=\{-1\}/)
 })

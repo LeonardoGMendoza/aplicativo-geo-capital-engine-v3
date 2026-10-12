@@ -4,7 +4,7 @@ export const navigation = [
   { path: '/', label: 'Centro de Operações', icon: LayoutDashboard, description: '' },
   { path: '/mapa', label: 'Mapa de Riscos', icon: Map, description: 'Mapa territorial e camadas de contexto.' },
   { path: '/clima', label: 'Clima ao vivo', icon: CloudRain, description: 'Calor e chuva previstos, radar de chuva e alertas de desastres no mundo, com dados reais.' },
-  { path: '/alertas', label: 'Alertas', icon: BellRing, description: 'Consulta e revisão de alertas.' },
+  { path: '/alertas', label: 'Alertas', icon: BellRing, description: 'Todos os alertas reais numa lista: previsão, satélite NASA e ONU, com orientação, IA e aviso por WhatsApp.' },
   { path: '/corporativo', label: 'Visão Corporativa', icon: Building2, description: 'Cadastro de referência e triagem geográfica com eventos NASA.' },
   { path: '/comunidade', label: 'Impacto Social', icon: HeartHandshake, description: 'Contexto comunitário de referência e preparação geral.' },
   { path: '/abrigos', label: 'Evacuação e Abrigos', icon: House, description: 'Pontos de apoio, serviços essenciais e preparação.' },

@@ -1,0 +1,13 @@
+/* Página "Alertas" (dados reais) */
+.alertas-kpi { border-radius: 10px; padding: 10px 14px; box-shadow: 0 3px 10px #00162525; }
+.alertas-grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 12px; align-items: start; }
+.alertas-lista { max-height: 640px; overflow: auto; }
+.alertas-lista li + li { margin-top: 4px; }
+.alertas-item { display: flex; width: 100%; align-items: center; gap: 10px; padding: 10px 10px 10px 0; border: 1px solid transparent; border-radius: 8px; background: #f7fafc; text-align: left; cursor: pointer; }
+.alertas-item:hover { border-color: #b9d6e6; }
+.alertas-item[aria-pressed="true"] { border-color: #0873f5; background: #e9f3ff; }
+.alertas-barra { align-self: stretch; width: 5px; border-radius: 0 4px 4px 0; }
+.alertas-barra.nivel-critical { background: #ed2450; }
+.alertas-barra.nivel-high { background: #df8c12; }
+.alertas-barra.nivel-attention { background: #0873f5; }
+@media (max-width: 1023px) { .alertas-grade { grid-template-columns: minmax(0, 1fr); } .alertas-lista { max-height: 420px; } }
