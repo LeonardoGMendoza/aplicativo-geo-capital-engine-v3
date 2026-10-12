@@ -18,6 +18,102 @@ Aplicação React/TypeScript com API FastAPI que junta dados públicos reais em 
 | QR Code do cidadão | Cartaz com QR code: o cidadão acha o abrigo mais perto e se cadastra para alertas no WhatsApp |
 | Inteligência (IA) | Perguntas respondidas com trechos de documentos oficiais (RAG: embeddings Cohere + Oracle OCI Generative AI), sempre citando PDF e página |
 
+### Arquitetura
+
+```mermaid
+flowchart TB
+    subgraph FONTES["Fontes públicas (dados reais)"]
+        NASA["NASA EONET<br/>eventos por satélite"]
+        GIBS["NASA GIBS<br/>imagens e temperatura do mar"]
+        METEO["Open-Meteo<br/>previsão do tempo"]
+        GDACS["GDACS / ONU<br/>alertas mundiais"]
+        OSM["OpenStreetMap<br/>abrigos, hospitais, UBS"]
+        OSRM["OSRM<br/>rotas pelas ruas"]
+        RADAR["RainViewer<br/>radar de chuva"]
+        YAHOO["Yahoo Finance<br/>cotações"]
+    end
+
+    subgraph SERVIDOR["Nosso servidor (Hostinger VPS)"]
+        NGINX["nginx + HTTPS<br/>omni.sandlj.com.br"]
+        API["API FastAPI (Docker)<br/>cache · limites · regras"]
+        DB[("SQLite<br/>cadastros do cidadão")]
+        N8N["n8n + WAHA<br/>envio de WhatsApp"]
+    end
+
+    subgraph IA["Inteligência (RAG)"]
+        PDF["5 documentos oficiais<br/>692 páginas"]
+        COHERE["Cohere<br/>busca por semelhança"]
+        OCI["Oracle OCI<br/>Generative AI"]
+    end
+
+    subgraph TELAS["Telas React"]
+        CENTRAL["Central de operações<br/>Defesa Civil · empresa · ESG"]
+        CIDADAO["App do cidadão<br/>QR code · abrigo · rota"]
+    end
+
+    HUMANO{{"Decisão humana<br/>(Human-in-the-Loop)"}}
+    ZAP["📲 WhatsApp<br/>empresa e comunidade"]
+
+    NASA & METEO & GDACS & OSM & YAHOO --> API
+    GIBS & RADAR & OSRM --> TELAS
+    PDF --> COHERE --> OCI --> API
+    API <--> NGINX <--> TELAS
+    API <--> DB
+    CENTRAL --> HUMANO -->|código do operador| API --> N8N --> ZAP
+    CIDADAO -->|cadastro com aceite| API
+
+    classDef fonte fill:#0ea5e9,stroke:#075985,color:#ffffff
+    classDef servidor fill:#10b981,stroke:#065f46,color:#ffffff
+    classDef ia fill:#8b5cf6,stroke:#4c1d95,color:#ffffff
+    classDef tela fill:#f59e0b,stroke:#92400e,color:#1f2937
+    classDef humano fill:#ef4444,stroke:#7f1d1d,color:#ffffff
+    classDef zap fill:#22c55e,stroke:#14532d,color:#ffffff
+    class NASA,GIBS,METEO,GDACS,OSM,OSRM,RADAR,YAHOO fonte
+    class NGINX,API,DB,N8N servidor
+    class PDF,COHERE,OCI ia
+    class CENTRAL,CIDADAO tela
+    class HUMANO humano
+    class ZAP zap
+```
+
+### Telas (capturas de outubro/2026, dados reais)
+
+**Centro de Operações**: indicadores, mapa da cidade com abrigos e saúde, ações prioritárias e orientações.
+
+![Centro de Operações](screenshots/app/centro-operacoes.jpg)
+
+**Mapa de Riscos**: eventos abertos da NASA no mundo, com nomes em português e a capital brasileira mais perto.
+
+![Mapa de Riscos](screenshots/app/mapa-de-riscos.jpg)
+
+**Clima ao vivo**: El Niño visto por satélite, ventos e temperatura animados e o efeito previsto no Brasil.
+
+![El Niño por satélite](screenshots/app/clima-el-nino.jpg)
+
+![Ventos e temperatura](screenshots/app/clima-ventos-windy.jpg)
+
+![Efeito no Brasil e previsão real](screenshots/app/clima-efeito-brasil.jpg)
+
+**Visão Corporativa**: assistente de risco (evento NASA × ativo), recomendação da IA, envio por WhatsApp e mercado agora.
+
+![Visão Corporativa](screenshots/app/visao-corporativa.jpg)
+
+![Mercado agora](screenshots/app/mercado-agora.jpg)
+
+**Evacuação e Abrigos**: locais reais perto de qualquer endereço (OpenStreetMap) e o mais próximo de cada tipo.
+
+![Evacuação e Abrigos](screenshots/app/evacuacao-abrigos.jpg)
+
+**Inteligência (IA)**: perguntas respondidas com trechos de 5 documentos oficiais, citando PDF e página.
+
+![Inteligência (IA)](screenshots/app/inteligencia-ia.jpg)
+
+### Integrantes do Grupo 12
+
+- **Liderança, Desenvolvimento Full Stack e IA**: Leonardo Junior Gonzales Mendoza (RM 373713). Aplicação React, API, IA (RAG com Oracle), servidor e integrações (NASA, WhatsApp).
+- **Design das Telas e Modelo de Negócio**: Felipe Eunilio Vieira dos Santos (RM 369771). Desenho das telas (mockups), framework de produtização e posicionamento B2B com Human-in-the-Loop.
+- **Desenvolvimento e Testes**: Helton Rosa da Silva Abadia (RM 360372). Ajustes técnicos, incluindo a correção do motor de alertas que bloqueava o disparo de múltiplos alertas.
+
 ### Como funciona o aviso por WhatsApp
 
 O operador escolhe um alerta, pode pedir a recomendação da IA e digita o **código do operador**. A API monta a mensagem a partir de um **modelo fixo** (versão empresa ou comunidade, com o nível calculado pela distância e pela data do evento e o link do app do cidadão) e entrega ao n8n, que só confere o token e envia pelo WAHA. A IA não escreve a mensagem: nada de endereço ou ordem inventada. Os botões "ordem de bloqueio" e "acionar lideranças" são simulação e não enviam nada.
@@ -114,6 +210,17 @@ flowchart TD
     H --> J[Visão ESG / Comunidade<br/>protocolo de evacuação]
     I --> K{Human-in-the-Loop<br/>confirmação manual}
     J --> K
+
+    classDef fonte fill:#0ea5e9,stroke:#075985,color:#ffffff
+    classDef calc fill:#f59e0b,stroke:#92400e,color:#1f2937
+    classDef app fill:#10b981,stroke:#065f46,color:#ffffff
+    classDef ia fill:#8b5cf6,stroke:#4c1d95,color:#ffffff
+    classDef humano fill:#ef4444,stroke:#7f1d1d,color:#ffffff
+    class A,B fonte
+    class C calc
+    class D,H,I,J app
+    class E,F,G ia
+    class K humano
 ```
 
 ### Visão Abrigos e Preparação
@@ -132,6 +239,13 @@ flowchart LR
     O[OpenStreetMap<br/>Overpass e Nominatim] --> M
     N[NASA EONET<br/>alertas próximos] --> M
     M --> R[Rota no Waze<br/>ou Google Maps]
+
+    classDef fonte fill:#0ea5e9,stroke:#075985,color:#ffffff
+    classDef app fill:#10b981,stroke:#065f46,color:#ffffff
+    classDef user fill:#f59e0b,stroke:#92400e,color:#1f2937
+    class O,N fonte
+    class M,R app
+    class U user
 ```
 
 ## Como rodar o painel legado localmente
@@ -153,7 +267,7 @@ O motor de recomendação (`backend/oracle_rag.py`) funciona em dois modos:
 - **Real**: requer o SDK `oci` instalado e a variável de ambiente `OCI_COMPARTMENT_ID` configurada, além do arquivo de credenciais `~/.oci/config`.
 - **Fallback (padrão)**: se a credencial não estiver configurada, o sistema usa uma recomendação local pré-definida, mantendo o painel estável em demonstrações públicas.
 
-## Capturas de tela (versão publicada no Streamlit Cloud)
+## Capturas de tela do painel legado (Streamlit Cloud)
 
 **Visão Corporativa (B2B)** — cruza o evento de risco (NASA EONET) com o ativo industrial mais próximo e recomenda ação de mitigação.
 
@@ -186,11 +300,9 @@ Ver `docs/documentacao_oficial_pitch.md` para a documentação oficial do projet
 - [EM ANDAMENTO] Integração com Oracle GenAI: implementada, sujeita a fallback conforme disponibilidade de credencial
 - [EM ANDAMENTO] Scripts em `backend/central_executiva.py` e `backend/omni_engine_alertas.py` são provas de conceito isoladas, não conectadas ao painel principal
 
-## Equipe e Contribuições
+## Equipe
 
-- **Leonardo Junior Gonzales Mendoza** (RM 373713) — desenvolvimento do painel em Python/Streamlit, integração com as APIs geoespaciais e financeiras, estruturação da arquitetura de IA (Oracle GenAI) e infraestrutura do repositório.
-- **Felipe Eunilio Vieira dos Santos** (RM 369771) — concepção do framework de produtização e modelo de negócio (documento "Decision Intelligence"), incluindo o posicionamento B2B e a lógica de Human-in-the-Loop aplicada à solução.
-- **Helton Rosa da Silva Abadia** (RM 360372) — ajustes técnicos no código, incluindo correção de um bug no motor de alertas que bloqueava o disparo de múltiplos alertas; alterações já enviadas ao GitHub e em processo de integração à branch principal.
+Ver [Integrantes do Grupo 12](#integrantes-do-grupo-12) no início deste README.
 
 ## Limitações conhecidas
 
