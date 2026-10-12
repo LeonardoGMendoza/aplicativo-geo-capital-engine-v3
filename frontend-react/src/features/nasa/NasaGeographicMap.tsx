@@ -1,29 +1,41 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { divIcon } from 'leaflet'
 import type { Marker as LeafletMarker } from 'leaflet'
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
+import { CircleMarker, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { FiltroMapaFelipe } from '@/features/climate/mapaFelipe'
 import 'leaflet/dist/leaflet.css'
 import type { NasaEvent } from './contracts'
 import type { Asset } from './proximity'
-import { categoryStyle, createClusterIndex, formatObservation, mapPosition, observationLabel } from './geography'
+import { createClusterIndex, formatObservation, mapPosition } from './geography'
+import { categoriaPt, corDoEvento, ondeFica, tituloPt, vistoHa } from './leitura'
+import { marcadorHtml } from '@/features/climate/cityMap'
 
 function EventMarker({ event, selected, onSelect }: { event: NasaEvent; selected: boolean; onSelect: (id: string) => void }) {
   const marker = useRef<LeafletMarker>(null)
   const map = useMap()
   const popupWidth = Math.min(260, Math.max(140, map.getSize().x - 70))
-  const style = categoryStyle(event)
   const position = mapPosition(event)
+  const cor = corDoEvento(event)
+  // Igual ao desenho do Felipe: bolinha com o triângulo de alerta, vermelha (visto nos últimos dias) ou laranja (visto há mais tempo).
   const icon = useMemo(() => divIcon({ className: 'nasa-event-icon', iconSize: [44, 44], iconAnchor: [22, 22],
-    html: `<span style="background:${style.color};border-style:${event.observationState === 'outdated' ? 'dashed' : event.observationState === 'unknown' ? 'dotted' : 'solid'}" class="nasa-marker ${selected ? 'is-selected' : ''}">${style.symbol}</span>` }), [style.color, style.symbol, event.observationState, selected])
+    html: `<span class="nasa-felipe ${selected ? 'is-selected' : ''}">${marcadorHtml('alerta', cor)}</span>` }), [cor, selected])
   useEffect(() => {
-    marker.current?.getElement()?.setAttribute('aria-label', `${event.title} · ${style.label} · ${observationLabel(event)}`)
+    marker.current?.getElement()?.setAttribute('aria-label', `${tituloPt(event.title)} · ${categoriaPt(event)} · ${vistoHa(event)}`)
     if (selected) marker.current?.openPopup()
-  }, [selected, event, style.label, popupWidth])
+  }, [selected, event, popupWidth])
   if (!position) return null
-  return <Marker ref={marker} position={position} icon={icon} title={`${event.title} · ${style.label} · ${observationLabel(event)}`} eventHandlers={{ click: () => onSelect(event.id) }}>
-    <Popup key={popupWidth} minWidth={140} maxWidth={popupWidth} maxHeight={180} autoPanPaddingTopLeft={[10, 70]} autoPanPaddingBottomRight={[10, 10]}><div className="space-y-1 text-xs"><strong>{event.title}</strong><p>{event.categories.map(c => c.title).join(', ') || 'Categoria não informada'}</p><p>Origem: {event.source}</p><p>Observação: {formatObservation(event.observedAt)}</p><p>{observationLabel(event)}</p><p>Lat/Lon: {position.map(v => v.toFixed(4)).join(', ')}</p>{event.coordinates?.method === 'first_polygon_vertex' && <p>Primeiro vértice do polígono; não é centroide.</p>}<p>Evento não determina risco local. Decisões exigem avaliação humana.</p></div></Popup>
-  </Marker>
+  return <>
+    <CircleMarker center={position} radius={26} pathOptions={{ color: cor, weight: 2, fillColor: cor, fillOpacity: 0.28 }} interactive={false} />
+    <Marker ref={marker} position={position} icon={icon} title={`${tituloPt(event.title)} · ${categoriaPt(event)} · ${vistoHa(event)}`} eventHandlers={{ click: () => onSelect(event.id) }}>
+      <Popup key={popupWidth} minWidth={140} maxWidth={popupWidth} maxHeight={200} autoPanPaddingTopLeft={[10, 70]} autoPanPaddingBottomRight={[10, 10]}><div className="space-y-1 text-xs">
+        <strong className="text-sm">{tituloPt(event.title)}</strong>
+        <p style={{ color: cor }} className="font-semibold">● {categoriaPt(event)} · {vistoHa(event)}</p>
+        <p>{ondeFica(event)}</p>
+        <p className="text-muted-foreground">Satélite NASA · {formatObservation(event.observedAt)}</p>
+        <p className="text-muted-foreground">Não confirma risco local: a decisão é humana.</p>
+      </div></Popup>
+    </Marker>
+  </>
 }
 
 function GeographicLayers({ events, selectedId, onSelect }: { events: NasaEvent[]; selectedId: string | null; onSelect: (id: string) => void }) {
@@ -77,14 +89,14 @@ export default function NasaGeographicMap({ events, selectedId, onSelect, assets
   const [tileError, setTileError] = useState(false)
   return <div className="min-w-0">
     {tileError && <p role="status" className="mb-1 text-amber-900">Base OpenStreetMap parcialmente indisponível. Marcadores e lista continuam disponíveis.</p>}
-    <div role="region" aria-label="Mapa geográfico de eventos NASA, sem avaliação de risco" className="nasa-map relative z-0 h-[300px] overflow-hidden rounded border sm:h-[340px]">
-      <MapContainer center={[10, 0]} zoom={2} minZoom={2} maxZoom={18} maxBounds={[[-85.0511287798, -180], [85.0511287798, 180]]} maxBoundsViscosity={1} scrollWheelZoom={false} className="h-full w-full">
+    <div role="region" aria-label="Mapa geográfico de eventos NASA, sem avaliação de risco" className="nasa-map relative isolate z-0 h-[340px] overflow-hidden rounded border sm:h-[420px]">
+      <MapContainer center={[-15, -55]} zoom={3} minZoom={2} maxZoom={18} maxBounds={[[-85.0511287798, -180], [85.0511287798, 180]]} maxBoundsViscosity={1} scrollWheelZoom={false} className="h-full w-full">
         <FiltroMapaFelipe />
         <TileLayer className="mapa-felipe" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" noWrap attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' eventHandlers={{ loading: () => setTileError(false), tileerror: () => setTileError(true) }} />
         <GeographicLayers events={events} selectedId={selectedId} onSelect={onSelect} />
         <AssetLayers assets={assets} selectedId={selectedAssetId} onSelect={onAssetSelect} />
       </MapContainer>
     </div>
-    <p className="mt-1 text-xs text-muted-foreground">Base OSM · arraste ou use +/− para ampliar · grupos mostram quantidades, não intensidade de risco.</p>
+    <p className="mt-1 text-xs text-muted-foreground">Arraste ou use +/− para ver o mundo · número = grupo de eventos (clique para abrir).</p>
   </div>
 }

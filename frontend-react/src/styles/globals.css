@@ -2,7 +2,12 @@
 
 .nasa-marker { display: flex; width: 30px; height: 30px; align-items: center; justify-content: center; border: 3px solid white; border-radius: 50%; color: white; font: bold 12px system-ui; box-shadow: 0 1px 5px #031b2c99; }
 .nasa-marker.is-selected { outline: 3px solid #031b2c; outline-offset: 2px; }
-.nasa-cluster-icon span { display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; border: 3px solid #5eead4; border-radius: 50%; background: #052b43; color: white; font: bold 13px system-ui; }
+.nasa-cluster-icon span { display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; border: 2.5px solid #fff; border-radius: 50%; background: #0dac8c; color: white; font: bold 14px system-ui; box-shadow: 0 0 0 7px #0dac8c55, 0 2px 10px #0008; }
+.nasa-felipe { display: block; }
+.nasa-bola { display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid #fff; box-shadow: 0 0 0 1px #0002; }
+.nasa-felipe .cidade-marcador { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 2px 10px #0008; }
+.nasa-felipe .cidade-marcador svg { width: 18px; height: 18px; }
+.nasa-felipe.is-selected .cidade-marcador { outline: 3px solid #fff; outline-offset: 3px; }
 .nasa-map .leaflet-container { font-family: Segoe UI, system-ui, sans-serif; background: #1c372d; }
 /* Mapas reais com as cores do desenho do Felipe (filtro SVG em features/climate/mapaFelipe.tsx) */
 .mapa-felipe { filter: url(#omni-mapa-felipe); }
