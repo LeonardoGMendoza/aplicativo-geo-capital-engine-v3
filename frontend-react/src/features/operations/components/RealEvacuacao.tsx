@@ -65,7 +65,7 @@ export function RealEvacuacao({ cidade, lugares, destinoId, onDestino, eventos }
         <button type="button" className="flex items-center gap-1 rounded bg-primary px-3 py-2 text-xs font-medium text-white" onClick={pedirGps}><LocateFixed className="size-3.5" />Usar minha localização</button>
       </div>
       {gpsMsg && <p role="status" className="px-3 pb-2 text-xs text-amber-900">{gpsMsg}</p>}
-      <div className="rota-caixa mx-2 overflow-hidden rounded-md">
+      <div className="rota-caixa mx-2 flex-1 overflow-hidden rounded-md">
         {destino ? <MapErrorBoundary message="Mapa da rota indisponível agora."><Suspense fallback={<p role="status" className="p-3 text-xs text-white">Carregando mapa…</p>}>
           <RotaMapa origem={origem} destino={destino.lugar.coordinates} tipo={destino.tipo} rota={rota} eventos={eventos} />
         </Suspense></MapErrorBoundary> : <p role="status" className="p-3 text-xs text-white">Buscando abrigos e saúde…</p>}

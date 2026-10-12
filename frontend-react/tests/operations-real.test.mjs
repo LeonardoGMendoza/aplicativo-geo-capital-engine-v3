@@ -127,10 +127,12 @@ test('evacuation route is real and drawn inside the site (no Google/Waze), list 
   assert.match(source('features/operations/real.css'), /\.rota-caixa \{[^}]*isolation: isolate;/)
 })
 
-test('real mode shows "Modo demonstração" only once and middle panels shrink to their content', () => {
+test('real mode shows "Modo demonstração" only once and the middle row has no holes', () => {
   const ops = source('features/operations/RealOperations.tsx')
   assert.doesNotMatch(ops, /Ver Modo demonstração/)
-  assert.match(ops, /className="middle-layout ops-real-meio"/); assert.doesNotMatch(ops, /ops-encher/)
+  assert.ok(ops.indexOf('aria-label="Fontes consultadas"') > ops.indexOf('id="central-alertas"') && ops.indexOf('aria-label="Fontes consultadas"') < ops.indexOf('<RealEvacuacao '), 'fontes embaixo da central')
+  assert.equal((ops.match(/className="ops-encher(?:"| ops-encher-lista)/g) ?? []).length, 2)
+  assert.match(source('features/operations/components/RealEvacuacao.tsx'), /rota-caixa mx-2 flex-1/)
   const css = source('features/operations/real.css')
-  assert.match(css, /\.ops-real-meio \{ align-items: start; \}/); assert.match(css, /\.rota-caixa \{ height: 280px;/)
+  assert.match(css, /\.ops-encher-dentro \{ position: absolute; inset: 0; overflow: auto; \}/); assert.match(css, /\.rota-caixa \{ min-height: 280px;/); assert.doesNotMatch(css, /align-items: start/)
 })
