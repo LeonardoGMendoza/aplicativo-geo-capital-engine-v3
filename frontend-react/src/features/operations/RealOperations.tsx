@@ -39,7 +39,7 @@ function paraCidade(p: Previsao): CidadePrevista {
   return { nome: p.cidade.nome, uf: p.cidade.uf, maxima: i >= 0 ? p.maximas[i] : null, diaMaxima: p.dias[i] ?? null, chuva: j >= 0 ? p.chuvas[j] : null, diaChuva: p.dias[j] ?? null }
 }
 
-export function RealOperations({ onDemo }: { onDemo: () => void }) {
+export function RealOperations(_props: { onDemo?: () => void }) {
   const { result: nasa, loading: nasaCarregando, error: nasaErro } = useNasaSession()
   const [cidade, setCidade] = useState(cidadesMapa[0])
   const [busca, setBusca] = useState('')
@@ -117,7 +117,7 @@ export function RealOperations({ onDemo }: { onDemo: () => void }) {
   ]
 
   return <>
-    <div className="demo-strip real-strip" role="note"><span className="flex items-center gap-2"><Database className="size-3.5 shrink-0" /><strong>DADOS REAIS</strong><span className="hidden sm:inline">Previsão, satélite, alertas da ONU e mapa colaborativo, consultados agora. Critérios do protótipo: não substitui alerta oficial.</span></span><button type="button" className="real-strip-demo" onClick={onDemo}>Ver Modo demonstração</button></div>
+    <div className="demo-strip real-strip" role="note"><span className="flex items-center gap-2"><Database className="size-3.5 shrink-0" /><strong>DADOS REAIS</strong><span className="hidden sm:inline">Previsão, satélite, alertas da ONU e mapa colaborativo, consultados agora. Critérios do protótipo: não substitui alerta oficial.</span></span></div>
 
     <div className="overview-layout">
       <div className="min-w-0">
@@ -158,11 +158,11 @@ export function RealOperations({ onDemo }: { onDemo: () => void }) {
     </div>
 
     <div className="middle-layout">
-      <section className="light-panel" id="central-alertas" tabIndex={-1} aria-label="Central de alertas com dados reais">
+      <section className="light-panel flex flex-col" id="central-alertas" tabIndex={-1} aria-label="Central de alertas com dados reais">
         <PanelHeading title="Central de Alertas" subtitle={`${itens.length} alertas de fontes reais; Brasil e América do Sul primeiro.`} icon={BellRing}><span className="rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">Dados reais</span></PanelHeading>
         <div className="compact-tabs">{([['todos', 'Todos'], ['brasil', 'Brasil e região'], ['mundo', 'Resto do mundo']] as const).map(([id, rotulo]) => <button key={id} type="button" aria-pressed={aba === id} onClick={() => setAba(id)}>{rotulo}</button>)}</div>
         <div className="flex flex-wrap gap-2 px-3 pb-2"><label className="flex min-w-0 flex-1 items-center gap-1 rounded border px-2"><Search className="size-3 text-muted-foreground" /><input aria-label="Buscar alerta na central" placeholder="Buscar alerta ou lugar…" value={filtro} onChange={e => setFiltro(e.target.value)} className="min-w-0 w-full py-1.5 text-xs outline-none" /></label></div>
-        <div className="max-h-[360px] overflow-auto px-2 pb-2"><table className="data-table"><caption className="sr-only">Alertas de fontes reais</caption><thead><tr><th>Tipo</th><th>Onde</th><th>Status</th><th>Ações</th></tr></thead><tbody>{filtrados.map(item => <tr key={item.id}><td className="max-w-44 font-medium">{item.titulo}</td><td>{item.local}</td><td><RiskBadge level={item.nivel} /></td><td><button type="button" className="rounded border bg-white px-2 py-0.5 text-xs" onClick={() => abrir(item)} aria-label={`Ver detalhes: ${item.titulo}`}>Ver</button></td></tr>)}</tbody></table>{filtrados.length === 0 && <p role="status" className="p-5 text-center text-xs text-muted-foreground">{itens.length ? 'Nenhum alerta corresponde aos filtros.' : 'Consultando as fontes…'}</p>}</div>
+        <div className="ops-encher"><div className="ops-encher-dentro px-2 pb-2"><table className="data-table"><caption className="sr-only">Alertas de fontes reais</caption><thead><tr><th>Tipo</th><th>Onde</th><th>Status</th><th>Ações</th></tr></thead><tbody>{filtrados.map(item => <tr key={item.id}><td className="max-w-44 font-medium">{item.titulo}</td><td>{item.local}</td><td><RiskBadge level={item.nivel} /></td><td><button type="button" className="rounded border bg-white px-2 py-0.5 text-xs" onClick={() => abrir(item)} aria-label={`Ver detalhes: ${item.titulo}`}>Ver</button></td></tr>)}</tbody></table>{filtrados.length === 0 && <p role="status" className="p-5 text-center text-xs text-muted-foreground">{itens.length ? 'Nenhum alerta corresponde aos filtros.' : 'Consultando as fontes…'}</p>}</div></div>
       </section>
       <RealEvacuacao cidade={cidade} lugares={maisPerto} destinoId={destinoId} onDestino={setDestinoId} eventos={perto} />
       <div className="shelter-list flex min-w-0 flex-col gap-2">
