@@ -15,6 +15,7 @@ from .global_alerts import AlertasGlobais
 from .global_alerts_router import router as global_alerts_router
 from .cadastros import Cadastros
 from .cadastros_router import router as cadastros_router
+from .alerta_whatsapp import router as alerta_whatsapp_router
 from .models import EventsResponse
 from .nasa import NasaService, Settings
 from .proximity import ASSETS, DATASET_VERSION, POLICY, ProximityRequest, analyze_proximity
@@ -87,6 +88,7 @@ def create_app(service: NasaService | None = None, inteligencia=None, alertas=No
     app.include_router(intelligence_router)
     app.include_router(global_alerts_router)
     app.include_router(cadastros_router)
+    app.include_router(alerta_whatsapp_router)
 
     return app
 

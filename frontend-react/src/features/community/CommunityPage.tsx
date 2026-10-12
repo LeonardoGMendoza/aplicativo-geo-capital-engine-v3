@@ -2,6 +2,7 @@ import { Component, lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { AlertActions } from '@/features/alerts/AlertActions'
 import { useNasaSession } from '../nasa/NasaSession'
 import { getAssets } from '../nasa/proximity'
 import type { AssetCatalog } from '../nasa/proximity'
@@ -60,6 +61,7 @@ export function CommunityPage() {
         {catalog && <CommunityReferenceList assets={visible} selectedId={asset?.id ?? null} onSelect={select} />}
       </section>
       <div className="min-w-0 space-y-4"><CommunityContextPanel asset={asset} result={screening.result} loading={screening.loading} error={screening.error} />
+        {asset && match && <AlertActions key={`${asset.id}-${match.event.id}`} perfil="comunidade" ativo={asset.name} comunidade={asset.communityDescription} evento={match.event.title} categoria={match.event.categories.map(c => c.title).join(', ')} km={match.distanceKm} />}
         <section className="light-panel space-y-3 p-4" aria-label="Consulta do ativo associado"><Button className="h-auto min-h-11 whitespace-normal text-left" disabled={!asset || !usable || screening.loading} onClick={() => void screening.consult()}>{screening.loading ? 'Consultando proximidade do ativo…' : 'Consultar proximidade do ativo associado'}</Button><p className="text-xs text-muted-foreground">Consulta somente o ativo selecionado e considera todo o catálogo NASA. Retorna o evento mais próximo a menos de 600 km; os filtros do explorador não alteram essa regra.</p></section>
       </div>
     </div>
@@ -67,6 +69,6 @@ export function CommunityPage() {
       {!asset ? <p className="text-sm">Selecione uma referência para visualizar as coordenadas de seu ativo associado.</p> : <><MapBoundary key={asset.id}><Suspense fallback={<p role="status">Carregando mapa; coordenadas e resultados permanecem disponíveis no contexto textual.</p>}><GeographicMap assets={[asset]} events={match ? [match.event] : []} selectedAssetId={focus === 'asset' || !match ? asset.id : null} selectedId={focus === 'event' ? match?.event.id ?? null : null} onAssetSelect={() => setFocus('asset')} onSelect={() => setFocus('event')} /></Suspense></MapBoundary><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => focusMap('asset')}>Ver ativo no mapa</Button>{match && <Button variant="outline" onClick={() => focusMap('event')}>Ver evento no mapa</Button>}</div></>}
     </section>
     <PreparationGuidance />
-    <section className="light-panel space-y-3 p-4" aria-labelledby="community-limits"><h2 id="community-limits" className="text-base font-semibold">Limites e qualidade dos dados</h2><p className="text-sm">Disponível: descrição comunitária, ativo associado, coordenadas do ativo e registros NASA consultados.</p><p className="text-sm">Não disponível: localização comunitária verificada, população, indicadores de vulnerabilidade, avaliação local, contatos institucionais ou disponibilidade de pontos de apoio.</p><p className="text-xs text-muted-foreground">Descrições repetidas continuam vinculadas a seus próprios ativos. Nenhuma comunicação ou ação operacional é executada. A lista e o contexto textual independem da base cartográfica.</p></section>
+    <section className="light-panel space-y-3 p-4" aria-labelledby="community-limits"><h2 id="community-limits" className="text-base font-semibold">Limites e qualidade dos dados</h2><p className="text-sm">Disponível: descrição comunitária, ativo associado, coordenadas do ativo e registros NASA consultados.</p><p className="text-sm">Não disponível: localização comunitária verificada, população, indicadores de vulnerabilidade, avaliação local, contatos institucionais ou disponibilidade de pontos de apoio.</p><p className="text-xs text-muted-foreground">Descrições repetidas continuam vinculadas a seus próprios ativos. Nenhuma comunicação é enviada sozinha: o envio por WhatsApp só acontece quando o operador aperta o botão e informa o código. A lista e o contexto textual independem da base cartográfica.</p></section>
   </div>
 }
