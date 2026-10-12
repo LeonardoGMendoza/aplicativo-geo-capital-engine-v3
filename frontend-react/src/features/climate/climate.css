@@ -50,8 +50,9 @@
 .cidade-resumo i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
 .cidade-mapa { height: 460px; border-radius: 10px; overflow: hidden; border: 1px solid #1d4f3f; background: #183d32; }
 @media (max-width: 640px) { .cidade-mapa { height: 340px; } }
-/* Fundo escuro do CARTO puxado para o verde-escuro do desenho (#183d32): só a camada base, o radar fica com as cores reais */
-.cidade-mapa .cidade-base { filter: sepia(.9) hue-rotate(95deg) saturate(1.6) brightness(1.15); }
+/* Mapa do OpenStreetMap (sem chave) escurecido por CSS e puxado para o verde-escuro do desenho (#183d32).
+   Só a camada base recebe o filtro: radar e marcadores ficam com as cores reais. */
+.cidade-mapa .cidade-base { filter: invert(1) hue-rotate(180deg) sepia(.35) hue-rotate(75deg) saturate(1.4) brightness(.78) contrast(1.05); }
 .cidade-marcador { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 8px #0007; }
 .mundo-lista li { display: block; padding: 0; }
 .mundo-item { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; width: 100%; min-height: 44px; padding: 8px 10px; font: inherit; font-size: 14px; color: #0b2233; text-align: left; background: none; border: 0; border-radius: 8px; cursor: pointer; }
@@ -72,6 +73,7 @@
 .nino-passos h3 span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-size: 13px; color: #fff; background: #0b8f7c; }
 .nino-passos .quente { color: #dc2626; }
 .nino-passos .frio { color: #2563eb; }
+.nino-mapa .nino-base { filter: invert(1) hue-rotate(180deg) grayscale(.6) brightness(.55); }
 .nino-mapa { height: 360px; margin-top: 8px; border-radius: 10px; overflow: hidden; border: 1px solid #1f2937; background: #111827; }
 .nino-legenda { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px; color: #4b657d; }
 .nino-legenda i { flex: 0 1 220px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #1e3a8a, #60a5fa, #f8fafc, #f87171, #991b1b); }

@@ -1,14 +1,21 @@
 import { useEffect, useMemo } from 'react'
-import { divIcon } from 'leaflet'
+import { divIcon, latLngBounds } from 'leaflet'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CORES, marcadorHtml } from './cityMap'
 import type { EventoPerto, PontoMapa } from './cityMap'
 import type { Coordinates } from '../shelters/places'
 
-function Centralizar({ centro }: { centro: Coordinates }) {
+function Enquadrar({ centro, pontos }: { centro: Coordinates; pontos: PontoMapa[] }) {
   const map = useMap()
-  useEffect(() => { map.setView([centro.latitude, centro.longitude], 11) }, [map, centro.latitude, centro.longitude])
+  const chave = `${centro.latitude},${centro.longitude}|${pontos.length}`
+  useEffect(() => {
+    // Enquadra a cidade e todos os abrigos/hospitais encontrados (raio de busca ~3 km), sem afastar demais.
+    const todos: [number, number][] = [[centro.latitude, centro.longitude], ...pontos.map(p => [p.lugar.coordinates.latitude, p.lugar.coordinates.longitude] as [number, number])]
+    if (todos.length === 1) map.setView(todos[0], 14)
+    else map.fitBounds(latLngBounds(todos), { padding: [30, 30], maxZoom: 15 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, chave])
   return null
 }
 
@@ -21,10 +28,10 @@ export default function CityRealMap({ centro, pontos, eventos, radarUrl, onRadar
     atencao: divIcon({ className: '', html: marcadorHtml('alerta', CORES.atencao), iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -16] }),
   }), [])
   return <div className="cidade-mapa">
-    <MapContainer center={[centro.latitude, centro.longitude]} zoom={11} minZoom={4} maxZoom={17} scrollWheelZoom className="h-full w-full">
-      <Centralizar centro={centro} />
-      <TileLayer className="cidade-base" url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" subdomains="abcd" maxZoom={19}
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>' />
+    <MapContainer center={[centro.latitude, centro.longitude]} zoom={14} minZoom={4} maxZoom={18} scrollWheelZoom className="h-full w-full">
+      <Enquadrar centro={centro} pontos={pontos} />
+      <TileLayer className="cidade-base" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19}
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' />
       {radarUrl && <TileLayer url={radarUrl} opacity={0.7} maxNativeZoom={7} maxZoom={17} zIndex={5} eventHandlers={{ tileerror: onRadarFalhou }}
         attribution='Radar: <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a>' />}
       {pontos.map(p => <Marker key={p.lugar.id} position={[p.lugar.coordinates.latitude, p.lugar.coordinates.longitude]} icon={icones[p.tipo]} title={`${p.lugar.name} · ${p.rotulo}`}>

@@ -13,12 +13,11 @@ export default function ElNinoOceanMap({ onData, onFalhou }: { onData: (data: st
   }
   return <div className="nino-mapa">
     <MapContainer center={[-5, -105]} zoom={2} minZoom={2} maxZoom={7} worldCopyJump scrollWheelZoom={false} className="h-full w-full">
-      <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png" subdomains="abcd"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>' />
+      <TileLayer className="nino-base" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19}
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' />
       <TileLayer key={data} url={urlAnomaliaMar(data)} maxNativeZoom={7} maxZoom={7} opacity={0.9}
         attribution='Temperatura do mar: <a href="https://earthdata.nasa.gov/gibs" target="_blank" rel="noopener">NASA GIBS</a> / GHRSST MUR'
         eventHandlers={{ load: () => onData(data), tileerror: erro }} />
-      <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png" subdomains="abcd" zIndex={6} />
       <Rectangle bounds={NINO34} pathOptions={{ color: '#ffffff', weight: 2, dashArray: '6 4', fillOpacity: 0 }}>
         <Tooltip permanent direction="top" className="nino-rotulo">Região Niño 3.4 · onde se mede o El Niño</Tooltip>
       </Rectangle>

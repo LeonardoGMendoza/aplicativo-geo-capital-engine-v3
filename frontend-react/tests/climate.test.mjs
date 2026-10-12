@@ -120,3 +120,8 @@ test('Clima page tells the El Niño story first, then the real forecast, city ma
   const cidade = source('features/climate/CityLiveMap.tsx')
   assert.match(cidade, /DADOS REAIS/); assert.match(cidade, /Não confirma risco nem rota segura/)
 })
+
+test('no map depends on a paid/keyed basemap (CARTO now asks for an API key)', () => {
+  for (const f of ['CityRealMap.tsx', 'ElNinoOceanMap.tsx', 'WorldWeatherMap.tsx']) assert.doesNotMatch(source(`features/climate/${f}`), /cartocdn|api[_-]?key/i, f)
+  assert.match(source('features/climate/CityRealMap.tsx'), /fitBounds\(latLngBounds\(todos\), \{ padding: \[30, 30\], maxZoom: 15 \}\)/)
+})
