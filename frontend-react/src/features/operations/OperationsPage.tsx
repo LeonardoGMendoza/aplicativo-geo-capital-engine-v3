@@ -15,10 +15,29 @@ import { DEFAULT_ALERT_ID, demoIndicators, demoSnapshot, formatSnapshotTime, get
 import { visualDemo } from './data/visual-demo'
 import type { DemoAlert } from '@/types/operations'
 import { NasaSummary } from '@/features/nasa/NasaSummary'
+import { useNasaSession } from '@/features/nasa/NasaSession'
+import { RealOperations } from './RealOperations'
+import './real.css'
 
 type Preview = { title: string; body: string; alert?: DemoAlert }
 
+// Abre com DADOS REAIS; o cenário fictício do Felipe continua igual, no botão "Modo demonstração".
+function ModeSwitch() {
+  const { mode, setMode } = useNasaSession()
+  return <div className="ops-modo" role="group" aria-label="Tipo de dados do painel"><button type="button" aria-pressed={mode === 'nasa'} onClick={() => setMode('nasa')}>Dados reais</button><button type="button" aria-pressed={mode === 'simulation'} onClick={() => setMode('simulation')}>Modo demonstração</button></div>
+}
+
 export function OperationsPage() {
+  const { mode, setMode } = useNasaSession()
+  if (mode === 'nasa') return <>
+    <header className="dashboard-heading"><div><h1 className="text-2xl font-semibold text-white">Situação atual</h1><p className="mt-1 text-sm text-[#b5d2e2]">Centro de Operações · dados reais</p></div><ModeSwitch /></header>
+    <NasaSummary />
+    <RealOperations onDemo={() => { setMode('simulation'); window.scrollTo({ top: 0 }) }} />
+  </>
+  return <DemoOperations />
+}
+
+function DemoOperations() {
   const [selectedId, setSelectedId] = useState(DEFAULT_ALERT_ID)
   const [preview, setPreview] = useState<Preview | null>(null)
   const previewTrigger = useRef<HTMLElement | null>(null)
@@ -33,7 +52,7 @@ export function OperationsPage() {
   }
 
   return <>
-    <header className="dashboard-heading"><div><h1 className="text-2xl font-semibold text-white">Situação atual</h1><p className="mt-1 text-sm text-[#b5d2e2]">Centro de Operações · cenário demonstrativo</p></div><span className="rounded border border-[#25617c] px-3 py-2 text-xs text-[#b5d2e2]">Referência fixa · {formatSnapshotTime(demoSnapshot.timestamp)}</span></header>
+    <header className="dashboard-heading"><div><h1 className="text-2xl font-semibold text-white">Situação atual</h1><p className="mt-1 text-sm text-[#b5d2e2]">Centro de Operações · cenário demonstrativo</p></div><div className="flex flex-wrap items-center gap-2"><ModeSwitch /><span className="ops-ref rounded border border-[#25617c] px-3 py-2 text-xs text-[#b5d2e2]">Referência fixa · {formatSnapshotTime(demoSnapshot.timestamp)}</span></div></header>
     <NasaSummary />
     <div className="demo-strip" role="note"><span className="flex items-center gap-2"><FlaskConical className="size-3.5 shrink-0" /><strong>Cenário abaixo · SIMULAÇÃO</strong><span className="hidden sm:inline">Indicadores e alertas ilustrativos, independentes da consulta NASA.</span></span><span className="flex items-center gap-1"><Clock3 className="size-3" />Referência fixa: {formatSnapshotTime(demoSnapshot.timestamp)}</span><span className="sm:hidden">Dados e imagens abaixo são ilustrativos. Nenhuma ação real.</span></div>
 

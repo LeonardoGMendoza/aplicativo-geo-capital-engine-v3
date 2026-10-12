@@ -16,7 +16,7 @@ export function NasaEventsPanel() {
       <div className="flex flex-wrap gap-2"><Button size="sm" variant={mode === 'simulation' ? 'default' : 'outline'} aria-pressed={mode === 'simulation'} onClick={() => setMode('simulation')}>Modo demonstração</Button><Button size="sm" variant={mode === 'nasa' ? 'default' : 'outline'} aria-pressed={mode === 'nasa'} onClick={() => setMode('nasa')}>Dados reais (NASA)</Button>{mode === 'nasa' && <Button size="sm" variant="outline" disabled={loading} onClick={refresh}>Atualizar consulta</Button>}</div>
     </div>
     {mode === 'simulation' ? <p className="mt-2 text-muted-foreground">SIMULAÇÃO · Dashboard com dados fictícios. Nenhuma consulta NASA é executada neste modo.</p> : <>
-      <p className="mt-2 text-muted-foreground">Eventos NASA não determinam risco local. Este mapa é geográfico; indicadores e abrigos do Centro de Operações continuam em SIMULAÇÃO. Nenhuma rota segura ou operação é definida. Decisões futuras exigem confirmação humana.</p>
+      <p className="mt-2 text-muted-foreground">Eventos NASA não determinam risco local. Este mapa é geográfico; o Centro de Operações usa estes eventos junto com a previsão do tempo, os alertas da ONU (GDACS) e os abrigos do OpenStreetMap. Nenhuma rota segura ou operação é definida. Decisões exigem confirmação humana.</p>
       {loading && <p role="status" className="mt-3">Consultando NASA pelo backend…</p>}
       {error && <p role="alert" className="mt-3 rounded border border-amber-300 bg-amber-50 p-3 text-amber-950">{error} O modo de simulação continua disponível.</p>}
       {!loading && result && <div className="mt-3 space-y-2">

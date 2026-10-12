@@ -1,0 +1,16 @@
+/* Centro de Operações: botões Dados reais / Modo demonstração e ajustes da versão com dados reais. */
+.ops-modo { display: inline-flex; padding: 3px; gap: 3px; border: 1px solid #25617c; border-radius: 8px; background: #05273dea; }
+.ops-modo button { min-height: 34px; padding: 0 12px; border-radius: 6px; font-size: 12px; font-weight: 600; color: #b5d2e2; }
+.ops-modo button[aria-pressed=true] { background: #0b8f7c; color: #fff; box-shadow: 0 0 10px #25d3b655; }
+.ops-modo button:focus-visible { outline: 2px solid #31cef1; outline-offset: 1px; }
+.real-strip { border-color: #25d3b670; background: #053a35ea; color: #d2f5ec; }
+.real-strip-demo { color: #9fe8d8; text-decoration: underline; font-size: inherit; }
+.ops-bola { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 4px 0 2px; vertical-align: middle; }
+.ops-real-mapa { display: flex; flex-direction: column; }
+.ops-real-mapa .cidade-mapa { flex: 1; height: auto; min-height: 330px; border: 0; border-radius: 6px; }
+@media (max-width: 767px) {
+  .dashboard-heading .ops-ref { display: none; }
+  .ops-modo { width: 100%; }
+  .ops-modo button { flex: 1; min-height: 44px; }
+  .ops-real-mapa .cidade-mapa { min-height: 300px; }
+}
