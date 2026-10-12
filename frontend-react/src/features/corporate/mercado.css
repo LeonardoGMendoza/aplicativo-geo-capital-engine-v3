@@ -1,0 +1,13 @@
+/* "Mercado agora": cara de corretora (fundo escuro, verde sobe / vermelho desce) dentro da paleta do Felipe */
+.mercado { background: linear-gradient(160deg, #06263b, #031b2c); border-radius: 10px; }
+.mercado-resumo { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; }
+.mercado-resumo span { padding: 4px 10px; border: 1px solid #176286; border-radius: 999px; background: #0a3550; }
+.mercado-tabela { width: 100%; border-collapse: collapse; font-size: 14px; }
+.mercado-tabela th { padding: 8px 10px; color: #a3c7dc; font-size: 12px; font-weight: 500; text-align: left; border-bottom: 1px solid #176286; }
+.mercado-tabela th.text-right { text-align: right; }
+.mercado-tabela td { padding: 10px; border-bottom: 1px solid #0f4a69; vertical-align: middle; }
+.mercado-tabela tbody tr:hover { background: #0a3550; }
+.mercado-tabela tbody tr:last-child td { border-bottom: 0; }
+.mercado-logo { display: grid; flex: 0 0 32px; width: 32px; height: 32px; place-items: center; border-radius: 50%; background: #0dac8c; color: #fff; font-weight: 700; }
+.mercado-ticker { margin-left: 4px; padding: 1px 6px; border-radius: 4px; background: #0a4260; color: #9fe8d8; font-size: 11px; font-weight: 500; }
+.mercado-alerta { display: inline-block; padding: 3px 8px; border-radius: 4px; background: #4a2a07; color: #ffd18a; }
