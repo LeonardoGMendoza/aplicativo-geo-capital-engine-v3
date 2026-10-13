@@ -22,7 +22,7 @@ test('price, change and sparkline formatting', () => {
 })
 
 test('Visão Corporativa shows the market panel next to NASA events, without claiming cause, not investment advice', () => {
-  assert.match(source('features/corporate/CorporatePage.tsx'), /<AssistenteRisco perfil="empresa" \/>\n\s*<MercadoPainel \/>/)
+  assert.match(source('features/corporate/CorporatePage.tsx'), /<AssistenteRisco perfil="empresa" \/>\r?\n\s*<MercadoPainel \/>/)
   const painel = source('features/corporate/MercadoPainel.tsx')
   assert.match(painel, /useAlertasAtivos\(\)/); assert.match(painel, /Não é recomendação de investimento/); assert.match(painel, /sem afirmar que um causou o outro/)
 })

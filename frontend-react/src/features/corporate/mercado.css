@@ -11,3 +11,17 @@
 .mercado-logo { display: grid; flex: 0 0 32px; width: 32px; height: 32px; place-items: center; border-radius: 50%; background: #0dac8c; color: #fff; font-weight: 700; }
 .mercado-ticker { margin-left: 4px; padding: 1px 6px; border-radius: 4px; background: #0a4260; color: #9fe8d8; font-size: 11px; font-weight: 500; }
 .mercado-alerta { display: inline-block; padding: 3px 8px; border-radius: 4px; background: #4a2a07; color: #ffd18a; }
+/* Celular: a tabela vira lista (nome à esquerda, preço e 24 h à direita, status NASA embaixo) */
+.mercado-lista { display: none; margin: 0; padding: 0; list-style: none; }
+.mercado-item { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 10px 2px; border-bottom: 1px solid #0f4a69; }
+.mercado-item:last-child { border-bottom: 0; }
+.mercado-item-nome { min-width: 0; }
+.mercado-item-nome p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mercado-item-nome .mercado-ticker { margin-left: 0; margin-right: 4px; }
+.mercado-item-preco { text-align: right; white-space: nowrap; }
+.mercado-item-nasa { grid-column: 2 / -1; min-width: 0; }
+.mercado-item-nasa .mercado-alerta { display: inline-block; max-width: 100%; white-space: normal; }
+@media (max-width: 640px) {
+  .mercado-desktop { display: none; }
+  .mercado-lista { display: block; }
+}
