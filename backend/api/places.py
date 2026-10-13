@@ -32,6 +32,8 @@ MAX_STALE_SECONDS = 86400   # se o Overpass cair, usa a cópia de até 1 dia (ma
 NEARBY_MAX_STALE = 30 * 86400  # abrigos/hospitais: cópia salva em disco vale até 30 dias se o Overpass estiver fora
 # Cidades da demonstração: o servidor busca sozinho ao ligar, para a tela não esperar o Overpass na apresentação
 CIDADES_DEMO = [(-30.0346, -51.2177), (-29.4661, -51.9615), (-23.5505, -46.6333), (-23.8077, -45.4075), (-22.5112, -43.1779), (-22.3762, -41.7869)]
+# Cidades buscadas pelo nome, como o usuário digita (o servidor usa o 1º resultado, igual à tela)
+CIDADES_POR_NOME = ["trujillo", "lima", "iquitos", "tacna", "tarapoto"]
 RADIUS_STEPS_M = (3000, 15000)   # amplia o raio quando a area tem poucos locais (zona rural)
 MIN_RESULTS = 10
 MAX_PER_CATEGORY = 40
@@ -349,14 +351,21 @@ def get_nearby(lat, lon):
 
 def aquecer_cidades(tentativas=6, intervalo=300, dormir=time.sleep):
     """Ao ligar a API: busca os abrigos das cidades da demonstração (de novo a cada 5 min se o Overpass falhar)."""
-    faltam = list(CIDADES_DEMO)
+    faltam = list(CIDADES_DEMO) + list(CIDADES_POR_NOME)
     for rodada in range(tentativas):
-        for lat, lon in list(faltam):
+        for cidade in list(faltam):
             try:
+                if isinstance(cidade, str):  # pelo nome: mesma busca que a tela faz
+                    achados = get_geocode(cidade)["items"]
+                    if not achados:
+                        raise LookupError("cidade não encontrada")
+                    lat, lon = achados[0]["coordinates"]["latitude"], achados[0]["coordinates"]["longitude"]
+                else:
+                    lat, lon = cidade
                 get_nearby(lat, lon)
-                faltam.remove((lat, lon))
+                faltam.remove(cidade)
             except Exception as erro:
-                log.warning("Abrigos de %s,%s ainda indisponíveis (%s)", lat, lon, type(erro).__name__)
+                log.warning("Abrigos de %s ainda indisponíveis (%s)", cidade, type(erro).__name__)
         if not faltam:
             return True
         if rodada < tentativas - 1:

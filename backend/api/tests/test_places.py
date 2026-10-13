@@ -239,6 +239,21 @@ class CacheEmDiscoEAquecimento(unittest.TestCase):
             if (lat, lon) == places.CIDADES_DEMO[0] and chamadas.count((lat, lon)) == 1:
                 raise RuntimeError("Overpass ocupado")
             return {}
-        with mock.patch.object(places, "get_nearby", side_effect=falso):
+        geo = {"items": [{"coordinates": {"latitude": -8.11, "longitude": -79.03}}]}
+        with mock.patch.object(places, "get_nearby", side_effect=falso), \
+                mock.patch.object(places, "get_geocode", return_value=geo):
             self.assertTrue(places.aquecer_cidades(tentativas=3, intervalo=0, dormir=lambda s: None))
-        self.assertEqual(len(chamadas), len(places.CIDADES_DEMO) + 1)
+        self.assertEqual(len(chamadas), len(places.CIDADES_DEMO) + len(places.CIDADES_POR_NOME) + 1)
+
+    def test_aquece_cidades_pelo_nome_com_o_primeiro_resultado(self):
+        pedidos, buscas = [], []
+
+        def geocode(nome):
+            pedidos.append(nome)
+            return {"items": [{"coordinates": {"latitude": -8.1116, "longitude": -79.0288}}]} if nome == "trujillo" else {"items": []}
+        with mock.patch.object(places, "CIDADES_DEMO", []), mock.patch.object(places, "CIDADES_POR_NOME", ["trujillo", "nada"]), \
+                mock.patch.object(places, "get_geocode", side_effect=geocode), \
+                mock.patch.object(places, "get_nearby", side_effect=lambda la, lo: buscas.append((la, lo)) or {}):
+            self.assertFalse(places.aquecer_cidades(tentativas=2, intervalo=0, dormir=lambda s: None))
+        self.assertEqual(buscas, [(-8.1116, -79.0288)])  # Trujillo uma vez; "nada" não achou e não busca abrigos
+        self.assertEqual(pedidos.count("nada"), 2)
