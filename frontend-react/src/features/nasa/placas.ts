@@ -6,7 +6,9 @@ export type Sismo = {
   coordinates: { latitude: number; longitude: number }; url: string | null; tsunamiSignal: boolean
 }
 export type Borda = { nome: string; positions: [number, number][][] }
-export type PlacasDados = { bordas: Borda[]; sismos: Sismo[]; erroPlacas: boolean; erroSismos: boolean; fonteSismos: string }
+/** 'dia' (últimas 24 h), 'semana', 'mes' (últimos 30 dias) ou um mês já encerrado 'AAAA-MM' (histórico). */
+export type Periodo = string
+export type PlacasDados = { bordas: Borda[]; sismos: Sismo[]; erroPlacas: boolean; erroSismos: boolean; fonteSismos: string; periodo: Periodo }
 
 type Options = { baseUrl?: string; signal?: AbortSignal; fetcher?: typeof fetch }
 const base = (o: Options) => (o.baseUrl ?? import.meta.env?.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000').replace(/\/$/, '')
@@ -111,11 +113,39 @@ export const ROTULOS: { texto: string; lat: number; lon: number; destaque?: bool
   { texto: 'Placa Norte-Americana', lat: 47, lon: -98 },
 ]
 
-export async function buscarPlacas(o: Options = {}): Promise<PlacasDados> {
-  const [p, s] = await Promise.allSettled([pedir('tectonic-plates', o), pedir('earthquakes', o)])
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
+export const ehMes = (p: Periodo) => /^\d{4}-(0[1-9]|1[0-2])$/.test(p)
+/** '2026-09' → 'setembro de 2026' */
+export function nomeMes(p: Periodo) { const [a, m] = p.split('-').map(Number); return `${MESES[m - 1]} de ${a}` }
+export function nomePeriodo(p: Periodo) {
+  return p === 'dia' ? 'nas últimas 24 horas' : p === 'semana' ? 'nos últimos 7 dias' : p === 'mes' ? 'nos últimos 30 dias' : ehMes(p) ? `em ${nomeMes(p)}` : ''
+}
+/** Os meses já encerrados, do mais recente para trás (o mês atual fica em "30 dias"). */
+export function mesesAnteriores(hoje = new Date(), n = 12) {
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - 1 - i, 1)
+    const valor = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const nome = nomeMes(valor)
+    return { valor, nome: nome[0].toUpperCase() + nome.slice(1) }
+  })
+}
+export function caminhoSismos(p: Periodo) { return ehMes(p) ? `earthquakes?mes=${p}` : `earthquakes?periodo=${p}` }
+
+const sismosValidos = (items: unknown) => Array.isArray(items)
+  ? (items as Sismo[]).filter(x => Number.isFinite(x?.magnitude) && Number.isFinite(x?.coordinates?.latitude) && Number.isFinite(x?.coordinates?.longitude))
+  : []
+
+/** Só os terremotos de outro período (as placas não mudam). Nunca rejeita: em falha devolve erroSismos. */
+export async function buscarSismos(periodo: Periodo, o: Options = {}): Promise<Pick<PlacasDados, 'sismos' | 'erroSismos'>> {
+  try {
+    const c = await pedir(caminhoSismos(periodo), o)
+    return { sismos: sismosValidos(c.items), erroSismos: !Array.isArray(c.items) }
+  } catch { return { sismos: [], erroSismos: true } }
+}
+
+export async function buscarPlacas(o: Options = {}, periodo: Periodo = 'dia'): Promise<PlacasDados> {
+  const [p, s] = await Promise.allSettled([pedir('tectonic-plates', o), pedir(caminhoSismos(periodo), o)])
   const bordas = p.status === 'fulfilled' ? bordasDoGeojson(p.value.geojson) : []
-  const sismos = s.status === 'fulfilled' && Array.isArray(s.value.items)
-    ? (s.value.items as Sismo[]).filter(x => Number.isFinite(x?.magnitude) && Number.isFinite(x?.coordinates?.latitude) && Number.isFinite(x?.coordinates?.longitude))
-    : []
-  return { bordas, sismos, erroPlacas: p.status !== 'fulfilled' || !bordas.length, erroSismos: s.status !== 'fulfilled', fonteSismos: 'USGS' }
+  const sismos = s.status === 'fulfilled' ? sismosValidos(s.value.items) : []
+  return { bordas, sismos, erroPlacas: p.status !== 'fulfilled' || !bordas.length, erroSismos: s.status !== 'fulfilled', fonteSismos: 'USGS', periodo }
 }

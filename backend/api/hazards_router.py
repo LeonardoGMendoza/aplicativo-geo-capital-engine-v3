@@ -20,6 +20,8 @@ def _error(status, state, code, message):
 def _run(fn):
     try:
         return JSONResponse(content=fn(), headers=_NO_STORE)
+    except hazards.InvalidRequest:
+        return _error(422, "error", "invalid_request", "Período inválido. Use dia, semana, mes ou um mês já encerrado (AAAA-MM).")
     except hazards.SourceUnavailable:
         return _error(503, "unavailable", "unavailable", "Fonte de dados indisponível no momento.")
     except hazards.InvalidResponse:
@@ -29,8 +31,8 @@ def _run(fn):
 
 
 @router.get("/earthquakes")
-def earthquakes():
-    return _run(hazards.get_earthquakes)
+def earthquakes(periodo: str = "semana", mes: str | None = None):
+    return _run(lambda: hazards.get_earthquakes(periodo, mes))
 
 
 @router.get("/tsunami-signals")

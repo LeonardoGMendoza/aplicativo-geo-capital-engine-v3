@@ -47,6 +47,42 @@ class TestEarthquakes(Base):
         with mock.patch.object(hazards, "_download", return_value={"features": []}):
             self.assertEqual(hazards.get_earthquakes()["state"], "empty")
 
+    def test_periodo_ao_vivo_usa_o_feed_certo(self):
+        with mock.patch.object(hazards, "_download", return_value=USGS) as dl:
+            r = hazards.get_earthquakes("dia")
+            hazards.get_earthquakes("mes")
+        urls = [c.args[0] for c in dl.call_args_list]
+        self.assertTrue(urls[0].endswith("4.5_day.geojson"))
+        self.assertTrue(urls[1].endswith("4.5_month.geojson"))
+        self.assertEqual(r["periodo"], "dia")
+        self.assertIn("últimas 24 horas", r["notice"])
+        self.assertFalse(r["isSimulation"])
+
+    def test_padrao_continua_a_semana(self):
+        with mock.patch.object(hazards, "_download", return_value=USGS) as dl:
+            r = hazards.get_earthquakes()
+        self.assertTrue(dl.call_args.args[0].endswith("4.5_week.geojson"))
+        self.assertEqual(r["notice"], hazards.QUAKE_NOTICE)
+
+    def test_mes_anterior_consulta_por_data(self):
+        with mock.patch.object(hazards, "_download", return_value=USGS) as dl:
+            r = hazards.get_earthquakes(mes="2025-12")
+        url, params = dl.call_args.args[0], dl.call_args.args[1]
+        self.assertEqual(url, hazards.URL_USGS_CONSULTA)
+        self.assertEqual((params["starttime"], params["endtime"], params["minmagnitude"]), ("2025-12-01", "2026-01-01", "4.5"))
+        self.assertEqual(r["mes"], "2025-12")
+        self.assertIn("dezembro de 2025", r["notice"])
+
+    def test_mes_invalido_ou_ainda_nao_encerrado(self):
+        from datetime import datetime, timezone
+        hoje = datetime(2026, 10, 14, tzinfo=timezone.utc)
+        self.assertEqual(hazards.intervalo_do_mes("2026-09", hoje)[:2], ("2026-09-01", "2026-10-01"))
+        for ruim in ["2026-10", "2027-01", "2026-13", "1999-12", "set/2026", "", None]:
+            with self.assertRaises(hazards.InvalidRequest, msg=str(ruim)):
+                hazards.intervalo_do_mes(ruim, hoje)
+        with self.assertRaises(hazards.InvalidRequest):
+            hazards.get_earthquakes("ano")
+
 
 class TestCache(Base):
     def test_second_call_uses_cache(self):

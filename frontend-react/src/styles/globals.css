@@ -157,3 +157,14 @@
 .placa-rotulo.is-destaque { background: #ff5a1f; color: #fff; }
 .placa-mag { flex: 0 0 auto; min-width: 34px; padding: 1px 6px; border-radius: 4px; color: #1a1400; font-weight: 700; text-align: center; }
 @media (max-width: 640px) { .placa-rotulo { font-size: 10px; padding: 0 4px; } }
+.placa-periodos { display: flex; flex-wrap: wrap; gap: 6px; }
+.placa-periodos button, .placa-meses button, .placa-vazio button { min-height: 36px; padding: 6px 12px; border: 1px solid #9db7bc; border-radius: 999px; background: #fff; color: #0b2f44; font-size: 13px; font-weight: 600; cursor: pointer; }
+.placa-periodos button[aria-pressed="true"], .placa-meses button[aria-pressed="true"] { background: #0b2f44; border-color: #0b2f44; color: #fff; }
+.placa-historico summary { display: flex; align-items: center; gap: 6px; min-height: 36px; cursor: pointer; font-size: 13px; font-weight: 600; list-style: revert; }
+.placa-meses { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; padding-top: 6px; }
+.placa-vazio { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
+@media (max-width: 640px) {
+  .placa-periodos button, .placa-meses button, .placa-vazio button, .placa-historico summary { min-height: 44px; font-size: 15px; }
+  .placa-periodos button { flex: 1 1 30%; padding: 6px 8px; }
+  .placa-meses { grid-template-columns: 1fr 1fr; }
+}

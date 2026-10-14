@@ -11,6 +11,13 @@ TIMEOUT_SECONDS = 10
 MAX_STALE_SECONDS = 3600
 
 URL_USGS = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson"
+# Periodos "ao vivo" do USGS (magnitude 4.5+) e a consulta por data para os meses anteriores.
+URL_USGS_PERIODO = {
+    "dia": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson",
+    "semana": URL_USGS,
+    "mes": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_month.geojson",
+}
+URL_USGS_CONSULTA = "https://earthquake.usgs.gov/fdsnws/event/1/query"
 URL_PLATES = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json"
 URL_NWS = "https://api.weather.gov/alerts/active"
 URL_ENSO = "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.html"
@@ -19,6 +26,9 @@ URL_METEO = "https://api.open-meteo.com/v1/forecast"
 TSUNAMI_NOTICE = ("Terremoto em região oceânica. Isto NÃO confirma tsunami. Alertas oficiais: "
                   "tsunami.gov (EUA/Pacífico/Caribe) e a Defesa Civil local.")
 QUAKE_NOTICE = "Terremotos de magnitude 4.5 ou mais nos últimos 7 dias. Não é previsão de novos eventos."
+PERIODO_TEXTO = {"dia": "nas últimas 24 horas", "semana": "nos últimos 7 dias", "mes": "nos últimos 30 dias"}
+MESES_PT = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto",
+            "setembro", "outubro", "novembro", "dezembro"]
 TORNADO_NOTICE = "Cobre somente os EUA. Não existe feed mundial de tornados. Avisos sem polígono não aparecem no mapa."
 
 
@@ -28,6 +38,10 @@ class SourceUnavailable(Exception):
 
 class InvalidResponse(Exception):
     """A fonte respondeu, mas num formato inesperado."""
+
+
+class InvalidRequest(ValueError):
+    """Parametro invalido vindo do cliente (periodo ou mes)."""
 
 
 # ---------- download com cache ----------
@@ -98,10 +112,37 @@ def parse_earthquakes(geo):
     return out
 
 
-def get_earthquakes():
-    geo, ts, stale = _fetch(URL_USGS, 300)
+def intervalo_do_mes(mes, hoje=None):
+    """'2026-09' -> ('2026-09-01', '2026-10-01', 'setembro de 2026'). So meses ja encerrados, de 2000 em diante."""
+    m = re.fullmatch(r"(\d{4})-(\d{2})", str(mes or ""))
+    if not m:
+        raise InvalidRequest("mes deve ser AAAA-MM")
+    ano, num = int(m.group(1)), int(m.group(2))
+    hoje = hoje or datetime.now(timezone.utc)
+    if not 1 <= num <= 12 or ano < 2000 or (ano, num) >= (hoje.year, hoje.month):
+        raise InvalidRequest("mes fora do intervalo")
+    prox = (ano + 1, 1) if num == 12 else (ano, num + 1)
+    return f"{ano:04d}-{num:02d}-01", f"{prox[0]:04d}-{prox[1]:02d}-01", f"{MESES_PT[num - 1]} de {ano}"
+
+
+def get_earthquakes(periodo="semana", mes=None):
+    """Ao vivo: periodo dia/semana/mes (feeds do USGS). Historico: mes='AAAA-MM' (consulta por data do USGS)."""
+    if mes:
+        inicio, fim, nome = intervalo_do_mes(mes)
+        params = {"format": "geojson", "starttime": inicio, "endtime": fim, "minmagnitude": "4.5", "orderby": "time"}
+        geo, ts, stale = _fetch(URL_USGS_CONSULTA, 86400, params)  # mes encerrado quase nao muda: cache de 1 dia
+        items = parse_earthquakes(geo)
+        notice = f"Terremotos de magnitude 4.5 ou mais em {nome}. Histórico, não é previsão de novos eventos."
+        return _envelope("items", items, not items, "USGS", URL_USGS_CONSULTA, ts, stale,
+                         notice=notice, periodo="historico", mes=mes)
+    url = URL_USGS_PERIODO.get(periodo)
+    if not url:
+        raise InvalidRequest("periodo deve ser dia, semana ou mes")
+    geo, ts, stale = _fetch(url, 300)
     items = parse_earthquakes(geo)
-    return _envelope("items", items, not items, "USGS", URL_USGS, ts, stale, notice=QUAKE_NOTICE)
+    notice = QUAKE_NOTICE if periodo == "semana" else \
+        f"Terremotos de magnitude 4.5 ou mais {PERIODO_TEXTO[periodo]}. Não é previsão de novos eventos."
+    return _envelope("items", items, not items, "USGS", url, ts, stale, notice=notice, periodo=periodo)
 
 
 def get_tsunami_signals():
