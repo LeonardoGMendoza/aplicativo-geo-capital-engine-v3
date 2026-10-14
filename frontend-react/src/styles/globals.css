@@ -150,3 +150,10 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+/* Placas tectônicas e terremotos (Mapa de Riscos) */
+.placa-traco { display: inline-block; width: 18px; border-top: 2.5px dashed #ff5a1f; }
+.placa-rotulo-icon { background: none; border: 0; }
+.placa-rotulo { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; padding: 1px 6px; border-radius: 4px; background: #031b2cc4; color: #ffd2bf; font: 600 11px/1.4 Segoe UI, system-ui, sans-serif; pointer-events: none; }
+.placa-rotulo.is-destaque { background: #ff5a1f; color: #fff; }
+.placa-mag { flex: 0 0 auto; min-width: 34px; padding: 1px 6px; border-radius: 4px; color: #1a1400; font-weight: 700; text-align: center; }
+@media (max-width: 640px) { .placa-rotulo { font-size: 10px; padding: 0 4px; } }

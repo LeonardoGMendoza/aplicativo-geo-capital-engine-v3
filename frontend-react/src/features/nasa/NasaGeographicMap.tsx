@@ -9,6 +9,8 @@ import type { Asset } from './proximity'
 import { createClusterIndex, formatObservation, mapPosition } from './geography'
 import { categoriaPt, corDoEvento, ondeFica, tituloPt, vistoHa } from './leitura'
 import { marcadorHtml } from '@/features/climate/cityMap'
+import { FocoPacifico, PlacasCamada } from './PlacasCamada'
+import type { PlacasDados } from './placas'
 
 function EventMarker({ event, selected, onSelect }: { event: NasaEvent; selected: boolean; onSelect: (id: string) => void }) {
   const marker = useRef<LeafletMarker>(null)
@@ -85,7 +87,7 @@ function AssetLayers({ assets, selectedId, onSelect }: { assets: Asset[]; select
   return <>{assets.map(a => <Marker key={a.id} position={[a.coordinates.latitude, a.coordinates.longitude]} icon={icon} title={`Ativo MVP: ${a.name} · referência`} eventHandlers={{ add: e => e.target.getElement()?.setAttribute('aria-label', `Ativo MVP: ${a.name} · referência`), click: () => onSelect(a.id) }}><Popup key={popupWidth} minWidth={140} maxWidth={popupWidth} maxHeight={180} autoPanPaddingTopLeft={[10, 70]} autoPanPaddingBottomRight={[10, 10]}><strong>{a.name}</strong><p>Ativo do MVP · referência não verificada</p><p>{a.id} · {a.sourceFile}</p><p>Lat/Lon: {a.coordinates.latitude}, {a.coordinates.longitude}</p><p>Não confirma segurança ou operação.</p></Popup></Marker>)}</>
 }
 
-export default function NasaGeographicMap({ events, selectedId, onSelect, assets, selectedAssetId, onAssetSelect }: { events: NasaEvent[]; selectedId: string | null; onSelect: (id: string) => void; assets: Asset[]; selectedAssetId: string | null; onAssetSelect: (id: string) => void }) {
+export default function NasaGeographicMap({ events, selectedId, onSelect, assets, selectedAssetId, onAssetSelect, placas = null, focoPacifico = 0 }: { events: NasaEvent[]; selectedId: string | null; onSelect: (id: string) => void; assets: Asset[]; selectedAssetId: string | null; onAssetSelect: (id: string) => void; placas?: PlacasDados | null; focoPacifico?: number }) {
   const [tileError, setTileError] = useState(false)
   return <div className="min-w-0">
     {tileError && <p role="status" className="mb-1 text-amber-900">Base OpenStreetMap parcialmente indisponível. Marcadores e lista continuam disponíveis.</p>}
@@ -93,6 +95,8 @@ export default function NasaGeographicMap({ events, selectedId, onSelect, assets
       <MapContainer center={[-15, -55]} zoom={3} minZoom={2} maxZoom={18} maxBounds={[[-85.0511287798, -180], [85.0511287798, 180]]} maxBoundsViscosity={1} scrollWheelZoom={false} className="h-full w-full">
         <FiltroMapaFelipe />
         <TileLayer className="mapa-felipe" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" noWrap attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' eventHandlers={{ loading: () => setTileError(false), tileerror: () => setTileError(true) }} />
+        {placas && <PlacasCamada dados={placas} />}
+        <FocoPacifico pedido={focoPacifico} />
         <GeographicLayers events={events} selectedId={selectedId} onSelect={onSelect} />
         <AssetLayers assets={assets} selectedId={selectedAssetId} onSelect={onAssetSelect} />
       </MapContainer>
