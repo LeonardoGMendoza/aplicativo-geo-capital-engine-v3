@@ -7,6 +7,7 @@ import { categoryMeta, formatDistance, nearestOf, routeLinks } from '../shelters
 import type { PlaceCategory } from '../shelters/places'
 import { useNearbySearch } from './useNearbySearch'
 import { AlertsSignup } from './AlertsSignup'
+import { LanguageSelector } from '@/i18n'
 import './citizen.css'
 const NearbyPlacesMap = lazy(() => import('../shelters/NearbyPlacesMap'))
 
@@ -42,6 +43,7 @@ export function CitizenPage() {
     <header className="citizen-header">
       <BrandSymbol className="h-11 w-10" decorative />
       <div><p className="citizen-brand">Omni-<span>EcoRescue</span></p><p className="citizen-tagline">Ajuda perto de você</p></div>
+      <LanguageSelector style={{ marginLeft: 'auto' }} />
     </header>
 
     <main className="citizen-main" id="main-content">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Activity, FlaskConical, Menu, PanelLeftClose, PanelLeftOpen, Satellite } from 'lucide-react'
+import { Activity, FlaskConical, Languages, Menu, PanelLeftClose, PanelLeftOpen, Satellite } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { menuNavigation } from '@/app/navigation'
 import { Brand, BrandSymbol } from '@/components/shared/Brand'
@@ -8,11 +8,16 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { demoSnapshot, formatSnapshotTime } from '@/features/operations/data/demo'
 import { useNasaSession } from '@/features/nasa/NasaSession'
+import { LanguageSelector } from '@/i18n'
 
 function SidebarContent({ onNavigate, collapsed = false, onToggle }: { onNavigate?: () => void; collapsed?: boolean; onToggle?: () => void }) {
   return <div className="flex h-full flex-col">
     <nav aria-label="Navegação principal" className="flex-1 space-y-1 px-2 py-3">
       {menuNavigation.map(({ path, label, icon: Icon }) => <NavLink key={path} to={path} end={path === '/'} onClick={onNavigate} title={collapsed ? label : undefined} aria-label={collapsed ? label : undefined} className={`sidebar-link ${collapsed ? 'justify-center' : ''}`}><Icon className="size-4 shrink-0" aria-hidden="true" /><span className={collapsed ? 'sr-only' : undefined}>{label}</span></NavLink>)}
+    <label title={collapsed ? 'Idioma / Language' : undefined} className={`relative mt-3 border-t border-[#25617c] flex items-center gap-2 rounded-md px-3 pt-3 pb-2 text-[#b4d3e1] hover:bg-white/10 hover:text-white ${collapsed ? 'justify-center' : ''}`}>
+      <Languages className="size-4 shrink-0" aria-hidden="true" />
+      <LanguageSelector className={collapsed ? 'absolute inset-0 cursor-pointer opacity-0' : 'w-full min-w-0 cursor-pointer rounded border border-[#25617c] bg-[#06283a] px-1 py-1 text-xs text-white'} />
+    </label>
     </nav>
     {onToggle && <Button variant="ghost" className="mx-2 mb-2 text-[#b4d3e1] hover:bg-white/10 hover:text-white" onClick={onToggle} aria-label={collapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'} aria-expanded={!collapsed} title={collapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}>{collapsed ? <PanelLeftOpen /> : <><PanelLeftClose /><span className="text-xs">Recolher</span></>}</Button>}
     <div className={`mx-3 mb-5 flex items-center gap-2 border-t border-[#25617c] pt-4 ${collapsed ? 'justify-center' : ''}`}><BrandSymbol className="h-10 w-8" /><p className={collapsed ? 'sr-only' : 'text-xs font-semibold leading-relaxed text-white'}>TECH4CHANGE<br /><span className="font-normal text-[#a2c4d4]">Dados em contexto.<br />O humano decide.</span></p></div>
