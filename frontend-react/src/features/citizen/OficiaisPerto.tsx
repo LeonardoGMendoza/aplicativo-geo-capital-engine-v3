@@ -6,7 +6,7 @@ import type { Coordinates } from '../shelters/places'
 import { listarOficiais, STATUS_OFICIAL, TIPOS_OFICIAIS } from '../shelters/abrigosOficiais'
 import type { LocalOficial } from '../shelters/abrigosOficiais'
 import { minutosAPe } from './dicas'
-import { areasEmVolta, areasNoCaminho } from '../operations/data/rota'
+import { areasEmVolta, areasNoCaminho, desvioPorPontos, googleComDesvio } from '../operations/data/rota'
 import type { AreaRisco } from '../operations/data/rota'
 
 const RAIO_KM = 30
@@ -45,7 +45,7 @@ export function OficiaisPerto({ origem }: { origem: Coordinates }) {
       {cruza.length > 0 && <p className="citizen-risco">{`⚠️ O caminho até aqui pode passar pela área de risco ${cruza.map(a => a.nome).join(', ')}. Prefira outro local ou confirme no 199.`}</p>}
       {l.status !== 'fechado' && <div className="citizen-oficial-rotas">
         <a className="citizen-route citizen-route-waze" href={routeLinks(l).waze} target="_blank" rel="noopener noreferrer">🚗 Ir pelo Waze</a>
-        <a className="citizen-route citizen-route-google" href={routeLinks(l).google} target="_blank" rel="noopener noreferrer">🗺️ Ir pelo Google Maps</a>
+        <a className="citizen-route citizen-route-google" href={cruza.length ? googleComDesvio(origem, l, desvioPorPontos(origem, l, evitar)) : routeLinks(l).google} target="_blank" rel="noopener noreferrer">{cruza.length ? '🗺️ Google Maps com desvio da área de risco' : '🗺️ Ir pelo Google Maps'}</a>
       </div>}
     </div>)}
     <p className="citizen-small">Cadastrados pela Defesa Civil. O status pode mudar: em caso de dúvida, ligue 199.</p>

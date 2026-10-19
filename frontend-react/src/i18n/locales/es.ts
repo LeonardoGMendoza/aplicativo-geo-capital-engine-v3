@@ -1254,6 +1254,7 @@ const es: Record<string, string> = {
  "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "No sabe de inundaciones o bloqueos que no se hayan registrado.",
  "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "Solo evita las zonas de riesgo registradas por Defensa Civil. No sabe de inundaciones o bloqueos fuera de ellas: confirme en el 199.",
  "Área de risco: {0}": "Zona de riesgo: {0}",
- "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ El camino hasta aquí puede pasar por la zona de riesgo {0}. Prefiera otro lugar o confirme en el 199."
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ El camino hasta aquí puede pasar por la zona de riesgo {0}. Prefiera otro lugar o confirme en el 199.",
+ "🗺️ Google Maps com desvio da área de risco": "🗺️ Google Maps evitando la zona de riesgo"
 }
 export default es

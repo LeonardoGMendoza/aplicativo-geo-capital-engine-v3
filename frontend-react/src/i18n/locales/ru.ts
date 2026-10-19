@@ -1359,6 +1359,7 @@ const ru: Record<string, string> = {
  "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "Он не знает о подтоплениях или перекрытиях, которые не внесены.",
  "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "Обходит только зоны риска, внесённые Гражданской обороной. Не знает о подтоплениях и перекрытиях вне их: уточните по 199.",
  "Área de risco: {0}": "Зона риска: {0}",
- "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ Путь сюда может проходить через зону риска {0}. Выберите другое место или уточните по 199."
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ Путь сюда может проходить через зону риска {0}. Выберите другое место или уточните по 199.",
+ "🗺️ Google Maps com desvio da área de risco": "🗺️ Google Maps в обход зоны риска"
 }
 export default ru

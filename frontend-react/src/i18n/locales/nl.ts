@@ -1358,6 +1358,7 @@ const nl: Record<string, string> = {
  "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "Ze weet niets van overstromingen of blokkades die niet zijn geregistreerd.",
  "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "Vermijdt alleen risicogebieden die de Civiele Bescherming heeft geregistreerd. Weet niets van overstromingen of blokkades daarbuiten: controleer via 199.",
  "Área de risco: {0}": "Risicogebied: {0}",
- "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ De weg hierheen kan door het risicogebied {0} gaan. Kies een andere plek of controleer via 199."
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ De weg hierheen kan door het risicogebied {0} gaan. Kies een andere plek of controleer via 199.",
+ "🗺️ Google Maps com desvio da área de risco": "🗺️ Google Maps met omweg rond het risicogebied"
 }
 export default nl

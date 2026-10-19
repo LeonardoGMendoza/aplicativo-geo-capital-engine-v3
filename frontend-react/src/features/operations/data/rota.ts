@@ -68,6 +68,31 @@ function pontoAoLado(ar: AreaRisco, a: Coordinates, b: Coordinates, lado: number
 }
 
 /**
+ * Pontos de passagem para o Google Maps contornar as áreas de risco que a linha reta a-b atravessa
+ * (o link do Google aceita "waypoints"; o do Waze não). Vazio = nada a desviar.
+ */
+export function desvioPorPontos(a: Coordinates, b: Coordinates, areas: AreaRisco[]): Coordinates[] {
+  const fixas = new Set([...areasEmVolta(a, areas), ...areasEmVolta(b, areas)].map(ar => ar.id))
+  const evitar = areas.filter(ar => !fixas.has(ar.id))
+  const cruzadas = areasNoCaminho([[a.latitude, a.longitude], [b.latitude, b.longitude]], evitar)
+  if (!cruzadas.length) return []
+  // da origem para o destino, na ordem em que o caminho encontra cada área
+  const dist = (ar: AreaRisco) => metros([a.latitude, a.longitude], [ar.latitude, ar.longitude])
+  return cruzadas.sort((x, y) => dist(x) - dist(y)).slice(0, 3).map(ar => {
+    const opcoes = [1, -1].map(lado => pontoAoLado(ar, a, b, lado))
+    return opcoes.find(p => !areasEmVolta(p, evitar).length) ?? opcoes[0]
+  })
+}
+
+/** Link do Google Maps com origem, destino e (se houver) os pontos de passagem do desvio. */
+export function googleComDesvio(a: Coordinates, b: Coordinates, pontos: Coordinates[]) {
+  const c = (p: Coordinates) => `${p.latitude.toFixed(6)},${p.longitude.toFixed(6)}`
+  const q = new URLSearchParams({ api: '1', origin: c(a), destination: c(b), travelmode: 'driving' })
+  if (pontos.length) q.set('waypoints', pontos.map(c).join('|'))
+  return `https://www.google.com/maps/dir/?${q}`
+}
+
+/**
  * Rota real pelas ruas do OpenStreetMap (OSRM, público e sem chave). Se falhar, devolve a linha reta.
  * Com áreas de risco (cadastro da Defesa Civil): como o guia de evacuação de Hiroshima, procura um caminho
  * que não atravesse nenhuma delas: primeiro entre as rotas alternativas, depois contornando a área por um

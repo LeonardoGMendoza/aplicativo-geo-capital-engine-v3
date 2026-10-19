@@ -1360,6 +1360,7 @@ const zh: Record<string, string> = {
  "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "它不知道未登记的积水或封路。",
  "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "只绕开民防部门登记的风险区。不知道其他地方的积水或封路：请拨打199确认。",
  "Área de risco: {0}": "风险区：{0}",
- "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ 前往此处的路可能经过风险区 {0}。请选择其他地点或拨打199确认。"
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ 前往此处的路可能经过风险区 {0}。请选择其他地点或拨打199确认。",
+ "🗺️ Google Maps com desvio da área de risco": "🗺️ 绕开风险区的Google地图"
 }
 export default zh

@@ -1356,6 +1356,7 @@ const sv: Record<string, string> = {
  "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "Den känner inte till översvämningar eller avstängningar som inte registrerats.",
  "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "Undviker bara riskområden som räddningstjänsten registrerat. Känner inte till översvämningar eller avstängningar utanför dem: kontrollera på 199.",
  "Área de risco: {0}": "Riskområde: {0}",
- "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ Vägen hit kan gå genom riskområdet {0}. Välj en annan plats eller kontrollera på 199."
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ Vägen hit kan gå genom riskområdet {0}. Välj en annan plats eller kontrollera på 199.",
+ "🗺️ Google Maps com desvio da área de risco": "🗺️ Google Maps med omväg runt riskområdet"
 }
 export default sv

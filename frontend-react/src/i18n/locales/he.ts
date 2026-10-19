@@ -1360,6 +1360,7 @@ const he: Record<string, string> = {
  "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "הוא לא יודע על הצפות או חסימות שלא נרשמו.",
  "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "עוקף רק אזורי סיכון שרשמה ההגנה האזרחית. לא יודע על הצפות או חסימות מחוץ להם: אמתו ב-199.",
  "Área de risco: {0}": "אזור סיכון: {0}",
- "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ הדרך לכאן עלולה לעבור באזור הסיכון {0}. בחרו מקום אחר או אמתו ב-199."
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ הדרך לכאן עלולה לעבור באזור הסיכון {0}. בחרו מקום אחר או אמתו ב-199.",
+ "🗺️ Google Maps com desvio da área de risco": "🗺️ Google Maps עם עקיפת אזור הסיכון"
 }
 export default he

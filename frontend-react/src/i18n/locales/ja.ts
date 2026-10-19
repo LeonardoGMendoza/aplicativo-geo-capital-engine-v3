@@ -1360,6 +1360,7 @@ const ja: Record<string, string> = {
  "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "登録されていない冠水や通行止めはわかりません。",
  "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "防災当局が登録した危険区域のみ回避します。それ以外の冠水や通行止めはわかりません。199で確認してください。",
  "Área de risco: {0}": "危険区域: {0}",
- "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ ここまでの道は危険区域 {0} を通る可能性があります。別の場所を選ぶか、199で確認してください。"
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ ここまでの道は危険区域 {0} を通る可能性があります。別の場所を選ぶか、199で確認してください。",
+ "🗺️ Google Maps com desvio da área de risco": "🗺️ 危険区域を避けてGoogleマップ"
 }
 export default ja

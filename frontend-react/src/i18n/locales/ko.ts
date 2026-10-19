@@ -1360,6 +1360,7 @@ const ko: Record<string, string> = {
  "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "등록되지 않은 침수나 통제는 알지 못합니다.",
  "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "민방위가 등록한 위험 지역만 우회합니다. 그 밖의 침수나 통제는 알지 못하니 199에서 확인하세요.",
  "Área de risco: {0}": "위험 지역: {0}",
- "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ 이곳까지 가는 길이 위험 지역 {0}을(를) 지날 수 있습니다. 다른 장소를 고르거나 199에서 확인하세요."
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ 이곳까지 가는 길이 위험 지역 {0}을(를) 지날 수 있습니다. 다른 장소를 고르거나 199에서 확인하세요.",
+ "🗺️ Google Maps com desvio da área de risco": "🗺️ 위험 지역을 우회하는 Google 지도"
 }
 export default ko
