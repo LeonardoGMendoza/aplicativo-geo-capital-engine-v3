@@ -78,9 +78,27 @@ export function desvioPorPontos(a: Coordinates, b: Coordinates, areas: AreaRisco
   if (!cruzadas.length) return []
   // da origem para o destino, na ordem em que o caminho encontra cada área
   const dist = (ar: AreaRisco) => metros([a.latitude, a.longitude], [ar.latitude, ar.longitude])
-  return cruzadas.sort((x, y) => dist(x) - dist(y)).slice(0, 3).map(ar => {
-    const opcoes = [1, -1].map(lado => pontoAoLado(ar, a, b, lado))
-    return opcoes.find(p => !areasEmVolta(p, evitar).length) ?? opcoes[0]
+  // Para cada área, DOIS pontos do mesmo lado: um antes e um depois dela. Com um ponto só, o Google
+  // chegava até ele passando por dentro da área. O link do celular aceita no máximo 3 paradas.
+  const pontos: Coordinates[] = []
+  for (const ar of cruzadas.sort((x, y) => dist(x) - dist(y))) {
+    if (pontos.length + 2 > 3) break
+    const opcoes = [1, -1].map(lado => contorno(ar, a, b, lado))
+    pontos.push(...(opcoes.find(par => par.every(p => !areasEmVolta(p, evitar).length)) ?? opcoes[0]))
+  }
+  return pontos
+}
+
+/** Dois pontos ao lado da área (lado = 1 ou -1): um antes e um depois dela, no sentido a → b. */
+function contorno(ar: AreaRisco, a: Coordinates, b: Coordinates, lado: number): Coordinates[] {
+  const kx = 111320 * Math.cos(ar.latitude * Math.PI / 180), ky = 110540
+  const dx = (b.longitude - a.longitude) * kx, dy = (b.latitude - a.latitude) * ky
+  const n = Math.hypot(dx, dy) || 1
+  const ux = dx / n, uy = dy / n
+  const lateral = ar.raioM * 1.4 + 500, frente = ar.raioM + 800
+  return [-1, 1].map(s => {
+    const x = s * frente * ux + lado * uy * lateral, y = s * frente * uy - lado * ux * lateral
+    return { latitude: ar.latitude + y / ky, longitude: ar.longitude + x / kx }
   })
 }
 
