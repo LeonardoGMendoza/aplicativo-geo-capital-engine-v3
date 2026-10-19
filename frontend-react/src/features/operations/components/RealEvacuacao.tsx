@@ -3,7 +3,8 @@ import { House, LocateFixed, Route, ShieldCheck, Stethoscope } from 'lucide-reac
 import { PanelHeading } from './PanelHeading'
 import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import { buscarRota } from '../data/rota'
-import type { Rota } from '../data/rota'
+import type { AreaRisco, Rota } from '../data/rota'
+import { listarOficiais } from '@/features/shelters/abrigosOficiais'
 import { distanciaKm } from '@/features/climate/cityMap'
 import type { EventoPerto, PontoMapa } from '@/features/climate/cityMap'
 import type { Coordinates } from '@/features/shelters/places'
@@ -25,19 +26,32 @@ export function RealEvacuacao({ cidade, lugares, destinoId, onDestino, eventos }
   const [gpsMsg, setGpsMsg] = useState('')
   const [rota, setRota] = useState<Rota | null>(null)
   const [calculando, setCalculando] = useState(false)
+  // Áreas de risco cadastradas pela Defesa Civil perto da origem (null = ainda carregando).
+  const [areas, setAreas] = useState<AreaRisco[] | null>(null)
   const destino = lugares.find(p => p.lugar.id === destinoId) ?? lugares[0] ?? null
   const origem = usarGps && origemGps ? origemGps : cidade.coordenadas
 
   useEffect(() => { setUsarGps(false); setGpsMsg('') }, [cidade.nome])
   useEffect(() => {
+    const abort = new AbortController()
+    setAreas(null)
+    listarOficiais(origem, 60, { signal: abort.signal })
+      .then(l => { if (!abort.signal.aborted) setAreas(l.filter(i => i.tipo === 'area_risco').map(i => ({ id: i.id, nome: i.nome, latitude: i.latitude, longitude: i.longitude, raioM: i.raioM ?? 300 }))) })
+      .catch(() => { if (!abort.signal.aborted) setAreas([]) })
+    return () => abort.abort()
+  }, [origem.latitude, origem.longitude])
+  const chaveAreas = areas ? areas.map(a => `${a.id}:${a.raioM}`).join(',') : null
+  useEffect(() => {
     if (!destino) { setRota(null); return }
+    if (areas === null) { setCalculando(true); setRota(null); return }
     const abort = new AbortController()
     setCalculando(true); setRota(null)
-    buscarRota(origem, destino.lugar.coordinates, { signal: abort.signal })
+    buscarRota(origem, destino.lugar.coordinates, { signal: abort.signal, areas })
       .then(r => { if (!abort.signal.aborted) { setRota(r); setCalculando(false) } })
       .catch(() => { if (!abort.signal.aborted) setCalculando(false) })
     return () => abort.abort()
-  }, [origem.latitude, origem.longitude, destino?.lugar.id])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [origem.latitude, origem.longitude, destino?.lugar.id, chaveAreas])
 
   function pedirGps() {
     if (!('geolocation' in navigator)) { setGpsMsg('Este aparelho não informa a localização.'); return }
@@ -53,7 +67,8 @@ export function RealEvacuacao({ cidade, lugares, destinoId, onDestino, eventos }
     <PanelHeading title="Evacuação e Abrigos" subtitle={`Rota real pelas ruas até abrigo ou saúde · ${cidade.nome}`} icon={Route} />
     <div className="compact-tabs">{(['Rota', 'Abrigos', 'Orientação'] as const).map(item => <button type="button" key={item} aria-pressed={aba === item} onClick={() => setAba(item)}>{item}</button>)}</div>
     {aba === 'Orientação' ? <div className="space-y-3 px-4 py-6 text-xs"><ShieldCheck className="size-7 text-primary" />
-      <p>A rota é a mais curta de carro pelas ruas do OpenStreetMap. Ela <b>não sabe</b> se a rua está alagada, bloqueada ou em área de risco.</p>
+      <p>A rota é a mais curta de carro pelas ruas do OpenStreetMap e <b>desvia das áreas de risco cadastradas pela Defesa Civil</b> (em vermelho no mapa).</p>
+      <p>Ela não sabe de alagamento ou bloqueio que não foi cadastrado.</p>
       <p>Confirme abrigo e caminho com a Defesa Civil (199) ou Bombeiros (193). Evite atravessar áreas marcadas em vermelho ou laranja no mapa.</p>
       <p>Para o cidadão, o app de fuga fica em <b>omni.sandlj.com.br/cidadao</b> (rota a partir do celular).</p></div>
     : aba === 'Abrigos' ? <ul className="max-h-[330px] space-y-1 overflow-auto p-3">{lugares.map(p => <li key={p.lugar.id}><button type="button" className="flex w-full items-center gap-2 rounded border p-2.5 text-left text-xs" aria-pressed={destino?.lugar.id === p.lugar.id} onClick={() => { onDestino(p.lugar.id); setAba('Rota') }}>{p.tipo === 'casa' ? <House className="size-4 shrink-0 text-[#0dac8c]" /> : <Stethoscope className="size-4 shrink-0 text-[#087bef]" />}<span className="min-w-0 flex-1 truncate">{p.lugar.name}</span><span className="text-muted-foreground">{km(p.lugar.distanceKm)} km</span></button></li>)}
@@ -67,12 +82,14 @@ export function RealEvacuacao({ cidade, lugares, destinoId, onDestino, eventos }
       {gpsMsg && <p role="status" className="px-3 pb-2 text-xs text-amber-900">{gpsMsg}</p>}
       <div className="rota-caixa mx-2 flex-1 overflow-hidden rounded-md">
         {destino ? <MapErrorBoundary message="Mapa da rota indisponível agora."><Suspense fallback={<p role="status" className="p-3 text-xs text-white">Carregando mapa…</p>}>
-          <RotaMapa origem={origem} destino={destino.lugar.coordinates} tipo={destino.tipo} rota={rota} eventos={eventos} />
+          <RotaMapa origem={origem} destino={destino.lugar.coordinates} tipo={destino.tipo} rota={rota} eventos={eventos} areas={areas ?? []} />
         </Suspense></MapErrorBoundary> : <p role="status" className="p-3 text-xs text-white">Buscando abrigos e saúde…</p>}
-        {destino && (calculando || rota) && <span className="rota-selo">{calculando ? 'CALCULANDO ROTA…' : rota?.calculada ? 'ROTA REAL · ruas do OpenStreetMap' : 'LINHA RETA · serviço de rotas fora do ar'}</span>}
+        {destino && (calculando || rota) && <span className="rota-selo">{calculando ? 'CALCULANDO ROTA…' : rota?.evitadas?.length ? 'ROTA SEGURA · desvia de área de risco' : rota?.calculada ? 'ROTA REAL · ruas do OpenStreetMap' : 'LINHA RETA · serviço de rotas fora do ar'}</span>}
       </div>
       <p role="status" className="px-3 pt-2 text-xs">{destino && rota ? <><b>{usarGps ? 'Você' : 'Centro'} → {destino.lugar.name}:</b> {km(rota.km)} km{rota.minutos ? ` · cerca de ${rota.minutos} min de carro` : ' em linha reta'}</> : ' '}</p>
-      <p className="px-3 pb-2 text-xs text-muted-foreground">Rota não validada para evacuação: não sabe de alagamento ou bloqueio. Confirme com a Defesa Civil.</p>
+      {rota?.evitadas?.length ? <p role="status" className="px-3 pt-1 text-xs font-semibold text-[#087f65]">{`✅ Desvia da área de risco: ${rota.evitadas.join(', ')}`}</p> : null}
+      {rota?.noCaminho?.length ? <p role="alert" className="px-3 pt-1 text-xs font-semibold text-[#b42318]">{`⚠️ Não achamos rota sem passar pela área de risco: ${rota.noCaminho.join(', ')}. Confirme com a Defesa Civil (199).`}</p> : null}
+      <p className="px-3 pb-2 text-xs text-muted-foreground">Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.</p>
     </>}
   </section>
 }

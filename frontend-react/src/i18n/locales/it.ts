@@ -1330,6 +1330,16 @@ const it: Record<string, string> = {
  "Marcar fechado": "Segna chiuso",
  "Remover": "Rimuovi",
  "Digite o código do operador no formulário para mudar o status.": "Inserisci il codice operatore nel modulo per cambiare lo stato.",
- "Digite o código do operador no formulário para remover.": "Inserisci il codice operatore nel modulo per rimuovere."
+ "Digite o código do operador no formulário para remover.": "Inserisci il codice operatore nel modulo per rimuovere.",
+ "ROTA SEGURA · desvia de área de risco": "PERCORSO SICURO · evita l'area a rischio",
+ "✅ Desvia da área de risco: {0}": "✅ Evita l'area a rischio: {0}",
+ "⚠️ Não achamos rota sem passar pela área de risco: {0}. Confirme com a Defesa Civil (199).": "⚠️ Nessun percorso evita l'area a rischio: {0}. Verifica con la Protezione Civile (199).",
+ "A rota é a mais curta de carro pelas ruas do OpenStreetMap e": "Il percorso è il più breve in auto sulle strade di OpenStreetMap e",
+ "desvia das áreas de risco cadastradas pela Defesa Civil": "evita le aree a rischio registrate dalla Protezione Civile",
+ "(em vermelho no mapa).": "(in rosso sulla mappa).",
+ "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "Non conosce allagamenti o blocchi non registrati.",
+ "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "Evita solo le aree a rischio registrate dalla Protezione Civile. Non conosce allagamenti o blocchi al di fuori: verifica al 199.",
+ "Área de risco: {0}": "Area a rischio: {0}",
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ Il percorso fin qui può attraversare l'area a rischio {0}. Scegli un altro luogo o verifica al 199."
 }
 export default it

@@ -1350,6 +1350,16 @@ const ko: Record<string, string> = {
  "Marcar fechado": "폐쇄로 표시",
  "Remover": "삭제",
  "Digite o código do operador no formulário para mudar o status.": "상태를 바꾸려면 양식에 운영자 코드를 입력하세요.",
- "Digite o código do operador no formulário para remover.": "삭제하려면 양식에 운영자 코드를 입력하세요."
+ "Digite o código do operador no formulário para remover.": "삭제하려면 양식에 운영자 코드를 입력하세요.",
+ "ROTA SEGURA · desvia de área de risco": "안전 경로 · 위험 지역 우회",
+ "✅ Desvia da área de risco: {0}": "✅ 위험 지역 우회: {0}",
+ "⚠️ Não achamos rota sem passar pela área de risco: {0}. Confirme com a Defesa Civil (199).": "⚠️ 위험 지역을 피하는 경로를 찾지 못했습니다: {0}. 민방위(199)에 확인하세요.",
+ "A rota é a mais curta de carro pelas ruas do OpenStreetMap e": "경로는 OpenStreetMap 도로 기준 자동차 최단 경로이며",
+ "desvia das áreas de risco cadastradas pela Defesa Civil": "민방위가 등록한 위험 지역을 우회합니다",
+ "(em vermelho no mapa).": "(지도에 빨간색으로 표시).",
+ "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "등록되지 않은 침수나 통제는 알지 못합니다.",
+ "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "민방위가 등록한 위험 지역만 우회합니다. 그 밖의 침수나 통제는 알지 못하니 199에서 확인하세요.",
+ "Área de risco: {0}": "위험 지역: {0}",
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ 이곳까지 가는 길이 위험 지역 {0}을(를) 지날 수 있습니다. 다른 장소를 고르거나 199에서 확인하세요."
 }
 export default ko

@@ -1348,6 +1348,16 @@ const nl: Record<string, string> = {
  "Marcar fechado": "Markeer als gesloten",
  "Remover": "Verwijderen",
  "Digite o código do operador no formulário para mudar o status.": "Vul de operatorcode in het formulier in om de status te wijzigen.",
- "Digite o código do operador no formulário para remover.": "Vul de operatorcode in het formulier in om te verwijderen."
+ "Digite o código do operador no formulário para remover.": "Vul de operatorcode in het formulier in om te verwijderen.",
+ "ROTA SEGURA · desvia de área de risco": "VEILIGE ROUTE · vermijdt risicogebied",
+ "✅ Desvia da área de risco: {0}": "✅ Vermijdt het risicogebied: {0}",
+ "⚠️ Não achamos rota sem passar pela área de risco: {0}. Confirme com a Defesa Civil (199).": "⚠️ Geen route gevonden die het risicogebied vermijdt: {0}. Controleer bij de Civiele Bescherming (199).",
+ "A rota é a mais curta de carro pelas ruas do OpenStreetMap e": "De route is de kortste met de auto over de straten van OpenStreetMap en",
+ "desvia das áreas de risco cadastradas pela Defesa Civil": "vermijdt de risicogebieden die de Civiele Bescherming heeft geregistreerd",
+ "(em vermelho no mapa).": "(rood op de kaart).",
+ "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "Ze weet niets van overstromingen of blokkades die niet zijn geregistreerd.",
+ "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "Vermijdt alleen risicogebieden die de Civiele Bescherming heeft geregistreerd. Weet niets van overstromingen of blokkades daarbuiten: controleer via 199.",
+ "Área de risco: {0}": "Risicogebied: {0}",
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ De weg hierheen kan door het risicogebied {0} gaan. Kies een andere plek of controleer via 199."
 }
 export default nl

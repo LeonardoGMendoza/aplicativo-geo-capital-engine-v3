@@ -1350,6 +1350,16 @@ const he: Record<string, string> = {
  "Marcar fechado": "סמן כסגור",
  "Remover": "הסר",
  "Digite o código do operador no formulário para mudar o status.": "הזינו את קוד המפעיל בטופס כדי לשנות את הסטטוס.",
- "Digite o código do operador no formulário para remover.": "הזינו את קוד המפעיל בטופס כדי להסיר."
+ "Digite o código do operador no formulário para remover.": "הזינו את קוד המפעיל בטופס כדי להסיר.",
+ "ROTA SEGURA · desvia de área de risco": "מסלול בטוח · עוקף אזור סיכון",
+ "✅ Desvia da área de risco: {0}": "✅ עוקף את אזור הסיכון: {0}",
+ "⚠️ Não achamos rota sem passar pela área de risco: {0}. Confirme com a Defesa Civil (199).": "⚠️ לא נמצא מסלול שעוקף את אזור הסיכון: {0}. אמתו מול ההגנה האזרחית (199).",
+ "A rota é a mais curta de carro pelas ruas do OpenStreetMap e": "המסלול הוא הקצר ביותר ברכב ברחובות OpenStreetMap ו",
+ "desvia das áreas de risco cadastradas pela Defesa Civil": "עוקף את אזורי הסיכון שרשמה ההגנה האזרחית",
+ "(em vermelho no mapa).": "(באדום על המפה).",
+ "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "הוא לא יודע על הצפות או חסימות שלא נרשמו.",
+ "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "עוקף רק אזורי סיכון שרשמה ההגנה האזרחית. לא יודע על הצפות או חסימות מחוץ להם: אמתו ב-199.",
+ "Área de risco: {0}": "אזור סיכון: {0}",
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ הדרך לכאן עלולה לעבור באזור הסיכון {0}. בחרו מקום אחר או אמתו ב-199."
 }
 export default he

@@ -1350,6 +1350,16 @@ const ja: Record<string, string> = {
  "Marcar fechado": "閉鎖にする",
  "Remover": "削除",
  "Digite o código do operador no formulário para mudar o status.": "状況を変えるには、フォームにオペレーターコードを入力してください。",
- "Digite o código do operador no formulário para remover.": "削除するには、フォームにオペレーターコードを入力してください。"
+ "Digite o código do operador no formulário para remover.": "削除するには、フォームにオペレーターコードを入力してください。",
+ "ROTA SEGURA · desvia de área de risco": "安全なルート · 危険区域を回避",
+ "✅ Desvia da área de risco: {0}": "✅ 危険区域を回避: {0}",
+ "⚠️ Não achamos rota sem passar pela área de risco: {0}. Confirme com a Defesa Civil (199).": "⚠️ 危険区域を通らないルートが見つかりません: {0}。防災当局（199）に確認してください。",
+ "A rota é a mais curta de carro pelas ruas do OpenStreetMap e": "ルートはOpenStreetMapの道路を使った車での最短経路で、",
+ "desvia das áreas de risco cadastradas pela Defesa Civil": "防災当局が登録した危険区域を回避します",
+ "(em vermelho no mapa).": "（地図上の赤い部分）。",
+ "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "登録されていない冠水や通行止めはわかりません。",
+ "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "防災当局が登録した危険区域のみ回避します。それ以外の冠水や通行止めはわかりません。199で確認してください。",
+ "Área de risco: {0}": "危険区域: {0}",
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ ここまでの道は危険区域 {0} を通る可能性があります。別の場所を選ぶか、199で確認してください。"
 }
 export default ja

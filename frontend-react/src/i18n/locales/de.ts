@@ -1348,6 +1348,16 @@ const de: Record<string, string> = {
  "Marcar fechado": "Als geschlossen markieren",
  "Remover": "Entfernen",
  "Digite o código do operador no formulário para mudar o status.": "Geben Sie den Operator-Code im Formular ein, um den Status zu ändern.",
- "Digite o código do operador no formulário para remover.": "Geben Sie den Operator-Code im Formular ein, um zu entfernen."
+ "Digite o código do operador no formulário para remover.": "Geben Sie den Operator-Code im Formular ein, um zu entfernen.",
+ "ROTA SEGURA · desvia de área de risco": "SICHERE ROUTE · umgeht Risikogebiet",
+ "✅ Desvia da área de risco: {0}": "✅ Umgeht das Risikogebiet: {0}",
+ "⚠️ Não achamos rota sem passar pela área de risco: {0}. Confirme com a Defesa Civil (199).": "⚠️ Keine Route gefunden, die das Risikogebiet umgeht: {0}. Bitte beim Katastrophenschutz bestätigen (199).",
+ "A rota é a mais curta de carro pelas ruas do OpenStreetMap e": "Die Route ist die kürzeste mit dem Auto über die Straßen von OpenStreetMap und",
+ "desvia das áreas de risco cadastradas pela Defesa Civil": "umgeht die vom Katastrophenschutz erfassten Risikogebiete",
+ "(em vermelho no mapa).": "(rot auf der Karte).",
+ "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "Sie kennt keine Überflutungen oder Sperrungen, die nicht erfasst wurden.",
+ "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "Umgeht nur die vom Katastrophenschutz erfassten Risikogebiete. Kennt keine Überflutungen oder Sperrungen außerhalb davon: unter 199 bestätigen.",
+ "Área de risco: {0}": "Risikogebiet: {0}",
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ Der Weg hierher kann durch das Risikogebiet {0} führen. Wählen Sie einen anderen Ort oder bestätigen Sie unter 199."
 }
 export default de

@@ -1347,6 +1347,16 @@ const no: Record<string, string> = {
  "Marcar fechado": "Merk som stengt",
  "Remover": "Fjern",
  "Digite o código do operador no formulário para mudar o status.": "Skriv operatørkoden i skjemaet for å endre status.",
- "Digite o código do operador no formulário para remover.": "Skriv operatørkoden i skjemaet for å fjerne."
+ "Digite o código do operador no formulário para remover.": "Skriv operatørkoden i skjemaet for å fjerne.",
+ "ROTA SEGURA · desvia de área de risco": "TRYGG RUTE · unngår risikoområde",
+ "✅ Desvia da área de risco: {0}": "✅ Unngår risikoområdet: {0}",
+ "⚠️ Não achamos rota sem passar pela área de risco: {0}. Confirme com a Defesa Civil (199).": "⚠️ Fant ingen rute som unngår risikoområdet: {0}. Bekreft med sivilforsvaret (199).",
+ "A rota é a mais curta de carro pelas ruas do OpenStreetMap e": "Ruten er den korteste med bil i OpenStreetMaps gater og",
+ "desvia das áreas de risco cadastradas pela Defesa Civil": "unngår risikoområdene sivilforsvaret har registrert",
+ "(em vermelho no mapa).": "(i rødt på kartet).",
+ "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "Den vet ikke om oversvømmelser eller sperringer som ikke er registrert.",
+ "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "Unngår bare risikoområder sivilforsvaret har registrert. Vet ikke om oversvømmelser eller sperringer utenfor dem: bekreft på 199.",
+ "Área de risco: {0}": "Risikoområde: {0}",
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ Veien hit kan gå gjennom risikoområdet {0}. Velg et annet sted eller bekreft på 199."
 }
 export default no

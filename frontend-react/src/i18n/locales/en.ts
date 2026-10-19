@@ -1343,6 +1343,16 @@ const en: Record<string, string> = {
  "Marcar fechado": "Mark closed",
  "Remover": "Remove",
  "Digite o código do operador no formulário para mudar o status.": "Enter the operator code in the form to change the status.",
- "Digite o código do operador no formulário para remover.": "Enter the operator code in the form to remove."
+ "Digite o código do operador no formulário para remover.": "Enter the operator code in the form to remove.",
+ "ROTA SEGURA · desvia de área de risco": "SAFE ROUTE · avoids risk area",
+ "✅ Desvia da área de risco: {0}": "✅ Avoids the risk area: {0}",
+ "⚠️ Não achamos rota sem passar pela área de risco: {0}. Confirme com a Defesa Civil (199).": "⚠️ We found no route that avoids the risk area: {0}. Confirm with Civil Defense (199).",
+ "A rota é a mais curta de carro pelas ruas do OpenStreetMap e": "The route is the shortest by car on OpenStreetMap streets and",
+ "desvia das áreas de risco cadastradas pela Defesa Civil": "avoids the risk areas registered by Civil Defense",
+ "(em vermelho no mapa).": "(in red on the map).",
+ "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "It does not know about flooding or blockages that were not registered.",
+ "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "It only avoids risk areas registered by Civil Defense. It does not know about flooding or blockages outside them: confirm at 199.",
+ "Área de risco: {0}": "Risk area: {0}",
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ The way here may cross the risk area {0}. Choose another place or confirm at 199."
 }
 export default en

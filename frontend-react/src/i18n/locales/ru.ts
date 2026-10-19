@@ -1349,6 +1349,16 @@ const ru: Record<string, string> = {
  "Marcar fechado": "Отметить «закрыто»",
  "Remover": "Удалить",
  "Digite o código do operador no formulário para mudar o status.": "Введите код оператора в форме, чтобы изменить статус.",
- "Digite o código do operador no formulário para remover.": "Введите код оператора в форме, чтобы удалить."
+ "Digite o código do operador no formulário para remover.": "Введите код оператора в форме, чтобы удалить.",
+ "ROTA SEGURA · desvia de área de risco": "БЕЗОПАСНЫЙ МАРШРУТ · в обход зоны риска",
+ "✅ Desvia da área de risco: {0}": "✅ В обход зоны риска: {0}",
+ "⚠️ Não achamos rota sem passar pela área de risco: {0}. Confirme com a Defesa Civil (199).": "⚠️ Не найден маршрут в обход зоны риска: {0}. Уточните в Гражданской обороне (199).",
+ "A rota é a mais curta de carro pelas ruas do OpenStreetMap e": "Маршрут — самый короткий на машине по улицам OpenStreetMap и",
+ "desvia das áreas de risco cadastradas pela Defesa Civil": "обходит зоны риска, внесённые Гражданской обороной",
+ "(em vermelho no mapa).": "(красным на карте).",
+ "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "Он не знает о подтоплениях или перекрытиях, которые не внесены.",
+ "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "Обходит только зоны риска, внесённые Гражданской обороной. Не знает о подтоплениях и перекрытиях вне их: уточните по 199.",
+ "Área de risco: {0}": "Зона риска: {0}",
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ Путь сюда может проходить через зону риска {0}. Выберите другое место или уточните по 199."
 }
 export default ru

@@ -1350,6 +1350,16 @@ const zh: Record<string, string> = {
  "Marcar fechado": "标记为关闭",
  "Remover": "删除",
  "Digite o código do operador no formulário para mudar o status.": "请在表单中输入操作员代码以更改状态。",
- "Digite o código do operador no formulário para remover.": "请在表单中输入操作员代码以删除。"
+ "Digite o código do operador no formulário para remover.": "请在表单中输入操作员代码以删除。",
+ "ROTA SEGURA · desvia de área de risco": "安全路线 · 绕开风险区",
+ "✅ Desvia da área de risco: {0}": "✅ 绕开风险区：{0}",
+ "⚠️ Não achamos rota sem passar pela área de risco: {0}. Confirme com a Defesa Civil (199).": "⚠️ 未找到绕开风险区的路线：{0}。请向民防部门（199）确认。",
+ "A rota é a mais curta de carro pelas ruas do OpenStreetMap e": "路线是按OpenStreetMap街道计算的最短驾车路线，并且",
+ "desvia das áreas de risco cadastradas pela Defesa Civil": "会绕开民防部门登记的风险区",
+ "(em vermelho no mapa).": "（地图上的红色区域）。",
+ "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "它不知道未登记的积水或封路。",
+ "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "只绕开民防部门登记的风险区。不知道其他地方的积水或封路：请拨打199确认。",
+ "Área de risco: {0}": "风险区：{0}",
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ 前往此处的路可能经过风险区 {0}。请选择其他地点或拨打199确认。"
 }
 export default zh

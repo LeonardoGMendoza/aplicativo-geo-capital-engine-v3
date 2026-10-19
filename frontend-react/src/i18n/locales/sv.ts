@@ -1346,6 +1346,16 @@ const sv: Record<string, string> = {
  "Marcar fechado": "Markera stängt",
  "Remover": "Ta bort",
  "Digite o código do operador no formulário para mudar o status.": "Ange operatörskoden i formuläret för att ändra status.",
- "Digite o código do operador no formulário para remover.": "Ange operatörskoden i formuläret för att ta bort."
+ "Digite o código do operador no formulário para remover.": "Ange operatörskoden i formuläret för att ta bort.",
+ "ROTA SEGURA · desvia de área de risco": "SÄKER RUTT · undviker riskområde",
+ "✅ Desvia da área de risco: {0}": "✅ Undviker riskområdet: {0}",
+ "⚠️ Não achamos rota sem passar pela área de risco: {0}. Confirme com a Defesa Civil (199).": "⚠️ Ingen rutt hittades som undviker riskområdet: {0}. Kontrollera med räddningstjänsten (199).",
+ "A rota é a mais curta de carro pelas ruas do OpenStreetMap e": "Rutten är den kortaste med bil på OpenStreetMaps gator och",
+ "desvia das áreas de risco cadastradas pela Defesa Civil": "undviker riskområden som räddningstjänsten registrerat",
+ "(em vermelho no mapa).": "(i rött på kartan).",
+ "Ela não sabe de alagamento ou bloqueio que não foi cadastrado.": "Den känner inte till översvämningar eller avstängningar som inte registrerats.",
+ "Desvia só das áreas de risco cadastradas pela Defesa Civil. Não sabe de alagamento ou bloqueio fora delas: confirme no 199.": "Undviker bara riskområden som räddningstjänsten registrerat. Känner inte till översvämningar eller avstängningar utanför dem: kontrollera på 199.",
+ "Área de risco: {0}": "Riskområde: {0}",
+ "⚠️ O caminho até aqui pode passar pela área de risco {0}. Prefira outro local ou confirme no 199.": "⚠️ Vägen hit kan gå genom riskområdet {0}. Välj en annan plats eller kontrollera på 199."
 }
 export default sv
