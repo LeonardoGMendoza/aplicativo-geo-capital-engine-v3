@@ -3,8 +3,15 @@ import { Globe2 } from 'lucide-react'
 import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import { buscarAlertasGlobais, buscarRadar, dataCurta, emojiTipo } from './globalWeather'
 import type { AlertaGlobal, Radar, RespostaAlertas } from './globalWeather'
+import { alertaMundialNaRegiao, useRegiao } from '@/features/regiao/regiao'
+import type { Regiao } from '@/features/regiao/regiao'
 import './climate.css'
 const WorldWeatherMap = lazy(() => import('./WorldWeatherMap'))
+const VISTAS: Record<Regiao, { centro: [number, number]; zoom: number }> = {
+  sp: { centro: [-22.3, -48.6], zoom: 6 },
+  brasil: { centro: [-14, -52], zoom: 4 },
+  mundo: { centro: [15, -20], zoom: 2 },
+}
 
 export function WorldWeather() {
   const [radar, setRadar] = useState<Radar | null>(null)
@@ -15,6 +22,7 @@ export function WorldWeather() {
   const [mostrarAlertas, setMostrarAlertas] = useState(true)
   const [aberto, setAberto] = useState<string | null>(null)
   const [foco, setFoco] = useState<AlertaGlobal | null>(null)
+  const regiao = useRegiao()
 
   useEffect(() => {
     const abort = new AbortController()
@@ -25,7 +33,8 @@ export function WorldWeather() {
     return () => abort.abort()
   }, [])
 
-  const lista = alertas?.alertas ?? []
+  // Filtro por região: no Estado de SP só entra o que pode chegar aqui (ciclone no Atlântico Sul, tsunami).
+  const lista = (alertas?.alertas ?? []).filter(a => alertaMundialNaRegiao(a.latitude, a.longitude, a.tipo, a.pais, regiao))
   return <section className="ia-panel mundo" aria-labelledby="mundo-titulo">
     <h2 id="mundo-titulo" className="ia-panel-title"><Globe2 className="size-5" aria-hidden="true" />Chuva e alertas no mundo, agora</h2>
     <p className="ia-muted">Manchas coloridas = radar de chuva (verde fraca → amarelo forte → vermelho muito forte/tempestade), onde houver radar meteorológico. Ícones = alertas laranja e vermelhos de desastres em qualquer país.</p>
@@ -38,7 +47,7 @@ export function WorldWeather() {
     {alertas?.estado === 'antigo' && <p className="ia-warn">GDACS fora do ar agora: mostrando a última lista obtida.</p>}
     <MapErrorBoundary message="Mapa indisponível. A lista de alertas abaixo continua valendo.">
       <Suspense fallback={<p role="status" className="ia-muted">Carregando mapa…</p>}>
-        <WorldWeatherMap radar={radar} alertas={lista} mostrarRadar={mostrarRadar} mostrarAlertas={mostrarAlertas} onRadarFalhou={() => setErroRadar('O radar de chuva não carregou agora. Os alertas continuam no mapa.')} foco={foco} />
+        <WorldWeatherMap radar={radar} alertas={lista} mostrarRadar={mostrarRadar} mostrarAlertas={mostrarAlertas} onRadarFalhou={() => setErroRadar('O radar de chuva não carregou agora. Os alertas continuam no mapa.')} foco={foco} vista={VISTAS[regiao]} />
       </Suspense>
     </MapErrorBoundary>
     {lista.length > 0 && <ul className="mundo-lista" aria-label="Alertas mais importantes">
@@ -61,7 +70,7 @@ export function WorldWeather() {
         </div>}
       </li>)}
     </ul>}
-    {alertas && lista.length === 0 && <p className="ia-muted">Nenhum alerta laranja ou vermelho ativo no mundo neste momento.</p>}
+    {alertas && lista.length === 0 && <p className="ia-muted">Nenhum alerta laranja ou vermelho na região escolhida neste momento.</p>}
     <p className="clima-fonte">Fontes: radar <span>RainViewer</span> (redes de radar públicas de vários países) · alertas <span>GDACS</span> (ONU / Comissão Europeia). Mostram a situação, não substituem os avisos da Defesa Civil de cada país.</p>
   </section>
 }

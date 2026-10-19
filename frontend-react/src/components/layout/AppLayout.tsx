@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Activity, FlaskConical, Languages, Menu, PanelLeftClose, PanelLeftOpen, Satellite } from 'lucide-react'
+import { Activity, FlaskConical, Languages, MapPin, Menu, Smartphone, PanelLeftClose, PanelLeftOpen, Satellite } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { menuNavigation } from '@/app/navigation'
 import { Brand, BrandSymbol } from '@/components/shared/Brand'
@@ -9,11 +9,15 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { demoSnapshot, formatSnapshotTime } from '@/features/operations/data/demo'
 import { useNasaSession } from '@/features/nasa/NasaSession'
 import { LanguageSelector } from '@/i18n'
+import { RegiaoSelector } from '@/features/regiao/regiao'
 
 function SidebarContent({ onNavigate, collapsed = false, onToggle }: { onNavigate?: () => void; collapsed?: boolean; onToggle?: () => void }) {
   return <div className="flex h-full flex-col">
     <nav aria-label="Navegação principal" className="flex-1 space-y-1 px-2 py-3">
+      <p className={collapsed ? 'sr-only' : 'px-3 pb-1 text-[10px] font-semibold uppercase tracking-[.18em] text-[#7fb2c9]'}>Gestão · Defesa Civil</p>
       {menuNavigation.map(({ path, label, icon: Icon }) => <NavLink key={path} to={path} end={path === '/'} onClick={onNavigate} title={collapsed ? label : undefined} aria-label={collapsed ? label : undefined} className={`sidebar-link ${collapsed ? 'justify-center' : ''}`}><Icon className="size-4 shrink-0" aria-hidden="true" /><span className={collapsed ? 'sr-only' : undefined}>{label}</span></NavLink>)}
+    {/* Área do cidadão separada da gestão (pedido da Defesa Civil): abre a tela simples do celular. */}
+    <Link to="/cidadao" onClick={onNavigate} title={collapsed ? 'Área do cidadão' : undefined} aria-label={collapsed ? 'Área do cidadão' : undefined} className={`mt-3 flex items-center gap-2 rounded-md border border-[#20d8c1] bg-[#0b3b4f] px-3 py-2 text-sm font-semibold text-[#2ce3c1] hover:bg-[#0f4a62] ${collapsed ? 'justify-center' : ''}`}><Smartphone className="size-4 shrink-0" aria-hidden="true" /><span className={collapsed ? 'sr-only' : undefined}>Área do cidadão</span></Link>
     <label title={collapsed ? 'Idioma / Language' : undefined} className={`relative mt-3 border-t border-[#25617c] flex items-center gap-2 rounded-md px-3 pt-3 pb-2 text-[#b4d3e1] hover:bg-white/10 hover:text-white ${collapsed ? 'justify-center' : ''}`}>
       <Languages className="size-4 shrink-0" aria-hidden="true" />
       <LanguageSelector className={collapsed ? 'absolute inset-0 cursor-pointer opacity-0' : 'w-full min-w-0 cursor-pointer rounded border border-[#25617c] bg-[#06283a] px-1 py-1 text-xs text-white'} />
@@ -60,6 +64,10 @@ export function AppLayout() {
       </div>
       <p className="relative hidden items-center gap-3 text-xs tracking-[.22em] text-white xl:flex">DADOS + CONTEXTO = APOIO À DECISÃO<Activity className="size-6 text-[#2ce3c1]" aria-hidden="true" /></p>
       <div className="relative ml-auto flex items-center gap-3 text-xs">
+        <label className="flex items-center gap-1 rounded-md border border-[#2089b0] bg-[#075778] px-2 py-1" title="Região mostrada nos alertas, no clima e nos mapas">
+          <MapPin className="size-4 text-[#20d8c1]" aria-hidden="true" />
+          <RegiaoSelector className="cursor-pointer bg-transparent text-xs font-semibold text-white outline-none [&>option]:bg-[#06283a]" />
+        </label>
         <HoraDoCabecalho />
         <span className="hidden size-8 items-center justify-center rounded-full border border-[#2089b0] bg-[#075778] font-semibold sm:flex" aria-label="Perfil demonstrativo">ES</span>
       </div>

@@ -7,6 +7,8 @@ import { categoryMeta, formatDistance, nearestOf, routeLinks } from '../shelters
 import type { PlaceCategory } from '../shelters/places'
 import { useNearbySearch } from './useNearbySearch'
 import { AlertsSignup } from './AlertsSignup'
+import { dicas, minutosAPe } from './dicas'
+import { OficiaisPerto } from './OficiaisPerto'
 import { LanguageSelector } from '@/i18n'
 import './citizen.css'
 const NearbyPlacesMap = lazy(() => import('../shelters/NearbyPlacesMap'))
@@ -24,6 +26,7 @@ export function CitizenPage() {
   const [address, setAddress] = useState('')
   const [category, setCategory] = useState<PlaceCategory | null>(null)
   const [pickedId, setPickedId] = useState<string | null>(null)
+  const [dica, setDica] = useState<string | null>(null)
   const { data, status, busy } = search
   const nearest = data && category ? nearestOf(data.items, category) : undefined
   const picked = data && pickedId ? data.items.find(p => p.id === pickedId && p.category === category) : undefined
@@ -72,6 +75,8 @@ export function CitizenPage() {
         {search.accuracy !== null && search.accuracy > 100 && <p className="citizen-warning">A posição pode estar imprecisa. Se estiver errada, digite seu endereço.</p>}
       </section>
 
+      {search.origin && <OficiaisPerto origem={search.origin.coordinates} />}
+
       {data && <section aria-labelledby="citizen-need" className="citizen-card">
         <h2 id="citizen-need" className="citizen-title">Do que você precisa?</h2>
         {data.state === 'stale' && <p className="citizen-warning">Sem conexão com o mapa agora: mostrando a última busca salva.</p>}
@@ -91,6 +96,7 @@ export function CitizenPage() {
         <p className="citizen-kicker">{selected.shelterKind === 'possible' ? 'Possível ponto de apoio' : categoryMeta[selected.category].label}{picked ? '' : ' mais próximo'}</p>
         <h2 id="citizen-place" className="citizen-place">{categoryMeta[selected.category].emoji} {selected.name}</h2>
         <p className="citizen-distance">{formatDistance(selected.distanceKm)} <span>em linha reta</span></p>
+        <p className="citizen-walk">{`🚶 cerca de ${minutosAPe(selected.distanceKm)} min a pé`}</p>
         {selected.address && <p className="citizen-address">📍 {selected.address}</p>}
         {selected.note && <p className="citizen-warning">{selected.note}</p>}
         <a className="citizen-route citizen-route-waze" href={routeLinks(selected.coordinates).waze} target="_blank" rel="noopener noreferrer">🚗 Ir pelo Waze</a>
@@ -101,9 +107,21 @@ export function CitizenPage() {
         </Suspense></MapErrorBoundary>}
       </section>}
 
+      <section aria-labelledby="citizen-tips" className="citizen-card">
+        <h2 id="citizen-tips" className="citizen-title">O que fazer agora?</h2>
+        <div className="citizen-tips-grid">
+          {dicas.map(d => <button key={d.id} type="button" className="citizen-tip-btn" aria-pressed={dica === d.id} aria-expanded={dica === d.id} onClick={() => setDica(dica === d.id ? null : d.id)}>
+            <span aria-hidden="true">{d.emoji}</span> {d.titulo}
+          </button>)}
+        </div>
+        {dicas.filter(d => d.id === dica).map(d => <ul key={d.id} className="citizen-tips-list">{d.itens.map(t => <li key={t}>{t}</li>)}</ul>)}
+        <p className="citizen-small">Dicas gerais de prevenção. Em perigo, ligue 199 (Defesa Civil) ou 193 (Bombeiros).</p>
+      </section>
+
       <section className="citizen-card citizen-footer">
         <p>Locais do OpenStreetMap, mapeados por voluntários. Podem estar desatualizados.</p>
         <p><Link to="/abrigos">Ver lista completa, todas as categorias e checklist de preparação →</Link></p>
+        <p className="citizen-small"><Link to="/">Acesso da gestão (Defesa Civil e empresas) →</Link></p>
       </section>
     </main>
   </div>

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { CloudRain, RefreshCw, ThermometerSun } from 'lucide-react'
-import { buscarPrevisoes, cidadesCalor, cidadesChuva, CALOR_INTENSO_C, CHUVA_FORTE_MM, formatarGraus, formatarMm, nivelCalor, nivelChuva, picoChuva, picoMaxima, rotuloCalor, rotuloChuva, totalChuva } from './climate'
+import { buscarPrevisoes, CALOR_INTENSO_C, CHUVA_FORTE_MM, formatarGraus, formatarMm, nivelCalor, nivelChuva, picoChuva, picoMaxima, rotuloCalor, rotuloChuva, totalChuva } from './climate'
 import type { Previsao } from './climate'
+import { cidadesDaRegiao, useRegiao } from '@/features/regiao/regiao'
 import './climate.css'
 
 type Estado = { calor: Previsao[]; chuva: Previsao[]; obtidoEm: Date } | null
@@ -11,16 +12,18 @@ export function ClimatePanel() {
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [tentativa, setTentativa] = useState(0)
+  const regiao = useRegiao()
 
   useEffect(() => {
     const abort = new AbortController()
     setCarregando(true); setErro(null)
+    const { calor: cidadesCalor, chuva: cidadesChuva } = cidadesDaRegiao(regiao)
     Promise.all([buscarPrevisoes(cidadesCalor, { signal: abort.signal }), buscarPrevisoes(cidadesChuva, { signal: abort.signal })])
       .then(([calor, chuva]) => { if (!abort.signal.aborted) setDados({ calor, chuva, obtidoEm: new Date() }) })
       .catch(e => { if (!abort.signal.aborted) setErro(e instanceof Error && e.name !== 'TimeoutError' ? e.message : 'A previsão demorou demais. Tente de novo.') })
       .finally(() => { if (!abort.signal.aborted) setCarregando(false) })
     return () => abort.abort()
-  }, [tentativa])
+  }, [tentativa, regiao])
 
   return <section className="ia-panel clima" aria-labelledby="clima-titulo">
     <div className="clima-topo">

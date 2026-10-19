@@ -13,7 +13,8 @@ import { RealMonitoring } from './components/RealMonitoring'
 import { itensDaPrevisao, itensGdacs, itensNasa, orientacoes, priorizar, tituloOrientacao } from './data/real'
 import type { CidadePrevista, ItemReal } from './data/real'
 import { useNasaSession } from '@/features/nasa/NasaSession'
-import { buscarPrevisoes, cidadesCalor, cidadesChuva } from '@/features/climate/climate'
+import { buscarPrevisoes } from '@/features/climate/climate'
+import { alertaMundialNaRegiao, cidadesDaRegiao, itemNaRegiao, useRegiao } from '@/features/regiao/regiao'
 import type { Previsao } from '@/features/climate/climate'
 import { buscarAlertasGlobais, buscarRadar, RADAR_COR_TV } from '@/features/climate/globalWeather'
 import type { AlertaGlobal } from '@/features/climate/globalWeather'
@@ -43,7 +44,9 @@ function paraCidade(p: Previsao): CidadePrevista {
 
 export function RealOperations(_props: { onDemo?: () => void }) {
   const { result: nasa, loading: nasaCarregando, error: nasaErro } = useNasaSession()
-  const [cidade, setCidade] = useState(cidadesMapa[0])
+  const regiao = useRegiao()
+  const cidadesDoMapa = regiao === 'sp' ? cidadesMapa.filter(c => c.nome.endsWith('/SP')) : cidadesMapa
+  const [cidade, setCidade] = useState(cidadesDoMapa[0])
   const [busca, setBusca] = useState('')
   const [buscaMsg, setBuscaMsg] = useState('')
   const [previsao, setPrevisao] = useState<Estado<Previsao[]>>(vazio)
@@ -61,12 +64,22 @@ export function RealOperations(_props: { onDemo?: () => void }) {
 
   useEffect(() => {
     const abort = new AbortController()
-    buscarPrevisoes([...cidadesCalor, ...cidadesChuva], { signal: abort.signal }).then(d => !abort.signal.aborted && setPrevisao({ dados: d, erro: false })).catch(() => !abort.signal.aborted && setPrevisao({ dados: null, erro: true }))
     buscarAlertasGlobais({ signal: abort.signal }).then(r => !abort.signal.aborted && setGdacs({ dados: r.alertas, erro: false })).catch(() => !abort.signal.aborted && setGdacs({ dados: null, erro: true }))
     buscarResumo({ signal: abort.signal }).then(r => !abort.signal.aborted && setCadastros({ dados: r, erro: false })).catch(() => !abort.signal.aborted && setCadastros({ dados: null, erro: true }))
     buscarRadar({ signal: abort.signal }).then(r => !abort.signal.aborted && setRadarUrl(r.tileUrl(RADAR_COR_TV))).catch(() => {})
     return () => abort.abort()
   }, [])
+
+  // Previsão das cidades da região escolhida (Estado de SP por padrão).
+  useEffect(() => {
+    const abort = new AbortController()
+    const { calor, chuva } = cidadesDaRegiao(regiao)
+    setPrevisao(vazio())
+    buscarPrevisoes([...calor, ...chuva], { signal: abort.signal }).then(d => !abort.signal.aborted && setPrevisao({ dados: d, erro: false })).catch(() => !abort.signal.aborted && setPrevisao({ dados: null, erro: true }))
+    return () => abort.abort()
+  }, [regiao])
+  // Ao trocar para o Estado de SP, o mapa vai para uma cidade de SP.
+  useEffect(() => { if (regiao === 'sp' && !cidade.nome.endsWith('/SP')) setCidade(cidadesDoMapa[0]) }, [regiao])
 
   useEffect(() => {
     const abort = new AbortController()
@@ -78,9 +91,9 @@ export function RealOperations(_props: { onDemo?: () => void }) {
   const perto = useMemo(() => (nasa ? eventosPerto(nasa.events, cidade.coordenadas) : []), [nasa, cidade])
   const itens = useMemo(() => priorizar([
     ...(previsao.dados ? itensDaPrevisao(previsao.dados.map(paraCidade)) : []),
-    ...itensNasa(perto.map(e => ({ id: e.evento.id, titulo: e.evento.title, categoria: e.evento.categories.map(c => c.id || c.title).join(' '), km: e.km, dias: e.dias })), cidade.nome),
+    ...itensNasa(perto.map(e => ({ id: e.evento.id, titulo: e.evento.title, categoria: e.evento.categories.map(c => c.id || c.title).join(' '), km: e.km, dias: e.dias, lat: e.posicao[0], lon: e.posicao[1] })), cidade.nome),
     ...(gdacs.dados ? itensGdacs(gdacs.dados) : []),
-  ]), [previsao, perto, gdacs, cidade])
+  ].filter(i => itemNaRegiao(i, regiao))), [previsao, perto, gdacs, cidade, regiao])
   const prioritarios = itens.slice(0, 3)
   const filtrados = itens.filter(i => (aba === 'todos' || i.escopo === aba) && `${i.titulo} ${i.local}`.toLocaleLowerCase('pt-BR').includes(filtro.toLocaleLowerCase('pt-BR')))
   const cidadesForte = previsao.dados?.map(paraCidade).filter(c => (c.maxima ?? 0) >= 35 || (c.chuva ?? 0) >= 50).length
@@ -124,7 +137,7 @@ export function RealOperations(_props: { onDemo?: () => void }) {
     <div className="overview-layout">
       <div className="min-w-0">
         <section aria-label="Indicadores com dados reais" className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-          <MetricCard title="Alertas vermelhos" value={numero(gdacs, d => d.filter(a => a.nivel === 'vermelho').length)} note="Mundo · GDACS (ONU)" icon={TriangleAlert} tone="red" />
+          <MetricCard title="Alertas vermelhos" value={numero(gdacs, d => d.filter(a => a.nivel === 'vermelho' && alertaMundialNaRegiao(a.latitude, a.longitude, a.tipo, a.pais, regiao)).length)} note={regiao === 'sp' ? 'Estado de SP · GDACS (ONU)' : regiao === 'brasil' ? 'Brasil · GDACS (ONU)' : 'Mundo · GDACS (ONU)'} icon={TriangleAlert} tone="red" />
           <MetricCard title="Calor ou chuva forte" value={cidadesForte ?? (previsao.erro ? '—' : '…')} note="de 8 cidades · próximos 3 dias" icon={Flame} tone="orange" />
           <MetricCard title="Abrigos e pontos de apoio" value={numero(lugares, () => abrigos.length)} note={`${cidade.nome} · OpenStreetMap`} icon={House} tone="blue" />
           <MetricCard title="Hospitais e UBS" value={numero(lugares, () => saude.length)} note={`${cidade.nome} · OpenStreetMap`} icon={Stethoscope} tone="green" />
@@ -132,7 +145,7 @@ export function RealOperations(_props: { onDemo?: () => void }) {
         <div className="primary-layout">
           <section className="light-panel flex flex-col" id="mapa" aria-label="Mapa da situação atual, dados reais">
             <PanelHeading title="Mapa da Situação Atual" icon={Map} />
-            <div className="flex gap-1 overflow-x-auto px-2 pb-2">{cidadesMapa.map(c => <button key={c.nome} type="button" aria-pressed={cidade.nome === c.nome} onClick={() => setCidade(c)} className="whitespace-nowrap rounded px-2 py-1.5 text-xs text-white" style={{ background: cidade.nome === c.nome ? '#0873f5' : '#075271' }}>{c.nome}</button>)}</div>
+            <div className="flex gap-1 overflow-x-auto px-2 pb-2">{cidadesDoMapa.map(c => <button key={c.nome} type="button" aria-pressed={cidade.nome === c.nome} onClick={() => setCidade(c)} className="whitespace-nowrap rounded px-2 py-1.5 text-xs text-white" style={{ background: cidade.nome === c.nome ? '#0873f5' : '#075271' }}>{c.nome}</button>)}</div>
             <form onSubmit={buscar} className="flex gap-1 px-2 pb-2" role="search"><label className="flex min-w-0 flex-1 items-center gap-1 rounded border bg-white px-2"><Search className="size-3 shrink-0 text-muted-foreground" /><input aria-label="Buscar outra cidade ou endereço" value={busca} onChange={e => setBusca(e.target.value)} maxLength={120} placeholder="Buscar outra cidade ou endereço…" className="min-w-0 flex-1 py-1.5 text-xs outline-none" /></label><button type="submit" className="mini-select" disabled={busca.trim().length < 2}>Buscar</button></form>
             {(buscaMsg || lugares.erro) && <p role="status" className="px-3 pb-2 text-xs text-amber-900">{buscaMsg || 'Abrigos e hospitais (OpenStreetMap) indisponíveis agora para esta cidade. Tente de novo em instantes.'}</p>}
             <div className="ops-real-mapa mx-2 min-h-[310px] flex-1 overflow-hidden rounded-md">

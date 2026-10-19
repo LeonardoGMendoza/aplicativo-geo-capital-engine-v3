@@ -19,6 +19,7 @@ from .cadastros import Cadastros
 from .places import aquecer_em_segundo_plano
 from .cadastros_router import router as cadastros_router
 from .alerta_whatsapp import router as alerta_whatsapp_router
+from .abrigos_oficiais_router import router as abrigos_oficiais_router
 from .models import EventsResponse
 from .nasa import NasaService, Settings
 from .proximity import ASSETS, DATASET_VERSION, POLICY, ProximityRequest, analyze_proximity
@@ -95,6 +96,7 @@ def create_app(service: NasaService | None = None, inteligencia=None, alertas=No
     app.include_router(cadastros_router)
     app.include_router(alerta_whatsapp_router)
     app.include_router(mercado_router)
+    app.include_router(abrigos_oficiais_router)
 
     return app
 

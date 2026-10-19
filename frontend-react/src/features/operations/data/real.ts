@@ -7,6 +7,8 @@ export type TipoReal = 'calor' | 'chuva' | 'incendio' | 'tempestade' | 'enchente
 export type ItemReal = {
   id: string; tipo: TipoReal; nivel: RiskLevel; titulo: string; local: string; quando: string
   detalhe: string; fonte: string; fonteUrl: string; perto: boolean; escopo: 'brasil' | 'mundo'
+  /** Para o filtro por região: UF da cidade (previsão) ou posição do evento (NASA/GDACS) e o tipo GDACS. */
+  uf?: string; lat?: number; lon?: number; tipoGdacs?: string
 }
 
 export const CRITERIOS = { calor: 35, calorCritico: 40, calorAtencao: 32, chuva: 50, chuvaCritica: 100, chuvaAtencao: 20 }
@@ -28,13 +30,13 @@ export function itensDaPrevisao(cidades: CidadePrevista[]): ItemReal[] {
       const nivel: RiskLevel = c.maxima >= CRITERIOS.calorCritico ? 'critical' : c.maxima >= CRITERIOS.calor ? 'high' : 'attention'
       itens.push({ id: `calor-${local}`, tipo: 'calor', nivel, titulo: nivel === 'attention' ? 'Muito quente' : 'Calor intenso', local, quando: diaMes(c.diaMaxima),
         detalhe: `Máxima prevista de ${graus(c.maxima)} em ${diaMes(c.diaMaxima)} (próximos 3 dias). Critério do protótipo: calor intenso a partir de ${CRITERIOS.calor} °C.`,
-        fonte: 'Open-Meteo (previsão)', fonteUrl: OPEN_METEO, perto: true, escopo: 'brasil' })
+        fonte: 'Open-Meteo (previsão)', fonteUrl: OPEN_METEO, perto: true, escopo: 'brasil', uf: c.uf })
     }
     if (c.chuva !== null && Number.isFinite(c.chuva) && c.chuva >= CRITERIOS.chuvaAtencao) {
       const nivel: RiskLevel = c.chuva >= CRITERIOS.chuvaCritica ? 'critical' : c.chuva >= CRITERIOS.chuva ? 'high' : 'attention'
       itens.push({ id: `chuva-${local}`, tipo: 'chuva', nivel, titulo: nivel === 'attention' ? 'Chuva moderada' : 'Chuva forte', local, quando: diaMes(c.diaChuva),
         detalhe: `Chuva prevista de ${mm(c.chuva)} em ${diaMes(c.diaChuva)} (maior volume em um dia, próximos 3 dias). Critério do protótipo: chuva forte a partir de ${CRITERIOS.chuva} mm.`,
-        fonte: 'Open-Meteo (previsão)', fonteUrl: OPEN_METEO, perto: true, escopo: 'brasil' })
+        fonte: 'Open-Meteo (previsão)', fonteUrl: OPEN_METEO, perto: true, escopo: 'brasil', uf: c.uf })
     }
   }
   return itens
@@ -44,7 +46,7 @@ const tipoNasa = (categoria: string): TipoReal => (/wildfire|fire/i.test(categor
   : /flood/i.test(categoria) ? 'enchente' : /volcan/i.test(categoria) ? 'vulcao' : /drought/i.test(categoria) ? 'seca' : 'outro')
 const nomeTipo: Record<TipoReal, string> = { calor: 'Calor', chuva: 'Chuva', incendio: 'Incêndio', tempestade: 'Tempestade', enchente: 'Enchente', ciclone: 'Ciclone', seca: 'Seca', terremoto: 'Terremoto', vulcao: 'Vulcão', outro: 'Evento natural' }
 
-export type EventoNasaPerto = { id: string; titulo: string; categoria: string; km: number; dias: number }
+export type EventoNasaPerto = { id: string; titulo: string; categoria: string; km: number; dias: number; lat?: number; lon?: number }
 /** Eventos NASA perto da cidade escolhida: dos últimos 3 dias = alto; até 30 dias = atenção. */
 export function itensNasa(eventos: EventoNasaPerto[], cidade: string): ItemReal[] {
   return eventos.map(e => {
@@ -53,7 +55,7 @@ export function itensNasa(eventos: EventoNasaPerto[], cidade: string): ItemReal[
     return { id: `nasa-${e.id}`, tipo, nivel: e.dias <= 3 ? 'high' as const : 'attention' as const, titulo: `${nomeTipo[tipo]} (satélite NASA)`,
       local: `a ${Math.round(e.km)} km de ${cidade}`, quando,
       detalhe: `${e.titulo}. Observado ${e.dias < 1 ? 'há menos de 1 dia' : `há ${Math.round(e.dias)} dia(s)`}, a ${Math.round(e.km)} km do centro de ${cidade}. Evento catalogado pela NASA; não confirma risco local.`,
-      fonte: 'NASA EONET', fonteUrl: EONET, perto: true, escopo: 'brasil' as const }
+      fonte: 'NASA EONET', fonteUrl: EONET, perto: true, escopo: 'brasil' as const, lat: e.lat, lon: e.lon }
   })
 }
 
@@ -68,7 +70,8 @@ export function itensGdacs(alertas: AlertaGdacs[]): ItemReal[] {
     return { id: `gdacs-${a.id}`, tipo: TIPO_GDACS[a.tipo] ?? 'outro', nivel: a.nivel === 'vermelho' ? 'critical' as const : 'high' as const,
       titulo: `${a.tipoNome}: ${a.nome}`, local: a.pais || 'Oceano / sem país', quando: diaMes(a.inicio),
       detalhe: `${a.severidade ? `${a.severidade}. ` : ''}Alerta ${a.nivel} do GDACS (ONU / Comissão Europeia), em vigor desde ${diaMes(a.inicio)}.`,
-      fonte: 'GDACS (ONU)', fonteUrl: a.link && a.link.startsWith('https://') ? a.link : GDACS, perto, escopo: perto ? 'brasil' as const : 'mundo' as const }
+      fonte: 'GDACS (ONU)', fonteUrl: a.link && a.link.startsWith('https://') ? a.link : GDACS, perto, escopo: perto ? 'brasil' as const : 'mundo' as const,
+      lat: a.latitude, lon: a.longitude, tipoGdacs: a.tipo }
   })
 }
 

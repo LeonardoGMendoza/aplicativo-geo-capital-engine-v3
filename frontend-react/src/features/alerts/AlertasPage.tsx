@@ -5,7 +5,8 @@ import { AlertActions } from './AlertActions'
 import { useNasaSession } from '@/features/nasa/NasaSession'
 import { capitalMaisPerto } from '@/features/nasa/leitura'
 import { mapPosition } from '@/features/nasa/geography'
-import { buscarPrevisoes, cidadesCalor, cidadesChuva } from '@/features/climate/climate'
+import { buscarPrevisoes } from '@/features/climate/climate'
+import { cidadesDaRegiao, itemNaRegiao, useRegiao } from '@/features/regiao/regiao'
 import type { Previsao } from '@/features/climate/climate'
 import { buscarAlertasGlobais } from '@/features/climate/globalWeather'
 import type { AlertaGlobal } from '@/features/climate/globalWeather'
@@ -32,6 +33,7 @@ function paraCidade(p: Previsao): CidadePrevista {
  */
 export function AlertasPage() {
   const nasa = useNasaSession()
+  const regiao = useRegiao()
   const [previsao, setPrevisao] = useState<Estado<Previsao[]>>({ dados: null, erro: false })
   const [gdacs, setGdacs] = useState<Estado<AlertaGlobal[]>>({ dados: null, erro: false })
   const [aba, setAba] = useState<'todos' | 'brasil' | 'mundo'>('todos')
@@ -42,10 +44,17 @@ export function AlertasPage() {
   useEffect(() => { if (nasa.mode !== 'nasa') nasa.setMode('nasa') }, [nasa.mode]) // esta página é sempre real
   useEffect(() => {
     const abort = new AbortController()
-    buscarPrevisoes([...cidadesCalor, ...cidadesChuva], { signal: abort.signal }).then(d => !abort.signal.aborted && setPrevisao({ dados: d, erro: false })).catch(() => !abort.signal.aborted && setPrevisao({ dados: null, erro: true }))
     buscarAlertasGlobais({ signal: abort.signal }).then(r => !abort.signal.aborted && setGdacs({ dados: r.alertas, erro: false })).catch(() => !abort.signal.aborted && setGdacs({ dados: null, erro: true }))
     return () => abort.abort()
   }, [])
+  // Previsão das cidades da região escolhida (Estado de SP por padrão).
+  useEffect(() => {
+    const abort = new AbortController()
+    const { calor, chuva } = cidadesDaRegiao(regiao)
+    setPrevisao({ dados: null, erro: false })
+    buscarPrevisoes([...calor, ...chuva], { signal: abort.signal }).then(d => !abort.signal.aborted && setPrevisao({ dados: d, erro: false })).catch(() => !abort.signal.aborted && setPrevisao({ dados: null, erro: true }))
+    return () => abort.abort()
+  }, [regiao])
 
   // Eventos NASA na América do Sul, até 30 dias, a até 300 km de uma capital brasileira.
   const nasaPerto = useMemo(() => {
@@ -56,7 +65,7 @@ export function AlertasPage() {
       if (!pos || !cap || !Number.isFinite(t) || !naAmericaDoSul(pos[0], pos[1]) || cap.km > RAIO_CAPITAL_KM) return []
       const dias = (agora - t) / 86400000
       if (dias > DIAS_NASA) return []
-      return itensNasa([{ id: e.id, titulo: e.title, categoria: e.categories.map(c => c.id || c.title).join(' '), km: cap.km, dias }], cap.nome)
+      return itensNasa([{ id: e.id, titulo: e.title, categoria: e.categories.map(c => c.id || c.title).join(' '), km: cap.km, dias, lat: pos[0], lon: pos[1] }], cap.nome)
         .map(item => ({ ...item, observadoEm: e.observedAt }))
     })
   }, [nasa.result])
@@ -65,7 +74,7 @@ export function AlertasPage() {
     ...(previsao.dados ? itensDaPrevisao(previsao.dados.map(paraCidade)) : []),
     ...nasaPerto,
     ...(gdacs.dados ? itensGdacs(gdacs.dados) : []),
-  ]), [previsao, nasaPerto, gdacs]) as (ItemReal & { observadoEm?: string | null })[]
+  ].filter(i => itemNaRegiao(i, regiao))), [previsao, nasaPerto, gdacs, regiao]) as (ItemReal & { observadoEm?: string | null })[]
 
   const filtrados = itens.filter(i => (aba === 'todos' || i.escopo === aba) && (!tipo || i.tipo === tipo)
     && `${i.titulo} ${i.local}`.toLocaleLowerCase('pt-BR').includes(busca.trim().toLocaleLowerCase('pt-BR')))

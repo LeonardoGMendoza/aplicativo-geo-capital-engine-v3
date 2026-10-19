@@ -11,8 +11,15 @@ function IrPara({ alerta }: { alerta: AlertaGlobal | null }) {
   return null
 }
 
+/** Enquadra a região escolhida no filtro (Estado de SP, Brasil ou mundo). */
+function Enquadrar({ vista }: { vista?: { centro: [number, number]; zoom: number } }) {
+  const map = useMap()
+  useEffect(() => { if (vista) map.setView(vista.centro, vista.zoom) }, [map, vista?.centro[0], vista?.centro[1], vista?.zoom])
+  return null
+}
+
 /** Mapa mundial (Leaflet): base OpenStreetMap, camada de radar de chuva e marcadores dos alertas GDACS. */
-export default function WorldWeatherMap({ radar, alertas, mostrarRadar, mostrarAlertas, onRadarFalhou, foco = null }: { radar: Radar | null; alertas: AlertaGlobal[]; mostrarRadar: boolean; mostrarAlertas: boolean; onRadarFalhou: () => void; foco?: AlertaGlobal | null }) {
+export default function WorldWeatherMap({ radar, alertas, mostrarRadar, mostrarAlertas, onRadarFalhou, foco = null, vista }: { radar: Radar | null; alertas: AlertaGlobal[]; mostrarRadar: boolean; mostrarAlertas: boolean; onRadarFalhou: () => void; foco?: AlertaGlobal | null; vista?: { centro: [number, number]; zoom: number } }) {
   const [cor, setCor] = useState(RADAR_COR_TV)
   const icones = useMemo(() => Object.fromEntries(alertas.map(a => [a.id, divIcon({
     className: '', iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14],
@@ -24,6 +31,7 @@ export default function WorldWeatherMap({ radar, alertas, mostrarRadar, mostrarA
   }
   return <div className="mundo-mapa">
     <MapContainer center={[15, -20]} zoom={2} minZoom={2} maxZoom={10} worldCopyJump scrollWheelZoom className="h-full w-full">
+      <Enquadrar vista={vista} />
       <IrPara alerta={foco} />
       <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19} attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' />
       {mostrarRadar && radar && <TileLayer key={cor} url={radar.tileUrl(cor)} opacity={0.75} maxNativeZoom={7} maxZoom={10} zIndex={5}

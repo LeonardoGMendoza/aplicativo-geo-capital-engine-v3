@@ -64,3 +64,20 @@
 .citizen-alerts-form button.citizen-whats { width: 100%; min-height: 60px; background: #128c4a; color: #fff; font-size: 20px; font-weight: 800; border-radius: 14px; }
 .citizen-alerts-form button.citizen-sair { width: 100%; background: #7f1d1d; }
 .citizen-alerts-form button.citizen-link { display: block; width: auto; min-width: 0; min-height: 44px; margin: 14px auto 0; padding: 0 8px; background: none; color: #075fba; font-size: 16px; font-weight: 700; text-decoration: underline; }
+/* Tempo a pé e dicas por tipo de evento (pedido da Defesa Civil) */
+.citizen-walk { font-size: 18px; font-weight: 700; color: #087f65; margin: 2px 0 8px; }
+.citizen-tips-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.citizen-tip-btn { min-height: 56px; padding: 10px; border-radius: 12px; border: 2px solid #c9dbe6; background: #f4f9fc; color: #0b2235; font-size: 16px; font-weight: 700; text-align: left; }
+.citizen-tip-btn[aria-pressed=true] { border-color: #0b2235; background: #e8f4fb; }
+.citizen-tips-list { margin: 12px 0 0; padding-left: 20px; list-style: disc; font-size: 17px; line-height: 1.45; }
+.citizen-tips-list li { margin-bottom: 8px; }
+/* Locais oficiais da Defesa Civil (aparecem antes dos pontos do OpenStreetMap) */
+.citizen-oficiais { border: 3px solid #087f65; }
+.citizen-risco { background: #fdecec; color: #8a1c13; border-radius: 12px; padding: 12px; font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+.citizen-oficial { border-top: 1px solid #d6e4ee; padding: 12px 0; }
+.citizen-oficial:first-of-type { border-top: 0; }
+.citizen-oficial-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.citizen-oficial-nome { font-size: 19px; font-weight: 800; }
+.citizen-oficial-status { border-radius: 999px; padding: 4px 10px; font-size: 14px; font-weight: 800; white-space: nowrap; }
+.citizen-oficial-tipo { font-size: 15px; color: #36536b; }
+.citizen-oficial-rotas { display: grid; gap: 8px; margin-top: 8px; }

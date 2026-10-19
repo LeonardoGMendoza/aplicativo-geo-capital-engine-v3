@@ -6,6 +6,7 @@ import { parseOrigin, orderPoints, distanceLabel, destinationLinks } from './loc
 import type { Origin } from './location'
 import { checklist, readChecklist, writeChecklist } from './checklist'
 import { NearbyPlaces } from './NearbyPlaces'
+import { AbrigosOficiaisGestao } from './AbrigosOficiaisGestao'
 import './shelters.css'
 const SupportMap = lazy(() => import('./SupportPointMap'))
 class MapBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -29,6 +30,7 @@ export function SheltersPage() {
   const links = point ? destinationLinks(point) : null
   return <div className="support-page min-w-0 space-y-5">
     <header><p className="text-xs font-semibold text-[#25d3b6]">OMNI-ECORESCUE / V3</p><h1 className="mt-1 text-2xl font-semibold">Evacuação e Abrigos</h1><p className="mt-2 text-sm text-[#b5d2e2]">Preparação familiar e pontos de apoio de referência. Esta página independe da NASA.</p></header>
+    <AbrigosOficiaisGestao />
     <NearbyPlaces />
     <section className="light-panel space-y-2 p-4" aria-label="Limitações do cadastro"><p className="text-sm font-semibold">{referenceNotice}</p><p className="text-sm">8 pontos do cadastro original do MVP. Não há dados de ocupação, confirmação de evacuação ou acionamento de serviços.</p></section>
     <section className="light-panel space-y-3 p-4" aria-labelledby="support-search"><h2 id="support-search" className="text-lg font-semibold">Consultar pontos de referência</h2><div className="grid min-w-0 gap-3 sm:grid-cols-2"><label className="text-sm">Buscar nome ou cidade<input className="mini-select mt-1 w-full" value={query} onChange={e => setQuery(e.target.value)} placeholder="Nome ou cidade" /></label><label className="text-sm">Tipo de ponto<select className="mini-select mt-1 w-full" value={type} onChange={e => setType(e.target.value)}><option value="">Todos os tipos</option>{[...new Set(supportPoints.map(p => p.type))].sort().map(t => <option key={t}>{t}</option>)}</select></label></div>
