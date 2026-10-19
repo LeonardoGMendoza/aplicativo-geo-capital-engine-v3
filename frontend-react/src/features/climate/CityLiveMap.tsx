@@ -73,6 +73,6 @@ export function CityLiveMap() {
         <CityRealMap centro={cidade.coordenadas} pontos={pontos ?? []} eventos={eventos ?? []} radarUrl={radarUrl} onRadarFalhou={() => setRadarUrl(null)} />
       </Suspense>
     </MapErrorBoundary>
-    <p className="clima-fonte">DADOS REAIS · abrigos e saúde: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> (mapeados por voluntários; escolas aparecem como possível ponto de apoio) · chuva: radar <a href="https://www.rainviewer.com/" target="_blank" rel="noopener noreferrer">RainViewer</a> · alertas: NASA EONET, eventos dos últimos {DIAS_EVENTO_RECENTE} dias (vermelho = últimos 3 dias). Não confirma risco nem rota segura: siga a Defesa Civil.</p>
+    <p className="clima-fonte">DADOS REAIS · abrigos e saúde: <span>OpenStreetMap</span> (mapeados por voluntários; escolas aparecem como possível ponto de apoio) · chuva: radar <span>RainViewer</span> · alertas: NASA EONET, eventos dos últimos {DIAS_EVENTO_RECENTE} dias (vermelho = últimos 3 dias). Não confirma risco nem rota segura: siga a Defesa Civil.</p>
   </section>
 }

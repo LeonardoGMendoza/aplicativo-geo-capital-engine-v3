@@ -150,7 +150,6 @@ export function NearbyPlaces() {
               <div className="flex flex-wrap gap-2 pt-1">
                 <Button asChild><a href={routeLinks(selected.coordinates).waze} target="_blank" rel="noopener noreferrer">🚗 Rota no Waze</a></Button>
                 <Button asChild><a href={routeLinks(selected.coordinates).google} target="_blank" rel="noopener noreferrer">🗺️ Rota no Google Maps</a></Button>
-                <Button asChild variant="outline"><a href={selected.osmUrl} target="_blank" rel="noopener noreferrer">Ver no OpenStreetMap</a></Button>
               </div>
               <p className="text-xs">O aplicativo externo traça a rota a partir da sua localização atual. Ele não confirma que o local está aberto, nem condições de acesso ou do trajeto. Em emergência, siga a Defesa Civil (199).</p>
             </div>}

@@ -23,7 +23,6 @@ export function PlacasCamada({ dados }: { dados: PlacasDados }) {
           <p>{lugarPt(s.place)}</p>
           <p className="text-muted-foreground">{haQuanto(s.observedAt)}{Number.isFinite(s.depthKm) ? ` · ${Math.round(s.depthKm as number)} km de profundidade` : ''}</p>
           {s.tsunamiSignal && <p className="font-semibold text-[#1d5fd6]">Sinal de tsunami: os centros de alerta foram notificados. Isso não confirma tsunami; siga a Defesa Civil local.</p>}
-          {s.url && <p><a href={s.url} target="_blank" rel="noopener noreferrer">Detalhes no USGS</a></p>}
         </div></Popup>
       </CircleMarker>
     })}

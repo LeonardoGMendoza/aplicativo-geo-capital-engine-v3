@@ -1270,6 +1270,23 @@ const ko: Record<string, string> = {
  "Centro de Apoio": "지원 센터",
  "Distância em linha reta entre a origem informada e o ponto de referência. Não representa percurso nem confirma condições de acesso, abertura ou disponibilidade.": "입력한 출발지와 참고 지점 사이의 직선거리입니다. 실제 경로가 아니며 접근, 개방, 이용 가능 여부를 확인하지 않습니다.",
  "Cadastro histórico de referência, sem verificação operacional. Coordenadas aproximadas. A utilização como abrigo, abertura e vagas não foram confirmadas.": "운영 확인이 없는 과거 참고 기록입니다. 좌표는 대략적입니다. 대피소 사용, 개방, 수용 인원은 확인되지 않았습니다.",
- "A operação demorou demais.": "작업 시간이 너무 오래 걸렸습니다."
+ "A operação demorou demais.": "작업 시간이 너무 오래 걸렸습니다.",
+ "Detalhes do GDACS": "GDACS 상세 정보",
+ "Buscando detalhes no GDACS…": "GDACS 상세 정보를 가져오는 중…",
+ "Não foi possível buscar os detalhes do GDACS agora. As informações acima continuam válidas.": "지금은 GDACS 상세 정보를 가져올 수 없습니다. 위의 정보는 그대로 유효합니다.",
+ "Mapa da área afetada indisponível agora.": "지금은 피해 지역 지도를 사용할 수 없습니다.",
+ "Mapa da área afetada": "피해 지역 지도",
+ "Vermelho, laranja e verde: áreas de alerta do GDACS. Linha escura: trajetória.": "빨강, 주황, 초록: GDACS 경보 구역. 진한 선: 이동 경로.",
+ "Pontuação do alerta": "경보 점수",
+ "Países atingidos": "피해 국가",
+ "População exposta: estimativa de modelo do GDACS, não contagem de atingidos.": "노출 인구: GDACS 모델 추정치이며 실제 피해자 수가 아닙니다.",
+ "O GDACS não respondeu agora; mostrando a última consulta.": "지금 GDACS가 응답하지 않아 마지막 조회 결과를 표시합니다.",
+ "Pessoas em ventos acima de 120 km/h": "시속 120 km 이상 바람 지역 인구",
+ "Pessoas em ventos acima de 63 km/h": "시속 63 km 이상 바람 지역 인구",
+ "Pessoas em área de maré de tempestade": "폭풍 해일 지역 인구",
+ "Pessoas na área do incêndio": "화재 지역 인구",
+ "Pessoas a até 5 km do incêndio": "화재 반경 5 km 이내 인구",
+ "Fonte: GDACS (ONU / Comissão Europeia) · consultado às {0}": "출처: GDACS(유엔 / 유럽연합 집행위원회) · {0} 조회",
+ "Fonte: GDACS (ONU / Comissão Europeia)": "출처: GDACS(유엔 / 유럽연합 집행위원회)"
 }
 export default ko

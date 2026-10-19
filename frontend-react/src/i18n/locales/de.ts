@@ -1267,6 +1267,23 @@ const de: Record<string, string> = {
  "Centro de Apoio": "Hilfszentrum",
  "Distância em linha reta entre a origem informada e o ponto de referência. Não representa percurso nem confirma condições de acesso, abertura ou disponibilidade.": "Luftlinie zwischen dem angegebenen Ausgangspunkt und dem Referenzpunkt. Sie stellt keine Route dar und bestätigt weder Zugang, Öffnung noch Verfügbarkeit.",
  "Cadastro histórico de referência, sem verificação operacional. Coordenadas aproximadas. A utilização como abrigo, abertura e vagas não foram confirmadas.": "Historischer Referenzeintrag ohne betriebliche Prüfung. Ungefähre Koordinaten. Nutzung als Notunterkunft, Öffnung und Plätze wurden nicht bestätigt.",
- "A operação demorou demais.": "Der Vorgang hat zu lange gedauert."
+ "A operação demorou demais.": "Der Vorgang hat zu lange gedauert.",
+ "Detalhes do GDACS": "GDACS-Details",
+ "Buscando detalhes no GDACS…": "GDACS-Details werden abgerufen…",
+ "Não foi possível buscar os detalhes do GDACS agora. As informações acima continuam válidas.": "Die GDACS-Details konnten gerade nicht abgerufen werden. Die Angaben oben bleiben gültig.",
+ "Mapa da área afetada indisponível agora.": "Karte des betroffenen Gebiets derzeit nicht verfügbar.",
+ "Mapa da área afetada": "Karte des betroffenen Gebiets",
+ "Vermelho, laranja e verde: áreas de alerta do GDACS. Linha escura: trajetória.": "Rot, Orange und Grün: GDACS-Warngebiete. Dunkle Linie: Zugbahn.",
+ "Pontuação do alerta": "Warnstufe (Punkte)",
+ "Países atingidos": "Betroffene Länder",
+ "População exposta: estimativa de modelo do GDACS, não contagem de atingidos.": "Exponierte Bevölkerung: Modellschätzung des GDACS, keine Zählung der Betroffenen.",
+ "O GDACS não respondeu agora; mostrando a última consulta.": "GDACS hat gerade nicht geantwortet; die letzte Abfrage wird angezeigt.",
+ "Pessoas em ventos acima de 120 km/h": "Menschen bei Wind über 120 km/h",
+ "Pessoas em ventos acima de 63 km/h": "Menschen bei Wind über 63 km/h",
+ "Pessoas em área de maré de tempestade": "Menschen im Sturmflutgebiet",
+ "Pessoas na área do incêndio": "Menschen im Brandgebiet",
+ "Pessoas a até 5 km do incêndio": "Menschen im Umkreis von 5 km um den Brand",
+ "Fonte: GDACS (ONU / Comissão Europeia) · consultado às {0}": "Quelle: GDACS (UN / Europäische Kommission) · abgerufen um {0}",
+ "Fonte: GDACS (ONU / Comissão Europeia)": "Quelle: GDACS (UN / Europäische Kommission)"
 }
 export default de

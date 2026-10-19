@@ -1267,6 +1267,23 @@ const nl: Record<string, string> = {
  "Centro de Apoio": "Steuncentrum",
  "Distância em linha reta entre a origem informada e o ponto de referência. Não representa percurso nem confirma condições de acesso, abertura ou disponibilidade.": "Afstand hemelsbreed tussen het opgegeven vertrekpunt en het referentiepunt. Dit is geen route en bevestigt geen toegang, opening of beschikbaarheid.",
  "Cadastro histórico de referência, sem verificação operacional. Coordenadas aproximadas. A utilização como abrigo, abertura e vagas não foram confirmadas.": "Historisch referentierecord, niet operationeel gecontroleerd. Geschatte coördinaten. Gebruik als opvang, opening en plaatsen zijn niet bevestigd.",
- "A operação demorou demais.": "De bewerking duurde te lang."
+ "A operação demorou demais.": "De bewerking duurde te lang.",
+ "Detalhes do GDACS": "GDACS-details",
+ "Buscando detalhes no GDACS…": "GDACS-details ophalen…",
+ "Não foi possível buscar os detalhes do GDACS agora. As informações acima continuam válidas.": "De GDACS-details konden nu niet worden opgehaald. De informatie hierboven blijft geldig.",
+ "Mapa da área afetada indisponível agora.": "Kaart van het getroffen gebied nu niet beschikbaar.",
+ "Mapa da área afetada": "Kaart van het getroffen gebied",
+ "Vermelho, laranja e verde: áreas de alerta do GDACS. Linha escura: trajetória.": "Rood, oranje en groen: GDACS-waarschuwingsgebieden. Donkere lijn: koers.",
+ "Pontuação do alerta": "Waarschuwingsscore",
+ "Países atingidos": "Getroffen landen",
+ "População exposta: estimativa de modelo do GDACS, não contagem de atingidos.": "Blootgestelde bevolking: modelschatting van GDACS, geen telling van getroffenen.",
+ "O GDACS não respondeu agora; mostrando a última consulta.": "GDACS reageerde nu niet; de laatste opvraging wordt getoond.",
+ "Pessoas em ventos acima de 120 km/h": "Mensen bij wind boven 120 km/u",
+ "Pessoas em ventos acima de 63 km/h": "Mensen bij wind boven 63 km/u",
+ "Pessoas em área de maré de tempestade": "Mensen in stormvloedgebied",
+ "Pessoas na área do incêndio": "Mensen in het brandgebied",
+ "Pessoas a até 5 km do incêndio": "Mensen binnen 5 km van de brand",
+ "Fonte: GDACS (ONU / Comissão Europeia) · consultado às {0}": "Bron: GDACS (VN / Europese Commissie) · opgevraagd om {0}",
+ "Fonte: GDACS (ONU / Comissão Europeia)": "Bron: GDACS (VN / Europese Commissie)"
 }
 export default nl

@@ -1266,6 +1266,23 @@ const fr: Record<string, string> = {
  "Centro de Apoio": "Centre d'aide",
  "Distância em linha reta entre a origem informada e o ponto de referência. Não representa percurso nem confirma condições de acesso, abertura ou disponibilidade.": "Distance à vol d'oiseau entre l'origine indiquée et le point de référence. Elle ne représente pas le trajet et ne confirme ni l'accès, ni l'ouverture, ni la disponibilité.",
  "Cadastro histórico de referência, sem verificação operacional. Coordenadas aproximadas. A utilização como abrigo, abertura e vagas não foram confirmadas.": "Enregistrement historique de référence, sans vérification opérationnelle. Coordonnées approximatives. L'utilisation comme abri, l'ouverture et les places n'ont pas été confirmées.",
- "A operação demorou demais.": "L'opération a pris trop de temps."
+ "A operação demorou demais.": "L'opération a pris trop de temps.",
+ "Detalhes do GDACS": "Détails du GDACS",
+ "Buscando detalhes no GDACS…": "Recherche des détails sur le GDACS…",
+ "Não foi possível buscar os detalhes do GDACS agora. As informações acima continuam válidas.": "Impossible d'obtenir les détails du GDACS pour le moment. Les informations ci-dessus restent valables.",
+ "Mapa da área afetada indisponível agora.": "Carte de la zone touchée indisponible pour le moment.",
+ "Mapa da área afetada": "Carte de la zone touchée",
+ "Vermelho, laranja e verde: áreas de alerta do GDACS. Linha escura: trajetória.": "Rouge, orange et vert : zones d'alerte du GDACS. Ligne foncée : trajectoire.",
+ "Pontuação do alerta": "Score de l'alerte",
+ "Países atingidos": "Pays touchés",
+ "População exposta: estimativa de modelo do GDACS, não contagem de atingidos.": "Population exposée : estimation du modèle du GDACS, pas un décompte des personnes touchées.",
+ "O GDACS não respondeu agora; mostrando a última consulta.": "Le GDACS n'a pas répondu ; affichage de la dernière consultation.",
+ "Pessoas em ventos acima de 120 km/h": "Personnes exposées à des vents de plus de 120 km/h",
+ "Pessoas em ventos acima de 63 km/h": "Personnes exposées à des vents de plus de 63 km/h",
+ "Pessoas em área de maré de tempestade": "Personnes en zone de submersion marine",
+ "Pessoas na área do incêndio": "Personnes dans la zone de l'incendie",
+ "Pessoas a até 5 km do incêndio": "Personnes à moins de 5 km de l'incendie",
+ "Fonte: GDACS (ONU / Comissão Europeia) · consultado às {0}": "Source : GDACS (ONU / Commission européenne) · consulté à {0}",
+ "Fonte: GDACS (ONU / Comissão Europeia)": "Source : GDACS (ONU / Commission européenne)"
 }
 export default fr

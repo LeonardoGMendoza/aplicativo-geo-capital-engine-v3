@@ -1269,6 +1269,23 @@ const ru: Record<string, string> = {
  "Centro de Apoio": "Центр помощи",
  "Distância em linha reta entre a origem informada e o ponto de referência. Não representa percurso nem confirma condições de acesso, abertura ou disponibilidade.": "Расстояние по прямой от указанной точки до справочного пункта. Это не маршрут; оно не подтверждает доступ, работу или наличие мест.",
  "Cadastro histórico de referência, sem verificação operacional. Coordenadas aproximadas. A utilização como abrigo, abertura e vagas não foram confirmadas.": "Историческая справочная запись без оперативной проверки. Координаты приблизительные. Использование как убежища, работа и наличие мест не подтверждены.",
- "A operação demorou demais.": "Операция заняла слишком много времени."
+ "A operação demorou demais.": "Операция заняла слишком много времени.",
+ "Detalhes do GDACS": "Подробности GDACS",
+ "Buscando detalhes no GDACS…": "Загружаем подробности GDACS…",
+ "Não foi possível buscar os detalhes do GDACS agora. As informações acima continuam válidas.": "Сейчас не удалось получить подробности GDACS. Информация выше остаётся в силе.",
+ "Mapa da área afetada indisponível agora.": "Карта пострадавшего района сейчас недоступна.",
+ "Mapa da área afetada": "Карта пострадавшего района",
+ "Vermelho, laranja e verde: áreas de alerta do GDACS. Linha escura: trajetória.": "Красный, оранжевый и зелёный — зоны оповещения GDACS. Тёмная линия — траектория.",
+ "Pontuação do alerta": "Оценка оповещения",
+ "Países atingidos": "Пострадавшие страны",
+ "População exposta: estimativa de modelo do GDACS, não contagem de atingidos.": "Население в зоне риска: модельная оценка GDACS, а не подсчёт пострадавших.",
+ "O GDACS não respondeu agora; mostrando a última consulta.": "GDACS сейчас не ответил; показан последний запрос.",
+ "Pessoas em ventos acima de 120 km/h": "Люди в зоне ветра свыше 120 км/ч",
+ "Pessoas em ventos acima de 63 km/h": "Люди в зоне ветра свыше 63 км/ч",
+ "Pessoas em área de maré de tempestade": "Люди в зоне штормового нагона",
+ "Pessoas na área do incêndio": "Люди в зоне пожара",
+ "Pessoas a até 5 km do incêndio": "Люди в радиусе 5 км от пожара",
+ "Fonte: GDACS (ONU / Comissão Europeia) · consultado às {0}": "Источник: GDACS (ООН / Европейская комиссия) · запрос в {0}",
+ "Fonte: GDACS (ONU / Comissão Europeia)": "Источник: GDACS (ООН / Европейская комиссия)"
 }
 export default ru

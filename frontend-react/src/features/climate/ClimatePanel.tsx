@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { CloudRain, RefreshCw, ThermometerSun } from 'lucide-react'
-import { buscarPrevisoes, cidadesCalor, cidadesChuva, CALOR_INTENSO_C, CHUVA_FORTE_MM, formatarGraus, formatarMm, FONTE_URL, NOTA_EL_NINO_URL, nivelCalor, nivelChuva, picoChuva, picoMaxima, rotuloCalor, rotuloChuva, totalChuva } from './climate'
+import { buscarPrevisoes, cidadesCalor, cidadesChuva, CALOR_INTENSO_C, CHUVA_FORTE_MM, formatarGraus, formatarMm, nivelCalor, nivelChuva, picoChuva, picoMaxima, rotuloCalor, rotuloChuva, totalChuva } from './climate'
 import type { Previsao } from './climate'
 import './climate.css'
 
@@ -26,7 +26,7 @@ export function ClimatePanel() {
     <div className="clima-topo">
       <div>
         <h2 id="clima-titulo" className="ia-panel-title" style={{ marginBottom: 2 }}>Condições agora: El Niño</h2>
-        <p className="ia-muted">O El Niño tende a trazer calor e seca ao Norte e chuva acima do normal ao Sul (<a href={NOTA_EL_NINO_URL} target="_blank" rel="noopener noreferrer">CPTEC/INPE, nota de 20/07/2026</a>). Previsão real para os próximos 3 dias:</p>
+        <p className="ia-muted">O El Niño tende a trazer calor e seca ao Norte e chuva acima do normal ao Sul (<span>CPTEC/INPE, nota de 20/07/2026</span>). Previsão real para os próximos 3 dias:</p>
       </div>
       <button type="button" className="clima-atualizar" onClick={() => setTentativa(n => n + 1)} disabled={carregando} aria-label="Atualizar previsão"><RefreshCw className="size-4" aria-hidden="true" />{carregando ? 'Atualizando…' : 'Atualizar'}</button>
     </div>
@@ -46,6 +46,6 @@ export function ClimatePanel() {
         <p className="clima-legenda">Maior chuva prevista em um dia · chuva forte a partir de {CHUVA_FORTE_MM} mm</p>
       </div>
     </div>}
-    {dados && <p className="clima-fonte">Fonte: <a href={FONTE_URL} target="_blank" rel="noopener noreferrer">Open-Meteo</a> (previsão de modelos meteorológicos) · consultado às {dados.obtidoEm.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}. Critérios do protótipo, não são alertas oficiais: siga a Defesa Civil e o INMET.</p>}
+    {dados && <p className="clima-fonte">Fonte: <span>Open-Meteo</span> (previsão de modelos meteorológicos) · consultado às {dados.obtidoEm.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}. Critérios do protótipo, não são alertas oficiais: siga a Defesa Civil e o INMET.</p>}
   </section>
 }

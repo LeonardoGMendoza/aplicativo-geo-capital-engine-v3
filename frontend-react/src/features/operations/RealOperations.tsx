@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { BellRing, BrainCircuit, Building2, CloudSun, Database, ExternalLink, FileText, Flame, HeartHandshake, House, Map, MessageSquare, Search, ShieldCheck, Stethoscope, TriangleAlert } from 'lucide-react'
+import { BellRing, BrainCircuit, Building2, CloudSun, Database, FileText, Flame, HeartHandshake, House, Map, MessageSquare, Search, ShieldCheck, Stethoscope, TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -21,6 +21,8 @@ import { cidadesMapa, CORES, eventosPerto, pontosDoMapa, RAIO_EVENTOS_KM } from 
 import type { PontoMapa } from '@/features/climate/cityMap'
 import { geocode, getNearbyPlaces } from '@/features/shelters/places'
 import { RealEvacuacao } from './components/RealEvacuacao'
+import { GdacsDetalhes } from '@/features/alerts/AlertaGdacs'
+import { idGdacs } from '@/features/alerts/gdacsDetalhes'
 import { proximidade } from './data/rota'
 import { useAlertasAtivos } from '@/features/alerts/useAlertasAtivos'
 import { buscarResumo } from '@/features/citizen/cadastroAlertas'
@@ -167,7 +169,7 @@ export function RealOperations(_props: { onDemo?: () => void }) {
       </section>
         <section className="light-panel" aria-label="Fontes consultadas">
           <PanelHeading title="Fontes consultadas" subtitle="Tudo público e sem chave" icon={CloudSun} />
-          <ul className="space-y-1 px-3 pb-3 text-xs">{fontes.map(f => <li key={f.nome} className="flex items-start gap-2 border-b pb-1.5 last:border-0"><span className="mt-1 size-2 shrink-0 rounded-full" style={{ background: f.ok ? '#0aaa86' : f.erro ? '#fa244b' : '#f5a016' }} /><div className="min-w-0 flex-1"><p className="font-semibold">{f.nome}</p><p className="text-muted-foreground"><a href={f.url} target="_blank" rel="noopener noreferrer" className="underline">{f.origem}</a>{f.ok && f.texto ? ` · ${f.texto}` : f.erro ? ' · indisponível agora' : ' · consultando…'}</p></div></li>)}</ul>
+          <ul className="space-y-1 px-3 pb-3 text-xs">{fontes.map(f => <li key={f.nome} className="flex items-start gap-2 border-b pb-1.5 last:border-0"><span className="mt-1 size-2 shrink-0 rounded-full" style={{ background: f.ok ? '#0aaa86' : f.erro ? '#fa244b' : '#f5a016' }} /><div className="min-w-0 flex-1"><p className="font-semibold">{f.nome}</p><p className="text-muted-foreground"><span>{f.origem}</span>{f.ok && f.texto ? ` · ${f.texto}` : f.erro ? ' · indisponível agora' : ' · consultando…'}</p></div></li>)}</ul>
         </section>
       </div>
       <RealEvacuacao cidade={cidade} lugares={maisPerto} destinoId={destinoId} onDestino={setDestinoId} eventos={perto} />
@@ -240,8 +242,9 @@ export function RealOperations(_props: { onDemo?: () => void }) {
       <Badge variant="outline" className="w-fit border-emerald-200 bg-emerald-50 text-emerald-800">DADOS REAIS · {detalhe?.item.fonte}</Badge>
       {detalhe && <div className="flex flex-wrap items-center justify-between gap-2 rounded border bg-secondary p-3"><div><p className="text-sm font-semibold">{detalhe.item.titulo}</p><p className="mt-1 text-xs text-muted-foreground">{detalhe.item.local} · {detalhe.item.quando}</p></div><RiskBadge level={detalhe.item.nivel} /></div>}
       {detalhe && !detalhe.orientar && <p className="text-sm leading-relaxed">{detalhe.item.detalhe}</p>}
+      {detalhe && !detalhe.orientar && <GdacsDetalhes itemId={detalhe.item.id} />}
       {detalhe && <div className="rounded border border-sky-200 bg-sky-50 p-3 text-sm leading-relaxed text-sky-950"><p className="text-xs font-semibold uppercase tracking-wide">Orientação geral · revise antes de divulgar</p><p className="mt-1">{orientacoes[detalhe.item.tipo]}</p></div>}
-      {detalhe && <a href={detalhe.item.fonteUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-[#075fba] underline">Fonte oficial: {detalhe.item.fonte}<ExternalLink className="size-3" /></a>}
+      {detalhe && (detalhe.orientar || !idGdacs(detalhe.item.id)) && <p className="text-xs text-muted-foreground">Fonte oficial: {detalhe.item.fonte}</p>}
       <p className="text-xs leading-relaxed text-muted-foreground">Não confirma risco local nem rota segura. Nenhuma mensagem é enviada: a decisão é humana.</p>
       <DialogFooter><DialogClose asChild><Button>Fechar</Button></DialogClose></DialogFooter>
     </DialogContent></Dialog>

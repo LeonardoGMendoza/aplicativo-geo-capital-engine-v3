@@ -1262,6 +1262,23 @@ const en: Record<string, string> = {
  "Centro de Apoio": "Support center",
  "Distância em linha reta entre a origem informada e o ponto de referência. Não representa percurso nem confirma condições de acesso, abertura ou disponibilidade.": "Straight-line distance between the given origin and the reference point. It does not represent the route or confirm access, opening or availability.",
  "Cadastro histórico de referência, sem verificação operacional. Coordenadas aproximadas. A utilização como abrigo, abertura e vagas não foram confirmadas.": "Historical reference record, not operationally verified. Approximate coordinates. Use as a shelter, opening and spaces were not confirmed.",
- "A operação demorou demais.": "The operation took too long."
+ "A operação demorou demais.": "The operation took too long.",
+ "Detalhes do GDACS": "GDACS details",
+ "Buscando detalhes no GDACS…": "Fetching GDACS details…",
+ "Não foi possível buscar os detalhes do GDACS agora. As informações acima continuam válidas.": "Could not fetch GDACS details right now. The information above is still valid.",
+ "Mapa da área afetada indisponível agora.": "Affected-area map unavailable right now.",
+ "Mapa da área afetada": "Affected-area map",
+ "Vermelho, laranja e verde: áreas de alerta do GDACS. Linha escura: trajetória.": "Red, orange and green: GDACS alert areas. Dark line: track.",
+ "Pontuação do alerta": "Alert score",
+ "Países atingidos": "Affected countries",
+ "População exposta: estimativa de modelo do GDACS, não contagem de atingidos.": "Exposed population: GDACS model estimate, not a count of people affected.",
+ "O GDACS não respondeu agora; mostrando a última consulta.": "GDACS did not respond right now; showing the last lookup.",
+ "Pessoas em ventos acima de 120 km/h": "People in winds above 120 km/h",
+ "Pessoas em ventos acima de 63 km/h": "People in winds above 63 km/h",
+ "Pessoas em área de maré de tempestade": "People in storm-surge area",
+ "Pessoas na área do incêndio": "People in the fire area",
+ "Pessoas a até 5 km do incêndio": "People within 5 km of the fire",
+ "Fonte: GDACS (ONU / Comissão Europeia) · consultado às {0}": "Source: GDACS (UN / European Commission) · checked at {0}",
+ "Fonte: GDACS (ONU / Comissão Europeia)": "Source: GDACS (UN / European Commission)"
 }
 export default en

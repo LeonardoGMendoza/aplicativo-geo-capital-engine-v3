@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
 import { Waves } from 'lucide-react'
 import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
-import { camadasVento, dataBR, NOTA_CPTEC, urlWindy } from './elNino'
+import { camadasVento, dataBR, urlWindy } from './elNino'
 import type { CamadaVento } from './elNino'
 import './climate.css'
 const ElNinoOceanMap = lazy(() => import('./ElNinoOceanMap'))
@@ -12,7 +12,7 @@ export function ElNinoSection() {
   const [camada, setCamada] = useState<CamadaVento>('wind')
   return <section className="ia-panel nino" aria-labelledby="nino-titulo">
     <h2 id="nino-titulo" className="ia-panel-title"><Waves className="size-5" aria-hidden="true" />El Niño: da causa ao efeito</h2>
-    <p className="ia-muted">O El Niño começa no oceano Pacífico e muda os ventos que chegam ao Brasil. Segundo o <a href={NOTA_CPTEC} target="_blank" rel="noopener noreferrer">CPTEC/INPE</a>, isso tende a trazer calor e seca ao Norte e chuva acima do normal ao Sul.</p>
+    <p className="ia-muted">O El Niño começa no oceano Pacífico e muda os ventos que chegam ao Brasil. Segundo o <span>CPTEC/INPE</span>, isso tende a trazer calor e seca ao Norte e chuva acima do normal ao Sul.</p>
 
     <ol className="nino-passos">
       <li>

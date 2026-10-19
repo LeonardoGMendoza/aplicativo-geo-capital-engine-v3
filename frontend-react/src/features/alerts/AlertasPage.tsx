@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BellRing, ExternalLink, Search } from 'lucide-react'
+import { BellRing, Search } from 'lucide-react'
 import { RiskBadge } from '@/components/shared/RiskBadge'
 import { AlertActions } from './AlertActions'
 import { useNasaSession } from '@/features/nasa/NasaSession'
@@ -11,6 +11,8 @@ import { buscarAlertasGlobais } from '@/features/climate/globalWeather'
 import type { AlertaGlobal } from '@/features/climate/globalWeather'
 import { itensDaPrevisao, itensGdacs, itensNasa, naAmericaDoSul, orientacoes, priorizar } from '@/features/operations/data/real'
 import type { CidadePrevista, ItemReal, TipoReal } from '@/features/operations/data/real'
+import { GdacsDetalhes } from './AlertaGdacs'
+import { idGdacs } from './gdacsDetalhes'
 import './alertas.css'
 
 type Estado<T> = { dados: T | null; erro: boolean }
@@ -105,8 +107,9 @@ export function AlertasPage() {
         {!atual ? <p className="text-sm text-muted-foreground">Escolha um alerta na lista.</p> : <>
           <div className="flex flex-wrap items-start justify-between gap-2"><div><h2 className="text-lg font-semibold">{atual.titulo}</h2><p className="text-sm text-muted-foreground">{atual.local} · {atual.quando}</p></div><RiskBadge level={atual.nivel} /></div>
           <p className="text-sm leading-relaxed">{atual.detalhe}</p>
+          <GdacsDetalhes itemId={atual.id} />
           <div className="rounded border border-sky-200 bg-sky-50 p-3 text-sm leading-relaxed text-sky-950"><p className="text-xs font-semibold uppercase tracking-wide">Orientação geral · revise antes de divulgar</p><p className="mt-1">{orientacoes[atual.tipo]}</p></div>
-          <a href={atual.fonteUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-[#075fba] underline">Fonte oficial: {atual.fonte}<ExternalLink className="size-3" /></a>
+          {!idGdacs(atual.id) && <p className="text-xs text-muted-foreground">Fonte oficial: {atual.fonte}</p>}
           <AlertActions key={atual.id} perfil="comunidade" ativo="" comunidade={atual.escopo === 'brasil' ? `Moradores de ${atual.local.replace(/^a \d+ km de /, '')} e região` : ''}
             evento={atual.titulo} categoria={NOME_TIPO[atual.tipo]} km={null} observadoEm={atual.observadoEm ?? agoraIso} />
         </>}

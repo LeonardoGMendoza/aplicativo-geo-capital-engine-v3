@@ -1270,6 +1270,23 @@ const he: Record<string, string> = {
  "Centro de Apoio": "מרכז סיוע",
  "Distância em linha reta entre a origem informada e o ponto de referência. Não representa percurso nem confirma condições de acesso, abertura ou disponibilidade.": "מרחק בקו ישר בין נקודת המוצא שהוזנה לנקודת הייחוס. אינו מייצג את הדרך ואינו מאשר גישה, פתיחה או זמינות.",
  "Cadastro histórico de referência, sem verificação operacional. Coordenadas aproximadas. A utilização como abrigo, abertura e vagas não foram confirmadas.": "רשומת ייחוס היסטורית, ללא אימות תפעולי. קואורדינטות משוערות. השימוש כמקלט, הפתיחה והמקומות לא אושרו.",
- "A operação demorou demais.": "הפעולה ארכה זמן רב מדי."
+ "A operação demorou demais.": "הפעולה ארכה זמן רב מדי.",
+ "Detalhes do GDACS": "פרטי GDACS",
+ "Buscando detalhes no GDACS…": "מביא פרטים מ-GDACS…",
+ "Não foi possível buscar os detalhes do GDACS agora. As informações acima continuam válidas.": "לא ניתן להביא כעת את פרטי GDACS. המידע שלמעלה עדיין בתוקף.",
+ "Mapa da área afetada indisponível agora.": "מפת האזור הנפגע אינה זמינה כעת.",
+ "Mapa da área afetada": "מפת האזור הנפגע",
+ "Vermelho, laranja e verde: áreas de alerta do GDACS. Linha escura: trajetória.": "אדום, כתום וירוק: אזורי ההתרעה של GDACS. קו כהה: מסלול.",
+ "Pontuação do alerta": "ציון ההתרעה",
+ "Países atingidos": "מדינות שנפגעו",
+ "População exposta: estimativa de modelo do GDACS, não contagem de atingidos.": "אוכלוסייה חשופה: הערכת מודל של GDACS, לא ספירת נפגעים.",
+ "O GDACS não respondeu agora; mostrando a última consulta.": "GDACS לא הגיב כעת; מוצגת הבדיקה האחרונה.",
+ "Pessoas em ventos acima de 120 km/h": "אנשים ברוחות מעל 120 קמ״ש",
+ "Pessoas em ventos acima de 63 km/h": "אנשים ברוחות מעל 63 קמ״ש",
+ "Pessoas em área de maré de tempestade": "אנשים באזור גאות סערה",
+ "Pessoas na área do incêndio": "אנשים באזור השריפה",
+ "Pessoas a até 5 km do incêndio": "אנשים עד 5 ק״מ מהשריפה",
+ "Fonte: GDACS (ONU / Comissão Europeia) · consultado às {0}": "מקור: GDACS (האו״ם / הנציבות האירופית) · נבדק ב-{0}",
+ "Fonte: GDACS (ONU / Comissão Europeia)": "מקור: GDACS (האו״ם / הנציבות האירופית)"
 }
 export default he

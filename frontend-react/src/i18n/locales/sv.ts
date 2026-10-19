@@ -1265,6 +1265,23 @@ const sv: Record<string, string> = {
  "Centro de Apoio": "Stödcenter",
  "Distância em linha reta entre a origem informada e o ponto de referência. Não representa percurso nem confirma condições de acesso, abertura ou disponibilidade.": "Avstånd fågelvägen mellan angiven startpunkt och referenspunkten. Det visar inte färdvägen och bekräftar inte åtkomst, öppettider eller tillgänglighet.",
  "Cadastro histórico de referência, sem verificação operacional. Coordenadas aproximadas. A utilização como abrigo, abertura e vagas não foram confirmadas.": "Historisk referenspost utan operativ verifiering. Ungefärliga koordinater. Användning som skydd, öppettider och platser har inte bekräftats.",
- "A operação demorou demais.": "Åtgärden tog för lång tid."
+ "A operação demorou demais.": "Åtgärden tog för lång tid.",
+ "Detalhes do GDACS": "GDACS-detaljer",
+ "Buscando detalhes no GDACS…": "Hämtar GDACS-detaljer…",
+ "Não foi possível buscar os detalhes do GDACS agora. As informações acima continuam válidas.": "Det gick inte att hämta GDACS-detaljerna just nu. Informationen ovan gäller fortfarande.",
+ "Mapa da área afetada indisponível agora.": "Kartan över det drabbade området är inte tillgänglig just nu.",
+ "Mapa da área afetada": "Karta över det drabbade området",
+ "Vermelho, laranja e verde: áreas de alerta do GDACS. Linha escura: trajetória.": "Rött, orange och grönt: GDACS varningsområden. Mörk linje: bana.",
+ "Pontuação do alerta": "Varningspoäng",
+ "Países atingidos": "Drabbade länder",
+ "População exposta: estimativa de modelo do GDACS, não contagem de atingidos.": "Exponerad befolkning: GDACS modelluppskattning, inte en räkning av drabbade.",
+ "O GDACS não respondeu agora; mostrando a última consulta.": "GDACS svarade inte just nu; visar senaste hämtningen.",
+ "Pessoas em ventos acima de 120 km/h": "Personer i vindar över 120 km/h",
+ "Pessoas em ventos acima de 63 km/h": "Personer i vindar över 63 km/h",
+ "Pessoas em área de maré de tempestade": "Personer i område med stormflod",
+ "Pessoas na área do incêndio": "Personer i brandområdet",
+ "Pessoas a até 5 km do incêndio": "Personer inom 5 km från branden",
+ "Fonte: GDACS (ONU / Comissão Europeia) · consultado às {0}": "Källa: GDACS (FN / Europeiska kommissionen) · hämtat {0}",
+ "Fonte: GDACS (ONU / Comissão Europeia)": "Källa: GDACS (FN / Europeiska kommissionen)"
 }
 export default sv

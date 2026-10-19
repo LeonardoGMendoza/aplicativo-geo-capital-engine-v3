@@ -1270,6 +1270,23 @@ const ja: Record<string, string> = {
  "Centro de Apoio": "支援センター",
  "Distância em linha reta entre a origem informada e o ponto de referência. Não representa percurso nem confirma condições de acesso, abertura ou disponibilidade.": "指定した出発地と参照地点の直線距離です。経路ではなく、アクセス・開設・空き状況を確認するものではありません。",
  "Cadastro histórico de referência, sem verificação operacional. Coordenadas aproximadas. A utilização como abrigo, abertura e vagas não foram confirmadas.": "運用上の確認がない過去の参照記録です。座標はおおよそです。避難所としての利用、開設、収容人数は確認されていません。",
- "A operação demorou demais.": "処理に時間がかかりすぎました。"
+ "A operação demorou demais.": "処理に時間がかかりすぎました。",
+ "Detalhes do GDACS": "GDACSの詳細",
+ "Buscando detalhes no GDACS…": "GDACSの詳細を取得中…",
+ "Não foi possível buscar os detalhes do GDACS agora. As informações acima continuam válidas.": "現在GDACSの詳細を取得できません。上の情報は引き続き有効です。",
+ "Mapa da área afetada indisponível agora.": "被災地域の地図は現在利用できません。",
+ "Mapa da área afetada": "被災地域の地図",
+ "Vermelho, laranja e verde: áreas de alerta do GDACS. Linha escura: trajetória.": "赤・オレンジ・緑：GDACSの警報区域。濃い線：進路。",
+ "Pontuação do alerta": "警報スコア",
+ "Países atingidos": "影響を受けた国",
+ "População exposta: estimativa de modelo do GDACS, não contagem de atingidos.": "被災想定人口：GDACSのモデル推計で、被災者数の集計ではありません。",
+ "O GDACS não respondeu agora; mostrando a última consulta.": "GDACSが応答しません。前回の取得結果を表示しています。",
+ "Pessoas em ventos acima de 120 km/h": "風速120 km/h超の地域の人口",
+ "Pessoas em ventos acima de 63 km/h": "風速63 km/h超の地域の人口",
+ "Pessoas em área de maré de tempestade": "高潮区域の人口",
+ "Pessoas na área do incêndio": "火災区域の人口",
+ "Pessoas a até 5 km do incêndio": "火災から5 km以内の人口",
+ "Fonte: GDACS (ONU / Comissão Europeia) · consultado às {0}": "出典：GDACS（国連／欧州委員会）· {0}に取得",
+ "Fonte: GDACS (ONU / Comissão Europeia)": "出典：GDACS（国連／欧州委員会）"
 }
 export default ja

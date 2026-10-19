@@ -57,12 +57,11 @@ export function WorldWeather() {
           </dl>
           <div className="mundo-acoes">
             <button type="button" className="cidade-chip" onClick={() => { setMostrarAlertas(true); setFoco(a); document.getElementById('mundo-titulo')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}>📍 Ver no mapa</button>
-            {a.link && <a className="mundo-fonte" href={a.link} target="_blank" rel="noopener noreferrer">fonte oficial (GDACS) ↗</a>}
           </div>
         </div>}
       </li>)}
     </ul>}
     {alertas && lista.length === 0 && <p className="ia-muted">Nenhum alerta laranja ou vermelho ativo no mundo neste momento.</p>}
-    <p className="clima-fonte">Fontes: radar <a href="https://www.rainviewer.com/" target="_blank" rel="noopener noreferrer">RainViewer</a> (redes de radar públicas de vários países) · alertas <a href="https://www.gdacs.org/" target="_blank" rel="noopener noreferrer">GDACS</a> (ONU / Comissão Europeia). Mostram a situação, não substituem os avisos da Defesa Civil de cada país.</p>
+    <p className="clima-fonte">Fontes: radar <span>RainViewer</span> (redes de radar públicas de vários países) · alertas <span>GDACS</span> (ONU / Comissão Europeia). Mostram a situação, não substituem os avisos da Defesa Civil de cada país.</p>
   </section>
 }

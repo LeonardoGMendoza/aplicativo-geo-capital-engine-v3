@@ -1270,6 +1270,23 @@ const zh: Record<string, string> = {
  "Centro de Apoio": "援助中心",
  "Distância em linha reta entre a origem informada e o ponto de referência. Não representa percurso nem confirma condições de acesso, abertura ou disponibilidade.": "所填起点与参考点之间的直线距离。不代表实际路线，也不确认通行、开放或可用情况。",
  "Cadastro histórico de referência, sem verificação operacional. Coordenadas aproximadas. A utilização como abrigo, abertura e vagas não foram confirmadas.": "历史参考记录，未经运营核实。坐标为近似值。未确认可作为避难所、是否开放及床位。",
- "A operação demorou demais.": "操作耗时过长。"
+ "A operação demorou demais.": "操作耗时过长。",
+ "Detalhes do GDACS": "GDACS 详情",
+ "Buscando detalhes no GDACS…": "正在获取 GDACS 详情…",
+ "Não foi possível buscar os detalhes do GDACS agora. As informações acima continuam válidas.": "暂时无法获取 GDACS 详情。上方信息仍然有效。",
+ "Mapa da área afetada indisponível agora.": "受影响区域地图暂不可用。",
+ "Mapa da área afetada": "受影响区域地图",
+ "Vermelho, laranja e verde: áreas de alerta do GDACS. Linha escura: trajetória.": "红、橙、绿：GDACS 警报区域。深色线：路径。",
+ "Pontuação do alerta": "警报评分",
+ "Países atingidos": "受影响国家",
+ "População exposta: estimativa de modelo do GDACS, não contagem de atingidos.": "暴露人口：GDACS 模型估算，并非受灾人数统计。",
+ "O GDACS não respondeu agora; mostrando a última consulta.": "GDACS 暂未响应；显示上次查询结果。",
+ "Pessoas em ventos acima de 120 km/h": "风速超过 120 公里/小时区域的人数",
+ "Pessoas em ventos acima de 63 km/h": "风速超过 63 公里/小时区域的人数",
+ "Pessoas em área de maré de tempestade": "风暴潮区域的人数",
+ "Pessoas na área do incêndio": "火灾区域的人数",
+ "Pessoas a até 5 km do incêndio": "火灾 5 公里范围内的人数",
+ "Fonte: GDACS (ONU / Comissão Europeia) · consultado às {0}": "来源：GDACS（联合国 / 欧盟委员会）· {0} 查询",
+ "Fonte: GDACS (ONU / Comissão Europeia)": "来源：GDACS（联合国 / 欧盟委员会）"
 }
 export default zh
