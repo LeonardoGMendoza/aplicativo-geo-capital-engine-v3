@@ -31,6 +31,9 @@ ELEMENTS = [
     node(14, "Hospital das Clínicas", amenity="hospital"),            # duplicata exata
     node(15, "Carrefour Express", lat=-23.60, shop="supermarket"),    # mesma rede, outro lugar
     node(16, "Banco Itaú", amenity="bank"),                           # fora das categorias
+    node(19, "Capela Vila Jacuí", amenity="place_of_worship", religion="christian", denomination="latter_day_saints"),
+    node(20, "Paróquia São Miguel", amenity="place_of_worship", religion="christian", denomination="catholic"),
+    node(21, "Mesquita Brasil", amenity="place_of_worship", religion="muslim"),
     {"type": "node", "id": 17, "lat": -23.5, "lon": -46.6, "tags": {}},  # sem nome
     {"type": "node", "id": 18, "tags": {"name": "Sem coordenada", "amenity": "hospital"}},
 ]
@@ -39,6 +42,19 @@ ELEMENTS = [
 class Base(unittest.TestCase):
     def setUp(self):
         places._cache.clear()
+
+
+class TestWorship(Base):
+    def test_igrejas_e_templos_do_mundo_todo(self):
+        by = {p["name"]: p for p in places.parse_elements(ELEMENTS, *ORIGIN)}
+        self.assertEqual(by["Capela Vila Jacuí"]["category"], "worship")
+        self.assertEqual(by["Capela Vila Jacuí"]["faith"], "A Igreja de Jesus Cristo dos Santos dos Últimos Dias")
+        self.assertEqual(by["Paróquia São Miguel"]["faith"], "Católica")
+        self.assertEqual(by["Mesquita Brasil"]["faith"], "Muçulmana")
+        self.assertIn("ponto de encontro", by["Mesquita Brasil"]["note"])
+
+    def test_consulta_inclui_place_of_worship(self):
+        self.assertIn("place_of_worship", places.build_query(-8.11, -79.03, 3000))
 
 
 class TestClassify(Base):

@@ -14,7 +14,7 @@ import './citizen.css'
 const NearbyPlacesMap = lazy(() => import('../shelters/NearbyPlacesMap'))
 
 // Ordem pensada para emergência: abrigo e saúde primeiro.
-export const citizenCategories: PlaceCategory[] = ['shelter', 'hospital', 'clinic', 'pharmacy', 'police', 'food']
+export const citizenCategories: PlaceCategory[] = ['shelter', 'hospital', 'clinic', 'pharmacy', 'police', 'food', 'worship']
 export const emergencyNumbers = [
   { number: '199', label: 'Defesa Civil' },
   { number: '193', label: 'Bombeiros' },
@@ -120,6 +120,7 @@ export function CitizenPage() {
 
       <section className="citizen-card citizen-footer">
         <p>Locais do OpenStreetMap, mapeados por voluntários. Podem estar desatualizados.</p>
+        <p><Link to="/preparar">🎒 Preparar a família e usar sem internet (guerra, nuclear, apagão, enchente) →</Link></p>
         <p><Link to="/abrigos">Ver lista completa, todas as categorias e checklist de preparação →</Link></p>
         <p className="citizen-small"><Link to="/">Acesso da gestão (Defesa Civil e empresas) →</Link></p>
       </section>

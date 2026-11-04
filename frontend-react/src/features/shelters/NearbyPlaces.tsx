@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
 import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import { Button } from '@/components/ui/button'
-import { categoryMeta, categoryOrder, filterPlaces, formatDistance, geocode, getNearbyPlaces, nearestOf, quickCities, routeLinks } from './places'
+import { categoryMeta, categoryOrder, faithsOf, filterPlaces, formatDistance, geocode, getNearbyPlaces, nearestOf, quickCities, routeLinks } from './places'
 import type { Coordinates, GeocodeResult, NearbyResponse, PlaceCategory } from './places'
 const NearbyPlacesMap = lazy(() => import('./NearbyPlacesMap'))
 
@@ -20,6 +20,7 @@ export function NearbyPlaces() {
   const [data, setData] = useState<NearbyResponse | null>(null)
   const [active, setActive] = useState<Set<PlaceCategory>>(() => new Set(categoryOrder))
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [faith, setFaith] = useState(() => { try { return localStorage.getItem('omni-fe') ?? '' } catch { return '' } })
   const [limit, setLimit] = useState(PAGE)
   const controller = useRef<AbortController | null>(null)
   const searchInput = useRef<HTMLInputElement | null>(null)
@@ -92,7 +93,9 @@ export function NearbyPlaces() {
     setSelectedId(best.id)
   }
 
-  const items = data ? filterPlaces(data.items, active) : []
+  const items = data ? filterPlaces(data.items, active, faith) : []
+  const faiths = data ? faithsOf(data.items) : []
+  function chooseFaith(value: string) { setFaith(value); try { localStorage.setItem('omni-fe', value) } catch { /* sem armazenamento */ } }
   const counts = new Map<PlaceCategory, number>((data?.categories ?? []).map(c => [c.id, c.count] as const))
   const selected = data?.items.find(p => p.id === selectedId)
   const busy = status === 'locating' || status === 'geocoding' || status === 'loading'
@@ -100,7 +103,7 @@ export function NearbyPlaces() {
 
   return <section className="light-panel space-y-4 p-4" aria-labelledby="nearby-places">
     <div><h2 id="nearby-places" className="text-lg font-semibold">Locais próximos — OpenStreetMap</h2>
-      <p className="text-sm">Abrigos, saúde, segurança, alimento, farmácia, hospedagem e mercados em qualquer cidade do mundo. Clique em um local para abrir a rota no Waze ou no Google Maps.</p></div>
+      <p className="text-sm">Abrigos, saúde, segurança, alimento, farmácia, hospedagem, mercados e igrejas/templos (ponto de encontro da comunidade) em qualquer cidade do mundo. Clique em um local para abrir a rota no Waze ou no Google Maps.</p></div>
 
     <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
       <form onSubmit={search} className="flex min-w-0 flex-1 gap-2" role="search">
@@ -123,6 +126,11 @@ export function NearbyPlaces() {
       <div className="flex flex-wrap gap-2" aria-label="Filtrar categorias">
         {categoryOrder.map(c => <button key={c} type="button" className="place-filter" aria-pressed={active.has(c)} style={{ '--place-color': categoryMeta[c].color } as CSSProperties} onClick={() => toggle(c)}>{categoryMeta[c].emoji} {categoryMeta[c].short} <span className="tabular-nums">({counts.get(c) ?? 0})</span></button>)}
       </div>
+      {active.has('worship') && faiths.length > 0 && <label className="flex flex-wrap items-center gap-2 text-sm">⛪ Mostrar igrejas de:
+        <select className="mini-select" value={faiths.includes(faith) ? faith : ''} onChange={e => chooseFaith(e.target.value)}>
+          <option value="">Todas as religiões</option>
+          {faiths.map(f => <option key={f} value={f}>{f}</option>)}
+        </select></label>}
       <p className="text-xs">{data.notice} {data.state === 'stale' && <strong>Fonte fora do ar: mostrando cópia de {new Date(data.fetchedAt).toLocaleString('pt-BR')}.</strong>} Raio da busca: {data.radiusKm} km.</p>
       {data.state === 'empty' && <p role="status" className="text-sm">Nenhum local dos tipos do mapa foi encontrado nesta área. Tente um bairro ou cidade maior. Isso não significa ausência de apoio na região.</p>}
 

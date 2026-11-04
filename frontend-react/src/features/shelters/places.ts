@@ -1,11 +1,13 @@
 // Locais reais próximos (OpenStreetMap) via API do MVP: /api/v1/places/nearby e /api/v1/places/geocode.
 // Porta para o React o mapa de abrigos do painel Streamlit (frontend/mapa_interativo.py).
-export type PlaceCategory = 'shelter' | 'hospital' | 'clinic' | 'police' | 'ngo' | 'food' | 'pharmacy' | 'lodging' | 'shop'
+export type PlaceCategory = 'shelter' | 'hospital' | 'clinic' | 'police' | 'ngo' | 'food' | 'pharmacy' | 'lodging' | 'shop' | 'worship'
 export type Coordinates = { latitude: number; longitude: number }
 export interface Place {
   id: string; name: string; category: PlaceCategory; categoryLabel: string
   coordinates: Coordinates; distanceKm: number; address: string | null; osmUrl: string
   shelterKind?: 'mapped' | 'possible'; note?: string
+  /** Igrejas e templos: religião ou denominação (OpenStreetMap), ex.: "Católica". */
+  faith?: string
 }
 export interface NearbyResponse {
   state: 'success' | 'empty' | 'stale'; source: string; sourceUrl: string; queriedAt: string; fetchedAt: string
@@ -24,6 +26,7 @@ export const categoryMeta: Record<PlaceCategory, { label: string; short: string;
   pharmacy: { label: 'Farmácia', short: 'Medicamento', emoji: '💊', color: '#db2777', nearest: 'Farmácia mais próxima' },
   lodging: { label: 'Hospedagem', short: 'Dormir', emoji: '🛏️', color: '#0284c7', nearest: 'Hospedagem mais próxima' },
   shop: { label: 'Mercado', short: 'Compras', emoji: '🛒', color: '#a16207', nearest: 'Mercado mais próximo' },
+  worship: { label: 'Igreja / templo', short: 'Igrejas', emoji: '⛪', color: '#4f46e5', nearest: 'Igreja mais próxima' },
 }
 export const categoryOrder = Object.keys(categoryMeta) as PlaceCategory[]
 
@@ -107,6 +110,11 @@ export function nearestOf(items: Place[], category: PlaceCategory) {
   return items.filter(p => p.category === category).reduce<Place | undefined>((best, p) => !best || p.distanceKm < best.distanceKm ? p : best, undefined)
 }
 
-export function filterPlaces(items: Place[], active: ReadonlySet<PlaceCategory>) {
-  return items.filter(p => active.has(p.category)).sort((a, b) => a.distanceKm - b.distanceKm || a.name.localeCompare(b.name, 'pt-BR'))
+/** Religiões/denominações presentes no resultado, para o filtro "minha igreja". */
+export function faithsOf(items: Place[]) {
+  return [...new Set(items.filter(p => p.category === 'worship' && p.faith).map(p => p.faith as string))].sort((a, b) => a.localeCompare(b, 'pt-BR'))
+}
+
+export function filterPlaces(items: Place[], active: ReadonlySet<PlaceCategory>, faith = '') {
+  return items.filter(p => active.has(p.category) && (!faith || p.category !== 'worship' || p.faith === faith)).sort((a, b) => a.distanceKm - b.distanceKm || a.name.localeCompare(b.name, 'pt-BR'))
 }

@@ -11,3 +11,8 @@ startI18n()
 createRoot(document.getElementById('root')!).render(
   <StrictMode><BrowserRouter><App /></BrowserRouter></StrictMode>,
 )
+
+// Guarda o app no celular para abrir sem internet (só no site publicado, não no modo de desenvolvimento).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => { /* sem modo offline neste navegador */ }) })
+}

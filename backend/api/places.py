@@ -48,6 +48,7 @@ CATEGORIES = {
     "pharmacy": "Farmácia",
     "lodging": "Hospedagem",
     "shop": "Mercado",
+    "worship": "Igreja / templo",
 }
 NEARBY_NOTICE = ("Locais mapeados por voluntários no OpenStreetMap. Podem estar desatualizados, fechados ou "
                  "classificados de forma errada. Não confirma funcionamento, vagas, acesso ou segurança do trajeto.")
@@ -169,14 +170,14 @@ def build_query(lat, lon, radius_m):
     isso estourava o tempo em cidades densas. O nome continua sendo usado na classificacao."""
     around = f"(around:{int(radius_m)},{lat},{lon})"
     parts = [
-        f'nwr["amenity"~"^(hospital|clinic|doctors|health_post|police|social_facility|pharmacy|marketplace|food_bank|community_centre|townhall|school)$"]{around};',
+        f'nwr["amenity"~"^(hospital|clinic|doctors|health_post|police|social_facility|pharmacy|marketplace|food_bank|community_centre|townhall|school|place_of_worship)$"]{around};',
         f'nwr["healthcare"~"^(hospital|clinic|centre|doctor)$"]{around};',
         f'nwr["shop"~"^(supermarket|convenience)$"]{around};',
         f'nwr["tourism"~"^(hotel|hostel|guest_house)$"]{around};',
         f'nwr["emergency"="assembly_point"]{around};',
         f'nwr["social_facility"="shelter"]{around};',
     ]
-    return f"[out:json][timeout:{OVERPASS_SERVER_TIMEOUT}];(" + "".join(parts) + ");out center 1000;"
+    return f"[out:json][timeout:{OVERPASS_SERVER_TIMEOUT}];(" + "".join(parts) + ");out center 1500;"
 
 
 def _race_overpass(query):
@@ -239,6 +240,8 @@ def classify(tags):
         return "shelter", "mapped"
     if amenity in ("school", "community_centre", "townhall"):
         return "shelter", "possible"
+    if amenity == "place_of_worship":
+        return "worship", None
     if amenity == "pharmacy" or _RX["pharmacy"].search(name):
         return "pharmacy", None
     if shop in ("supermarket", "convenience") or _RX["shop"].search(name):
@@ -261,6 +264,38 @@ def classify(tags):
     if _RX["urgent"].search(name):
         return "clinic", None
     return None, None
+
+
+# Igrejas e templos do mundo todo (OpenStreetMap): a comunidade de fé costuma ser o ponto de encontro numa crise.
+_DENOMINACOES = {
+    "latter_day_saints": "A Igreja de Jesus Cristo dos Santos dos Últimos Dias",
+    "mormon": "A Igreja de Jesus Cristo dos Santos dos Últimos Dias",
+    "catholic": "Católica", "roman_catholic": "Católica",
+    "orthodox": "Ortodoxa", "russian_orthodox": "Ortodoxa", "greek_orthodox": "Ortodoxa",
+    "seventh_day_adventist": "Adventista", "adventist": "Adventista",
+    "jehovahs_witness": "Testemunhas de Jeová",
+    "spiritist": "Espírita",
+}
+_EVANGELICAS = {"evangelical", "pentecostal", "baptist", "methodist", "presbyterian", "lutheran", "assemblies_of_god",
+                "protestant", "anglican", "reformed", "church_of_god", "christian_congregation", "universal_church"}
+_RELIGIOES = {"muslim": "Muçulmana", "jewish": "Judaica", "buddhist": "Budista", "hindu": "Hindu",
+              "shinto": "Xintoísta", "sikh": "Sikh", "spiritualist": "Espírita", "taoist": "Taoísta"}
+WORSHIP_NOTE = "Comunidade de fé ({}). Pode servir de ponto de encontro em emergência: combine antes com a liderança local."
+
+
+def faith_label(tags):
+    """Nome da religião ou denominação, em português, a partir das tags religion/denomination do OpenStreetMap."""
+    den = (tags.get("denomination") or "").lower()
+    rel = (tags.get("religion") or "").lower()
+    if den in _DENOMINACOES:
+        return _DENOMINACOES[den]
+    if den in _EVANGELICAS:
+        return "Evangélica"
+    if rel in _RELIGIOES:
+        return _RELIGIOES[rel]
+    if rel == "christian":
+        return "Cristã"
+    return "Não informada"
 
 
 def _address(tags):
@@ -305,6 +340,9 @@ def parse_elements(elements, lat, lon):
         if category == "shelter":
             item["shelterKind"] = kind
             item["note"] = MAPPED_SHELTER_NOTE if kind == "mapped" else POSSIBLE_SHELTER_NOTE
+        if category == "worship":
+            item["faith"] = faith_label(tags)
+            item["note"] = WORSHIP_NOTE.format(item["faith"])
         buckets[category].append(item)
     items = []
     for category, bucket in buckets.items():

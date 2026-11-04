@@ -7,6 +7,7 @@ import { CorporatePage } from '@/features/corporate/CorporatePage'
 import { CommunityPage } from '@/features/community/CommunityPage'
 import { SheltersPage } from '@/features/shelters/SheltersPage'
 import { CitizenPage } from '@/features/citizen/CitizenPage'
+import { PrepararPage } from '@/features/preparar/PrepararPage'
 import { IntelligencePage } from '@/features/intelligence/IntelligencePage'
 import { ClimatePage } from '@/features/climate/ClimatePage'
 import { QrPage } from '@/features/citizen/QrPage'
@@ -35,6 +36,8 @@ export function App() {
     <Routes>
       {/* Tela do cidadão: celular, sem o menu da central */}
       <Route path="/cidadao" element={<CitizenPage />} />
+      {/* Preparar e usar sem internet: guias, kit, plano da família e locais guardados no celular */}
+      <Route path="/preparar" element={<PrepararPage />} />
       {/* A consulta NASA roda só nas telas da central, não na tela do cidadão */}
       <Route element={<NasaSessionProvider><AppLayout /></NasaSessionProvider>}>
         <Route index element={<OperationsPage />} />

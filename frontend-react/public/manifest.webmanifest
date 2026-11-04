@@ -1,0 +1,15 @@
+{
+  "name": "Omni-EcoRescue",
+  "short_name": "Omni",
+  "description": "Ajuda perto de você e guias de emergência que funcionam sem internet.",
+  "start_url": "/preparar",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#031b2c",
+  "theme_color": "#031b2c",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

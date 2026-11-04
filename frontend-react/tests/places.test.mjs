@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { categoryMeta, categoryOrder, filterPlaces, formatDistance, geocode, getNearbyPlaces, nearestOf, quickCities, routeLinks, validNearby } from '../src/features/shelters/places.ts'
+import { categoryMeta, categoryOrder, faithsOf, filterPlaces, formatDistance, geocode, getNearbyPlaces, nearestOf, quickCities, routeLinks, validNearby } from '../src/features/shelters/places.ts'
 
 const baseUrl = 'http://fixture-api.test'
 const place = (id, category, distanceKm, extra = {}) => ({ id, name: `Local ${id}`, category, categoryLabel: categoryMeta[category].label, coordinates: { latitude: -23.55, longitude: -46.63 }, distanceKm, address: null, osmUrl: `https://www.openstreetmap.org/${id}`, ...extra })
@@ -66,8 +66,8 @@ test('nearest, filters and distance labels', () => {
   assert.equal(formatDistance(12.34), '12,3 km')
 })
 
-test('nine categories match the Streamlit map and quick cities keep the case study', () => {
-  assert.deepEqual(categoryOrder, ['shelter', 'hospital', 'clinic', 'police', 'ngo', 'food', 'pharmacy', 'lodging', 'shop'])
+test('nine categories of the Streamlit map plus churches/temples, and quick cities keep the case study', () => {
+  assert.deepEqual(categoryOrder, ['shelter', 'hospital', 'clinic', 'police', 'ngo', 'food', 'pharmacy', 'lodging', 'shop', 'worship'])
   assert.deepEqual(quickCities.map(c => c.name), ['São Paulo/SP', 'São Sebastião/SP', 'Porto Alegre/RS', 'Lajeado/RS', 'Macaé/RJ'])
 })
 
@@ -79,4 +79,16 @@ test('nearby section copy keeps explicit limits and opt-in location', () => {
   assert.match(section, /Isso não significa ausência de apoio na região/)
   // geolocalização só dentro do clique no botão, nunca ao carregar a página
   assert.doesNotMatch(section, /useEffect\([^)]*geolocation/s)
+})
+
+test('churches and temples worldwide, filtered by faith', () => {
+  const lista = [
+    place('node/40', 'worship', 0.4, { faith: 'A Igreja de Jesus Cristo dos Santos dos Últimos Dias' }),
+    place('node/41', 'worship', 0.2, { faith: 'Católica' }),
+    place('node/42', 'hospital', 0.3),
+  ]
+  assert.deepEqual(faithsOf(lista), ['A Igreja de Jesus Cristo dos Santos dos Últimos Dias', 'Católica'])
+  const todas = new Set(['worship', 'hospital'])
+  assert.deepEqual(filterPlaces(lista, todas, 'Católica').map(p => p.id), ['node/41', 'node/42'])
+  assert.deepEqual(filterPlaces(lista, todas).map(p => p.id), ['node/41', 'node/42', 'node/40'])
 })

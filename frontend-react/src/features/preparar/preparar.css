@@ -1,0 +1,55 @@
+/* Preparar e usar sem internet: mesma base visual da tela do cidadão (citizen.css). */
+.prep-rede { margin-left: auto; font-size: 13px; font-weight: 800; padding: 6px 10px; border-radius: 999px; white-space: nowrap; }
+.prep-rede.is-on { background: #0f766e; color: #fff; }
+.prep-rede.is-off { background: #fbbf24; color: #3b2400; }
+.prep-intro p + p { margin-top: 6px; }
+
+.prep-pais + .prep-pais { margin-top: 10px; }
+.prep-pais-nome { font-size: 15px; font-weight: 800; color: #7f1d1d; margin-bottom: 6px; }
+.prep-numeros { display: flex; flex-wrap: wrap; gap: 8px; }
+.prep-numero { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 84px; min-height: 64px; padding: 6px 10px; border-radius: 12px; background: #dc2626; color: #fff; text-decoration: none; }
+.prep-numero strong { font-size: 24px; line-height: 1; }
+.prep-numero span { font-size: 13px; font-weight: 600; margin-top: 3px; }
+
+.prep-guias { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.prep-guia { margin-top: 12px; padding-top: 12px; border-top: 2px solid #e2ecf2; }
+.prep-guia-resumo { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+.prep-passos { padding-left: 22px; list-style: decimal; font-size: 17px; line-height: 1.45; }
+.prep-passos li { margin-bottom: 8px; }
+
+.prep-gps { width: 100%; min-height: 56px; margin-top: 8px; border-radius: 14px; background: #0b2235; color: #fff; font-size: 18px; font-weight: 800; }
+.prep-locais { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.prep-local { border-left: 6px solid #087b88; background: #f4f9fc; border-radius: 10px; padding: 10px 12px; }
+.prep-local-nome { font-size: 18px; font-weight: 800; }
+.prep-local-info { font-size: 15px; color: #36536b; }
+.prep-local-dist { font-size: 17px; font-weight: 700; color: #087f65; margin-top: 2px; }
+
+.prep-kit-config { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.prep-kit-config label { display: flex; flex-direction: column; font-size: 15px; font-weight: 700; color: #36536b; }
+.prep-kit-config input { width: 96px; min-height: 52px; margin-top: 4px; border: 2px solid #a9c2d3; border-radius: 12px; padding: 0 12px; font-size: 20px; color: #0b2235; }
+.prep-dias { display: flex; gap: 6px; flex-wrap: wrap; }
+.prep-dias button { min-height: 52px; padding: 0 14px; border-radius: 12px; border: 2px solid #c9dbe6; background: #f4f9fc; color: #0b2235; font-size: 16px; font-weight: 700; }
+.prep-dias button[aria-pressed=true] { border-color: #0b2235; background: #0b2235; color: #fff; }
+.prep-extras { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.prep-barra { margin-top: 14px; height: 14px; border-radius: 999px; background: #e2ecf2; overflow: hidden; }
+.prep-barra span { display: block; height: 100%; background: #16a34a; transition: width .3s; }
+.prep-barra-texto { font-size: 15px; font-weight: 700; margin-top: 4px; }
+.prep-grupo { margin-top: 12px; border: 0; padding: 0; }
+.prep-grupo legend { font-size: 16px; font-weight: 800; color: #0b4a63; }
+
+.prep-form { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.prep-form label { display: flex; flex-direction: column; gap: 4px; font-size: 15px; font-weight: 700; color: #36536b; }
+.prep-form textarea { border: 2px solid #a9c2d3; border-radius: 12px; padding: 10px 12px; font-size: 17px; color: #0b2235; font-family: inherit; resize: vertical; }
+.prep-acoes { display: flex; flex-direction: column; gap: 8px; }
+.prep-imprimir { min-height: 52px; border-radius: 14px; border: 2px solid #0b2235; background: #fff; color: #0b2235; font-size: 18px; font-weight: 800; }
+
+@media (max-width: 380px) { .prep-guias { grid-template-columns: 1fr; } }
+
+/* Impressão: só o plano da família, em preto e branco */
+@media print {
+  .citizen-app { background: #fff; color: #000; }
+  .citizen-header, .citizen-main > section:not(.prep-plano) { display: none !important; }
+  .prep-plano { box-shadow: none; }
+  .prep-acoes, .prep-plano .citizen-small { display: none; }
+  .prep-form textarea { border: 1px solid #000; }
+}

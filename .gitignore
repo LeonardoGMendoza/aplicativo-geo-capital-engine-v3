@@ -38,3 +38,27 @@ htmlcov/
 /frontend-react/validation/*.jpg
 /frontend-react/validation/*.json
 /frontend-react/validation/*.txt
+
+# arquivos pessoais e scripts soltos (não vão para o GitHub)
+all_user_inputs.txt
+cleaned_messages.txt
+raw_messages.txt
+transcript_user.txt
+gerar_slide.py
+patch*.py
+rag_historico.py
+test_b.py
+test_c.js
+test_script.js
+
+# arquivos pessoais e scripts soltos (não vão para o GitHub)
+all_user_inputs.txt
+cleaned_messages.txt
+raw_messages.txt
+transcript_user.txt
+gerar_slide.py
+patch*.py
+rag_historico.py
+test_b.py
+test_c.js
+test_script.js
