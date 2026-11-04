@@ -66,6 +66,7 @@ export function WorldWeather() {
           </dl>
           <div className="mundo-acoes">
             <button type="button" className="cidade-chip" onClick={() => { setMostrarAlertas(true); setFoco(a); document.getElementById('mundo-titulo')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}>📍 Ver no mapa</button>
+            {a.link && <a className="mundo-fonte" href={a.link} target="_blank" rel="noopener noreferrer">fonte oficial (GDACS)</a>}
           </div>
         </div>}
       </li>)}

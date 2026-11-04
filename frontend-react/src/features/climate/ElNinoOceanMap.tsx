@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MapContainer, Rectangle, TileLayer, Tooltip } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { dataBR, datasAnimacao, NINO34, urlAnomaliaMar } from './elNino'
 
+// A NASA às vezes publica a imagem do mar com mais de uma semana de atraso: procura até 20 dias para trás.
+const ATRASO_MAXIMO = 20
 const semMovimento = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /**
@@ -33,11 +35,22 @@ export default function ElNinoOceanMap({ onData, onFalhou }: { onData: (data: st
   const atual = datas[Math.min(indice, ultimo)]
   useEffect(() => { if (prontas.has(atual)) onData(atual) }, [atual, prontas, onData])
 
+  const jaFalhou = useRef(new Set<string>())
   function carregou(data: string) { setProntas(p => (p.has(data) ? p : new Set(p).add(data))) }
-  function erroNaMaisNova() {
-    if (atraso < 5) setAtraso(a => a + 1) // dia ainda não publicado: tenta o anterior
-    else onFalhou()
+  // Cada quadradinho (tile) que falha dispara um erro: conta só uma vez por data, e só se nada daquela data carregou.
+  function erroNaMaisNova(data: string) {
+    if (prontas.has(data) || jaFalhou.current.has(data)) return
+    jaFalhou.current.add(data)
+    if (atraso < ATRASO_MAXIMO) { setAtraso(a => a + 1); setIndice(ultimo); return } // dia ainda não publicado: tenta o anterior
+    if (prontas.size === 0) onFalhou()                 // nenhuma imagem dos últimos 60 dias: aí sim avisa
   }
+  // Se a mais nova nunca chegar mas as anteriores sim, mostra a mais recente que carregou.
+  useEffect(() => {
+    if (atraso >= ATRASO_MAXIMO && !prontas.has(datas[ultimo]) && prontas.size > 0) {
+      const ultimaBoa = datas.reduce((m, d, i) => (prontas.has(d) ? i : m), -1)
+      if (ultimaBoa >= 0) setIndice(ultimaBoa)
+    }
+  }, [atraso, prontas])
 
   return <div className="nino-mapa">
     <MapContainer center={[-5, -105]} zoom={2} minZoom={2} maxZoom={7} worldCopyJump scrollWheelZoom={false} className="h-full w-full">
@@ -46,7 +59,7 @@ export default function ElNinoOceanMap({ onData, onFalhou }: { onData: (data: st
       {datas.map((data, i) => <TileLayer key={data} url={urlAnomaliaMar(data)} maxNativeZoom={7} maxZoom={7}
         opacity={data === atual ? 0.9 : 0} zIndex={data === atual ? 3 : 2}
         attribution={i === ultimo ? 'Temperatura do mar: <a href="https://earthdata.nasa.gov/gibs" target="_blank" rel="noopener">NASA GIBS</a> / GHRSST MUR' : undefined}
-        eventHandlers={{ load: () => carregou(data), ...(i === ultimo ? { tileerror: erroNaMaisNova } : {}) }} />)}
+        eventHandlers={{ load: () => carregou(data), ...(i === ultimo ? { tileerror: () => erroNaMaisNova(data) } : {}) }} />)}
       <Rectangle bounds={NINO34} pathOptions={{ color: '#ffffff', weight: 2, dashArray: '6 4', fillOpacity: 0, className: 'nino-pulso' }}>
         <Tooltip permanent direction="top" className="nino-rotulo">Região Niño 3.4 · onde se mede o El Niño</Tooltip>
       </Rectangle>
