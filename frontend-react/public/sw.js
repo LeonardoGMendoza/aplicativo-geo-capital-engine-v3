@@ -3,7 +3,7 @@
 // - Arquivos do build (/assets/*, com hash no nome): guardados para sempre.
 // - Busca de locais (/api/v1/places/*): tenta a rede; sem rede, devolve a última resposta guardada.
 // Não guarda dados pessoais nem chamadas de outras rotas da API (cadastros, alertas).
-const VERSAO = 'omni-offline-v1'
+const VERSAO = 'omni-offline-v2'
 const PAGINAS = ['/', '/index.html', '/cidadao', '/preparar', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
 async function guardarApp() {
@@ -14,6 +14,16 @@ async function guardarApp() {
     const html = await (await fetch('/index.html', { cache: 'reload' })).text()
     const arquivos = [...html.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)].map(m => m[1])
     await Promise.allSettled(arquivos.map(u => cache.add(u)))
+    // Dentro do JS principal: logotipo, mapas e idiomas carregados depois. A imagem de referência do design fica de fora.
+    for (const js of arquivos.filter(u => u.endsWith('.js'))) {
+      const codigo = await (await cache.match(js) ?? await fetch(js)).text()
+      const extras = [...new Set([
+        ...[...codigo.matchAll(/assets\/[\w.-]+\.(?:js|css|svg|png|woff2?)/g)].map(m => '/' + m[0]),
+        ...[...codigo.matchAll(/["'`]\.\/([\w.-]+\.(?:js|css))["'`]/g)].map(m => '/assets/' + m[1]),
+      ])]
+        .filter(u => !u.includes('design-reference') && !arquivos.includes(u))
+      await Promise.allSettled(extras.map(u => cache.add(u)))
+    }
   } catch { /* sem rede na instalação: guarda na próxima visita */ }
 }
 

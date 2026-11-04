@@ -43,6 +43,12 @@
 .prep-acoes { display: flex; flex-direction: column; gap: 8px; }
 .prep-imprimir { min-height: 52px; border-radius: 14px; border: 2px solid #0b2235; background: #fff; color: #0b2235; font-size: 18px; font-weight: 800; }
 
+.prep-rotas { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.prep-rotas a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 10px; background: #0b2235; color: #fff; font-size: 15px; font-weight: 800; text-decoration: none; }
+.prep-mapa-offline { margin-top: 12px; font-size: 15px; }
+.prep-mapa-offline ul { margin: 6px 0 0; padding-left: 18px; list-style: disc; }
+.prep-mapa-offline li { margin-bottom: 4px; }
+
 @media (max-width: 380px) { .prep-guias { grid-template-columns: 1fr; } }
 
 /* Impressão: só o plano da família, em preto e branco */

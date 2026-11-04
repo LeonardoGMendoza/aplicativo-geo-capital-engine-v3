@@ -62,3 +62,12 @@ test('service worker e manifest: app abre sem internet, sem guardar dados pessoa
   assert.match(source('index.html'), /rel="manifest"/)
   assert.match(source('src/app/App.tsx'), /path="\/preparar"/)
 })
+
+test('rotas que funcionam sem internet: Apple Mapas, Organic Maps e mapa padrão do Android', async () => {
+  const { rotasOffline } = await import('../src/features/preparar/locaisSalvos.ts')
+  const r = rotasOffline({ latitude: -23.5, longitude: -46.45 }, 'Capela Vila Jacuí')
+  assert.match(r.apple, /^maps:\/\/\?daddr=-23\.5%2C-46\.45&dirflg=w$/)
+  assert.match(r.organic, /^om:\/\/map\?v=1&ll=-23\.5%2C-46\.45&n=Capela%20Vila%20Jacu%C3%AD$/)
+  assert.match(r.geo, /^geo:-23\.5,-46\.45\?q=/)
+  assert.match(source('src/features/citizen/useNearbySearch.ts'), /navigator\.onLine === false/)
+})

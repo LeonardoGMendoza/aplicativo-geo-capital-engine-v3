@@ -55,3 +55,16 @@ export function locaisAPartirDe(dados: LocaisSalvos, aqui: Coordinates | null) {
     return { ...p, kmAgora: km, minutosAPe: Math.max(1, Math.round((km / 4.5) * 60)), direcao: direcao(rumo(base, p.coordinates)) }
   }).sort((a, b) => a.kmAgora - b.kmAgora)
 }
+
+/** Links que abrem apps de mapa capazes de funcionar SEM INTERNET (com o mapa da cidade baixado antes). */
+export function rotasOffline(destino: Coordinates, nome: string) {
+  const c = `${destino.latitude},${destino.longitude}`
+  return {
+    // Apple Mapas (iPhone): rota a pé; funciona offline com "Mapas off-line" baixados (iOS 17+).
+    apple: `maps://?daddr=${encodeURIComponent(c)}&dirflg=w`,
+    // Organic Maps (grátis, OpenStreetMap, 100% offline no iPhone e no Android).
+    organic: `om://map?v=1&ll=${encodeURIComponent(c)}&n=${encodeURIComponent(nome)}`,
+    // Android: abre o app de mapa padrão (Google Maps com mapa off-line baixado).
+    geo: `geo:${c}?q=${encodeURIComponent(c + '(' + nome + ')')}`,
+  }
+}

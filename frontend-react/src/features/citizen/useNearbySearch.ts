@@ -5,6 +5,8 @@ import type { Coordinates, NearbyResponse } from '../shelters/places'
 // Acima disso o navegador só adivinhou pela internet (ex.: centro da cidade): não buscar ali.
 export const MAX_ACCURACY_M = 5000
 export type SearchStatus = 'idle' | 'locating' | 'geocoding' | 'loading' | 'done' | 'error'
+export const MSG_SEM_INTERNET = 'Sem internet agora: não dá para buscar locais novos. Abra “Preparar e usar sem internet” para ver os locais que você guardou.'
+const semInternet = () => typeof navigator !== 'undefined' && navigator.onLine === false
 
 /** Busca de locais próximos para a tela do cidadão: GPS sob clique, endereço digitado ou ponto ajustado no mapa. */
 export function useNearbySearch() {
@@ -27,7 +29,7 @@ export function useNearbySearch() {
     } catch (error) {
       if (signal.aborted) return
       setStatus('error')
-      setMessage(error instanceof Error && error.name !== 'TimeoutError' ? error.message : 'A busca demorou demais. Tente de novo em instantes.')
+      setMessage(semInternet() ? MSG_SEM_INTERNET : error instanceof Error && error.name !== 'TimeoutError' ? error.message : 'A busca demorou demais. Tente de novo em instantes.')
     }
   }
 
@@ -64,7 +66,7 @@ export function useNearbySearch() {
       await searchAt(results[0].coordinates, results[0].displayName ?? results[0].name, null, signal)
     } catch (error) {
       if (signal.aborted) return
-      setStatus('error'); setMessage(error instanceof Error ? error.message : 'Falha na busca.')
+      setStatus('error'); setMessage(semInternet() ? MSG_SEM_INTERNET : error instanceof Error ? error.message : 'Falha na busca.')
     }
   }
 

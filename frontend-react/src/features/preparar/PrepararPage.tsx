@@ -9,7 +9,7 @@ import type { Coordinates } from '../shelters/places'
 import { useNearbySearch } from '../citizen/useNearbySearch'
 import { guias, numerosPorPais } from './conteudo'
 import { DURACOES, itensDoKit, progresso } from './kit'
-import { escolherParaGuardar, guardarLocais, lerLocais, locaisAPartirDe } from './locaisSalvos'
+import { escolherParaGuardar, guardarLocais, lerLocais, locaisAPartirDe, rotasOffline } from './locaisSalvos'
 import type { LocaisSalvos } from './locaisSalvos'
 import '../citizen/citizen.css'
 import './preparar.css'
@@ -19,6 +19,8 @@ const gravar = (chave: string, valor: unknown) => { try { localStorage.setItem(c
 
 interface Plano { encontro: string; encontro2: string; contatoFora: string; contatos: string; criancas: string; remedios: string; observacoes: string }
 const PLANO_VAZIO: Plano = { encontro: '', encontro2: '', contatoFora: '', contatos: '', criancas: '', remedios: '', observacoes: '' }
+
+const ehIOS = typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
 
 function useOnline() {
   const [online, setOnline] = useState(() => typeof navigator === 'undefined' ? true : navigator.onLine)
@@ -64,12 +66,21 @@ export function PrepararPage() {
   function salvarPlano(e: FormEvent) { e.preventDefault(); gravar('omni-plano', plano); setPlanoSalvo(true); setTimeout(() => setPlanoSalvo(false), 2500) }
   function ondeEstou() {
     if (!('geolocation' in navigator)) { setGpsMsg('Este aparelho não informa a localização.'); return }
-    setGpsMsg('Procurando sua posição pelo GPS (funciona sem internet)…')
-    navigator.geolocation.getCurrentPosition(
-      p => { setAqui({ latitude: p.coords.latitude, longitude: p.coords.longitude }); setGpsMsg('') },
-      () => setGpsMsg('Não foi possível ler o GPS. Mostrando as distâncias a partir do ponto onde os locais foram guardados.'),
-      { enableHighAccuracy: true, timeout: 20_000, maximumAge: 60_000 },
-    )
+    setGpsMsg('Procurando sua posição pelo GPS (funciona sem internet). Perto de uma janela ou ao ar livre fica mais rápido; pode levar até 1 minuto…')
+    const ok = (p: GeolocationPosition) => {
+      setAqui({ latitude: p.coords.latitude, longitude: p.coords.longitude })
+      setGpsMsg(Number.isFinite(p.coords.accuracy) && p.coords.accuracy > 500 ? `Posição aproximada (~${Math.round(p.coords.accuracy)} m). Vá para perto de uma janela e toque de novo para melhorar.` : '')
+    }
+    const falhou = (e: GeolocationPositionError) => setGpsMsg(e.code === e.PERMISSION_DENIED
+      ? (ehIOS
+        ? 'O iPhone não deu permissão de localização. Vá em Ajustes → Privacidade e Segurança → Serviços de Localização → Sites do Safari → “Ao Usar o App”, e toque de novo.'
+        : 'A localização foi bloqueada. Libere nas configurações do navegador e toque de novo.')
+      : 'O GPS não achou sua posição agora. Sem internet, dentro de casa o GPS demora: vá para perto de uma janela ou ao ar livre e toque de novo. Enquanto isso, as distâncias são a partir do ponto guardado.')
+    // 1ª tentativa: GPS preciso (até 60 s). Se falhar por tempo, aceita uma posição recente/menos precisa.
+    navigator.geolocation.getCurrentPosition(ok, e => {
+      if (e.code === e.PERMISSION_DENIED) { falhou(e); return }
+      navigator.geolocation.getCurrentPosition(ok, falhou, { enableHighAccuracy: false, timeout: 30_000, maximumAge: 10 * 60_000 })
+    }, { enableHighAccuracy: true, timeout: 60_000, maximumAge: 2 * 60_000 })
   }
 
   return <div className="citizen-app">
@@ -124,8 +135,20 @@ export function PrepararPage() {
             <p className="prep-local-info">{categoryMeta[p.category].label}{p.faith ? ` · ${p.faith}` : ''}</p>
             <p className="prep-local-dist"><span aria-hidden="true">{p.direcao.seta}</span> {formatDistance(p.kmAgora)} a {p.direcao.texto} · ~{p.minutosAPe} min a pé</p>
             {p.address && <p className="prep-local-info">📍 {p.address}</p>}
+            <div className="prep-rotas">
+              {ehIOS ? <a href={rotasOffline(p.coordinates, p.name).apple}>Apple Mapas</a> : <a href={rotasOffline(p.coordinates, p.name).geo}>Google Maps</a>}
+              <a href={rotasOffline(p.coordinates, p.name).organic}>Organic Maps</a>
+            </div>
           </li>)}</ul>
           <p className="citizen-small">Distância em linha reta{aqui ? ' a partir de onde você está' : ' a partir do ponto guardado'}. O app não sabe se o caminho está bloqueado.</p>
+          <div className="citizen-warning prep-mapa-offline">
+            <strong>Rota sem internet:</strong> Waze não funciona offline. Baixe antes o mapa da sua cidade:
+            <ul>
+              <li><strong>iPhone – Apple Mapas:</strong> foto do perfil → Mapas Off-line → Baixar novo mapa.</li>
+              <li><strong>Google Maps:</strong> foto do perfil → Mapas off-line → Selecionar seu mapa.</li>
+              <li><strong>Organic Maps</strong> (grátis, iPhone e Android): baixe o mapa do estado; funciona 100% sem internet.</li>
+            </ul>
+          </div>
         </>}
       </section>
 

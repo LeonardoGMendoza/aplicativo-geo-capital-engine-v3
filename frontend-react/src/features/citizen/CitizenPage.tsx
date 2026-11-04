@@ -5,7 +5,7 @@ import { BrandSymbol } from '@/components/shared/Brand'
 import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import { categoryMeta, formatDistance, nearestOf, routeLinks } from '../shelters/places'
 import type { PlaceCategory } from '../shelters/places'
-import { useNearbySearch } from './useNearbySearch'
+import { MSG_SEM_INTERNET, useNearbySearch } from './useNearbySearch'
 import { AlertsSignup } from './AlertsSignup'
 import { dicas, minutosAPe } from './dicas'
 import { OficiaisPerto } from './OficiaisPerto'
@@ -70,7 +70,7 @@ export function CitizenPage() {
           </div>
         </form>
         {statusText && <p role="status" className="citizen-status">{statusText}</p>}
-        {status === 'error' && <p role="alert" className="citizen-error">{search.message}</p>}
+        {status === 'error' && <p role="alert" className="citizen-error">{search.message}{search.message === MSG_SEM_INTERNET && <> <Link to="/preparar">Abrir agora →</Link></>}</p>}
         {search.origin && status !== 'error' && <p className="citizen-origin">Perto de: <strong>{search.origin.label}</strong>{search.accuracy !== null && <> (precisão ~{search.accuracy.toLocaleString('pt-BR')} m)</>}</p>}
         {search.accuracy !== null && search.accuracy > 100 && <p className="citizen-warning">A posição pode estar imprecisa. Se estiver errada, digite seu endereço.</p>}
       </section>
