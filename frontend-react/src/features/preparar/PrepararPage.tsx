@@ -1,6 +1,6 @@
 // "Preparar e usar sem internet": guias, kit da família, plano e locais guardados no aparelho.
 // Tudo aqui funciona offline depois da primeira visita (o service worker guarda o app).
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { BrandSymbol } from '@/components/shared/Brand'
@@ -9,7 +9,7 @@ import type { Coordinates } from '../shelters/places'
 import { useNearbySearch } from '../citizen/useNearbySearch'
 import { guias, numerosPorPais } from './conteudo'
 import { DURACOES, itensDoKit, progresso } from './kit'
-import { escolherParaGuardar, guardarLocais, lerLocais, locaisAPartirDe, rotasOffline } from './locaisSalvos'
+import { CIDADES_FAMILIA, escolherParaGuardar, guardarLugar, lerTodos, locaisAPartirDe, lugarMaisPerto, rotasOffline } from './locaisSalvos'
 import type { LocaisSalvos } from './locaisSalvos'
 import '../citizen/citizen.css'
 import './preparar.css'
@@ -41,7 +41,9 @@ export function PrepararPage() {
   const [marcados, setMarcados] = useState<Set<string>>(() => new Set(ler<string[]>('omni-kit-marcados', [])))
   const [plano, setPlano] = useState<Plano>(() => ({ ...PLANO_VAZIO, ...ler<Partial<Plano>>('omni-plano', {}) }))
   const [planoSalvo, setPlanoSalvo] = useState(false)
-  const [locais, setLocais] = useState<LocaisSalvos | null>(() => lerLocais())
+  const [todos, setTodos] = useState<Record<string, LocaisSalvos>>(() => lerTodos())
+  const [lugar, setLugar] = useState<string | null>(() => Object.keys(lerTodos())[0] ?? null)
+  const guardandoId = useRef<string | null>(null)
   const [aqui, setAqui] = useState<Coordinates | null>(null)
   const [gpsMsg, setGpsMsg] = useState('')
   const busca = useNearbySearch()
@@ -49,18 +51,30 @@ export function PrepararPage() {
   useEffect(() => { gravar('omni-kit-pessoas', pessoas); gravar('omni-kit-dias', dias); gravar('omni-kit-extras', extras) }, [pessoas, dias, extras])
   useEffect(() => { gravar('omni-kit-marcados', [...marcados]) }, [marcados])
 
-  // Quando a busca termina com internet, guarda os locais mais próximos no aparelho.
+  // Quando a busca termina com internet, guarda os locais daquele lugar no aparelho.
   useEffect(() => {
-    if (busca.status === 'done' && busca.data && busca.origin) {
-      const dados = escolherParaGuardar(busca.data.items, busca.origin.coordinates, busca.origin.label)
-      if (guardarLocais(dados)) setLocais(dados)
+    if (busca.status === 'done' && busca.data && busca.origin && guardandoId.current) {
+      const id = guardandoId.current
+      guardandoId.current = null
+      const novos = guardarLugar(id, escolherParaGuardar(busca.data.items, busca.origin.coordinates, busca.origin.label))
+      if (novos) { setTodos(novos); setLugar(id) }
     }
   }, [busca.status, busca.data, busca.origin])
 
   const itens = itensDoKit(pessoas, dias, extras)
   const prog = progresso(itens, marcados)
   const grupos = [...new Set(itens.map(i => i.grupo))]
+  const locais = lugar ? todos[lugar] ?? null : null
   const lista = locais ? locaisAPartirDe(locais, aqui) : []
+  const nomeDe = (id: string) => id === 'perto' ? 'Perto de mim' : CIDADES_FAMILIA.find(c => c.id === id)?.nome ?? id
+
+  function guardarPertoDeMim() { guardandoId.current = 'perto'; busca.locate() }
+  function guardarCidade(id: string) {
+    const c = CIDADES_FAMILIA.find(x => x.id === id)
+    if (!c) return
+    guardandoId.current = id
+    void busca.searchAt(c.coordenadas, `${c.nome}, ${c.pais}`)
+  }
 
   function marcar(id: string) { setMarcados(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n }) }
   function salvarPlano(e: FormEvent) { e.preventDefault(); gravar('omni-plano', plano); setPlanoSalvo(true); setTimeout(() => setPlanoSalvo(false), 2500) }
@@ -68,7 +82,10 @@ export function PrepararPage() {
     if (!('geolocation' in navigator)) { setGpsMsg('Este aparelho não informa a localização.'); return }
     setGpsMsg('Procurando sua posição pelo GPS (funciona sem internet). Perto de uma janela ou ao ar livre fica mais rápido; pode levar até 1 minuto…')
     const ok = (p: GeolocationPosition) => {
-      setAqui({ latitude: p.coords.latitude, longitude: p.coords.longitude })
+      const agora = { latitude: p.coords.latitude, longitude: p.coords.longitude }
+      setAqui(agora)
+      const perto = lugarMaisPerto(todos, agora)
+      if (perto) setLugar(perto)
       setGpsMsg(Number.isFinite(p.coords.accuracy) && p.coords.accuracy > 500 ? `Posição aproximada (~${Math.round(p.coords.accuracy)} m). Vá para perto de uma janela e toque de novo para melhorar.` : '')
     }
     const falhou = (e: GeolocationPositionError) => setGpsMsg(e.code === e.PERMISSION_DENIED
@@ -120,14 +137,20 @@ export function PrepararPage() {
       <section className="citizen-card" aria-labelledby="prep-locais">
         <h2 id="prep-locais" className="citizen-title">Locais guardados no celular</h2>
         {online && <>
-          <p>Com internet, guarde os abrigos, hospitais, farmácias e igrejas perto de casa. Sem internet, o GPS mostra a distância e a direção até eles.</p>
-          <button type="button" className="citizen-primary" onClick={busca.locate} disabled={busca.busy}>📍 Guardar locais perto de mim</button>
+          <p>Com internet, guarde os abrigos, hospitais, farmácias e igrejas de cada lugar. Sem internet, o GPS mostra a distância e a direção até eles.</p>
+          <button type="button" className="citizen-primary" onClick={guardarPertoDeMim} disabled={busca.busy}>📍 Guardar locais perto de mim</button>
+          <p className="prep-sub">Cidades da família (guarde antes de viajar):</p>
+          <div className="prep-cidades">{CIDADES_FAMILIA.map(c => <button key={c.id} type="button" className="prep-cidade" disabled={busca.busy} onClick={() => guardarCidade(c.id)}>
+            {todos[c.id] ? '✓ ' : '⬇ '}{c.nome}<small>{c.pais}</small></button>)}</div>
           {busca.busy && <p role="status" className="citizen-status">Buscando e guardando… pode levar até 30 segundos.</p>}
           {busca.status === 'error' && <p role="alert" className="citizen-error">{busca.message}</p>}
         </>}
-        {!locais && !online && <p className="citizen-warning">Nenhum local guardado ainda. Quando tiver internet, toque em “Guardar locais perto de mim”.</p>}
+        {Object.keys(todos).length === 0 && !online && <p className="citizen-warning">Nenhum local guardado ainda. Quando tiver internet, toque em “Guardar locais perto de mim” ou numa cidade da família.</p>}
+        {Object.keys(todos).length > 1 && <div className="prep-dias prep-lugares" role="group" aria-label="Lugar guardado">
+          {Object.keys(todos).map(id => <button key={id} type="button" aria-pressed={lugar === id} onClick={() => setLugar(id)}>{nomeDe(id)}</button>)}
+        </div>}
         {locais && <>
-          <p className="citizen-small">Guardado em {new Date(locais.salvoEm).toLocaleString('pt-BR')} perto de: {locais.rotulo}.</p>
+          <p className="citizen-small">Guardado em {new Date(locais.salvoEm).toLocaleString('pt-BR')} · {locais.rotulo}.</p>
           <button type="button" className="prep-gps" onClick={ondeEstou}>🧭 Onde estou agora? (GPS, sem internet)</button>
           {gpsMsg && <p role="status" className="citizen-status">{gpsMsg}</p>}
           <ul className="prep-locais">{lista.slice(0, 20).map(p => <li key={p.id} className="prep-local" style={{ borderLeftColor: categoryMeta[p.category].color }}>

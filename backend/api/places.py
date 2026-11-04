@@ -31,7 +31,16 @@ GEOCODE_TTL = 86400         # 1 dia
 MAX_STALE_SECONDS = 86400   # se o Overpass cair, usa a cópia de até 1 dia (marcada como antiga)
 NEARBY_MAX_STALE = 30 * 86400  # abrigos/hospitais: cópia salva em disco vale até 30 dias se o Overpass estiver fora
 # Cidades da demonstração: o servidor busca sozinho ao ligar, para a tela não esperar o Overpass na apresentação
-CIDADES_DEMO = [(-30.0346, -51.2177), (-29.4661, -51.9615), (-23.5505, -46.6333), (-23.8077, -45.4075), (-22.5112, -43.1779), (-22.3762, -41.7869)]
+# Cidades da família do Leonardo (mesmas coordenadas da tela /preparar, para cair no mesmo cache)
+CIDADES_FAMILIA = [(-15.7939, -47.8828),   # Brasília
+                   (-25.5469, -54.5882),   # Foz do Iguaçu
+                   (-25.5097, -54.6111),   # Ciudad del Este
+                   (-12.0464, -77.0428),   # Lima
+                   (-8.1116, -79.0288),    # Trujillo
+                   (-3.7437, -73.2516),    # Iquitos
+                   (-6.4882, -76.361),    # Tarapoto
+                   (40.7608, -111.891)]   # Salt Lake City (Utah)
+CIDADES_DEMO = [(-30.0346, -51.2177), (-29.4661, -51.9615), (-23.5505, -46.6333), (-23.8077, -45.4075), (-22.5112, -43.1779), (-22.3762, -41.7869)] + CIDADES_FAMILIA
 # Cidades buscadas pelo nome, como o usuário digita (o servidor usa o 1º resultado, igual à tela)
 CIDADES_POR_NOME = ["trujillo", "lima", "iquitos", "tacna", "tarapoto"]
 RADIUS_STEPS_M = (3000, 15000)   # amplia o raio quando a area tem poucos locais (zona rural)

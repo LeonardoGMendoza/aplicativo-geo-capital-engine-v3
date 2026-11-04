@@ -3,7 +3,21 @@
 // Sem internet: o GPS do celular continua funcionando, então mostramos distância e direção até cada local.
 import type { Coordinates, Place, PlaceCategory } from '../shelters/places'
 
-export const CHAVE_LOCAIS = 'omni-locais-offline'
+export const CHAVE_LOCAIS = 'omni-locais-offline'          // versão antiga: um só lugar
+export const CHAVE_CIDADES = 'omni-locais-offline-cidades'  // vários lugares: perto de mim + cidades da família
+
+/** Cidades onde a família está (mesmas coordenadas que o servidor deixa prontas). */
+export const CIDADES_FAMILIA: { id: string; nome: string; pais: string; coordenadas: Coordinates }[] = [
+  { id: 'sao-paulo', nome: 'São Paulo', pais: 'Brasil', coordenadas: { latitude: -23.5505, longitude: -46.6333 } },
+  { id: 'brasilia', nome: 'Brasília', pais: 'Brasil', coordenadas: { latitude: -15.7939, longitude: -47.8828 } },
+  { id: 'foz', nome: 'Foz do Iguaçu', pais: 'Brasil', coordenadas: { latitude: -25.5469, longitude: -54.5882 } },
+  { id: 'cde', nome: 'Ciudad del Este', pais: 'Paraguai', coordenadas: { latitude: -25.5097, longitude: -54.6111 } },
+  { id: 'lima', nome: 'Lima', pais: 'Peru', coordenadas: { latitude: -12.0464, longitude: -77.0428 } },
+  { id: 'trujillo', nome: 'Trujillo', pais: 'Peru', coordenadas: { latitude: -8.1116, longitude: -79.0288 } },
+  { id: 'iquitos', nome: 'Iquitos', pais: 'Peru', coordenadas: { latitude: -3.7437, longitude: -73.2516 } },
+  { id: 'tarapoto', nome: 'Tarapoto', pais: 'Peru', coordenadas: { latitude: -6.4882, longitude: -76.361 } },
+  { id: 'utah', nome: 'Salt Lake City (Utah)', pais: 'EUA', coordenadas: { latitude: 40.7608, longitude: -111.891 } },
+]
 export const CATEGORIAS_OFFLINE: PlaceCategory[] = ['shelter', 'hospital', 'clinic', 'pharmacy', 'worship', 'police', 'food']
 const POR_CATEGORIA = 5
 
@@ -23,6 +37,34 @@ export function lerLocais(armazenamento: Pick<Storage, 'getItem'> | null = typeo
 
 export function guardarLocais(dados: LocaisSalvos, armazenamento: Pick<Storage, 'setItem'> | null = typeof localStorage === 'undefined' ? null : localStorage) {
   try { armazenamento?.setItem(CHAVE_LOCAIS, JSON.stringify(dados)); return true } catch { return false }
+}
+
+type Armazem = Pick<Storage, 'getItem' | 'setItem'> | null
+const armazemPadrao = (): Armazem => typeof localStorage === 'undefined' ? null : localStorage
+
+/** Todos os lugares guardados, por id ('perto' = perto de mim; ou o id da cidade). Migra a versão antiga. */
+export function lerTodos(armazenamento: Armazem = armazemPadrao()): Record<string, LocaisSalvos> {
+  try {
+    const todos = JSON.parse(armazenamento?.getItem(CHAVE_CIDADES) ?? 'null') as Record<string, LocaisSalvos> | null
+    if (todos && typeof todos === 'object') return Object.fromEntries(Object.entries(todos).filter(([, d]) => d && Array.isArray(d.itens) && d.origem))
+  } catch { /* corrompido: começa vazio */ }
+  const antigo = lerLocais(armazenamento)
+  return antigo ? { perto: antigo } : {}
+}
+
+export function guardarLugar(id: string, dados: LocaisSalvos, armazenamento: Armazem = armazemPadrao()) {
+  const todos = { ...lerTodos(armazenamento), [id]: dados }
+  try { armazenamento?.setItem(CHAVE_CIDADES, JSON.stringify(todos)); return todos } catch { return null }
+}
+
+/** Qual lugar guardado está mais perto de onde a pessoa está agora. */
+export function lugarMaisPerto(todos: Record<string, LocaisSalvos>, aqui: Coordinates) {
+  let melhor: string | null = null, menor = Infinity
+  for (const [id, d] of Object.entries(todos)) {
+    const km = distanciaKm(aqui, d.origem)
+    if (km < menor) { menor = km; melhor = id }
+  }
+  return melhor
 }
 
 const rad = (g: number) => (g * Math.PI) / 180

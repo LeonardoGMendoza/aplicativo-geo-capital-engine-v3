@@ -43,6 +43,12 @@
 .prep-acoes { display: flex; flex-direction: column; gap: 8px; }
 .prep-imprimir { min-height: 52px; border-radius: 14px; border: 2px solid #0b2235; background: #fff; color: #0b2235; font-size: 18px; font-weight: 800; }
 
+.prep-sub { margin-top: 14px; font-size: 15px; font-weight: 800; color: #0b4a63; }
+.prep-cidades { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.prep-cidade { display: flex; flex-direction: column; align-items: flex-start; min-height: 56px; padding: 8px 12px; border-radius: 12px; border: 2px solid #c9dbe6; background: #f4f9fc; color: #0b2235; font-size: 16px; font-weight: 800; text-align: left; }
+.prep-cidade small { font-size: 13px; font-weight: 600; color: #36536b; }
+.prep-cidade:disabled { opacity: .55; }
+.prep-lugares { margin-top: 12px; }
 .prep-rotas { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 .prep-rotas a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 10px; background: #0b2235; color: #fff; font-size: 15px; font-weight: 800; text-decoration: none; }
 .prep-mapa-offline { margin-top: 12px; font-size: 15px; }
