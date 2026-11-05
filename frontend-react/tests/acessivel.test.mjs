@@ -40,3 +40,13 @@ test('assistente com rosto (Clara/Rafael): só no lado do cidadão e carregado s
   const { tempos } = await import('../src/features/acessivel/avatar.ts').catch(() => ({}))
   if (tempos) assert.equal(tempos('Oi, tudo bem').words.length, 3)
 })
+
+test('Modo acessível em pt/es/en: a IA responde no idioma e o som volta ao alto-falante depois do microfone', () => {
+  const pagina = source('features/acessivel/ModoAcessivel.tsx')
+  assert.match(pagina, /ask\(q, 'comunidade', \{ idioma \}\)/)
+  assert.match(pagina, /modoSom\('play-and-record'\)/)
+  assert.ok((pagina.match(/modoSom\('playback'\)/g) || []).length >= 3, 'playback ao terminar de ouvir, no erro e no fim')
+  for (const t of ['Toque y diga su pregunta', 'Tap and say your question', 'El agua está subiendo', 'The water is rising']) assert.ok(pagina.includes(t), t)
+  assert.match(source('features/intelligence/intelligence.ts'), /idioma: options\.idioma/)
+  assert.match(source('features/acessivel/avatar.ts'), /modoSom\('playback'\)/)
+})

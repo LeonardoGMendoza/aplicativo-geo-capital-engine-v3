@@ -212,7 +212,7 @@ class Inteligencia:
                  "paginaFim": self.trechos[i]["pagina_fim"], "texto": self.trechos[i]["texto"],
                  "similaridade": round(max(0.0, nota), 3)} for nota, i in notas[:k]]
 
-    def perguntar(self, pergunta, perfil="defesa_civil", ip="?"):
+    def perguntar(self, pergunta, perfil="defesa_civil", ip="?", idioma="pt"):
         pergunta = " ".join((pergunta or "").split())
         if not 3 <= len(pergunta) <= 300 or perfil not in PERFIS:
             raise ValueError("pergunta ou perfil inválido")
@@ -221,7 +221,8 @@ class Inteligencia:
         if self.estado != "pronto":
             self.iniciar()
             raise Preparando()
-        chave, agora = (pergunta.lower(), perfil), time.monotonic()
+        idioma = idioma if idioma in LINGUAS else "pt"
+        chave, agora = (pergunta.lower(), perfil, idioma), time.monotonic()
         guardado = self._cache.get(chave)
         if guardado and agora - guardado[0] < self.cache_segundos:
             return guardado[1]
@@ -230,7 +231,7 @@ class Inteligencia:
         resposta, modo = None, "documentos"
         if self.chat is not None:
             try:
-                resposta, modo = self.chat(montar_prompt(pergunta, perfil, trechos)), "ia"
+                resposta, modo = self.chat(montar_prompt(pergunta, perfil, trechos, idioma)), "ia"
             except Exception as erro:
                 log.warning("Oracle falhou (%s); devolvendo só os trechos", type(erro).__name__)
         resultado = {"pergunta": pergunta, "perfil": perfil, "modo": modo, "resposta": resposta,
@@ -248,7 +249,11 @@ def citar(t):
     return f"{t['fonte']}, pág. {paginas}"
 
 
-def montar_prompt(pergunta, perfil, trechos):
+LINGUAS = {"pt": "português", "es": "espanhol", "en": "inglês"}
+
+
+def montar_prompt(pergunta, perfil, trechos, idioma="pt"):
+    lingua = LINGUAS.get(idioma, "português")
     contexto = "\n\n".join(f"[{n}] ({citar(t)}) {t['texto']}" for n, t in enumerate(trechos, start=1))
     return f"""Você é a IA de apoio à decisão do Omni-EcoRescue, um protótipo acadêmico de resposta a desastres.
 
@@ -260,7 +265,7 @@ TRECHOS DE DOCUMENTOS OFICIAIS (planos de contingência, relatórios de desastre
 {contexto}
 
 INSTRUÇÕES:
-- Responda em português, em no máximo 5 frases curtas e práticas. Se o trecho estiver em inglês, traduza para o português.
+- Responda em {lingua}, em no máximo 5 frases curtas e práticas. Se o trecho estiver em outro idioma, traduza para o {lingua}.
 - Use somente as informações dos trechos. Depois de cada informação, cite a fonte entre parênteses, por exemplo (brumadinho.pdf, pág. 12).
 - Se os trechos não tratarem da pergunta, diga isso claramente e não invente.
 - Não prometa rota segura, vaga em abrigo ou resgate. A decisão final é humana e da Defesa Civil."""

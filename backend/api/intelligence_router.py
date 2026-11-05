@@ -13,6 +13,7 @@ _NO_STORE = {"Cache-Control": "no-store"}
 class Pergunta(BaseModel):
     pergunta: str = Field(min_length=3, max_length=300)
     perfil: str = Field(default="defesa_civil", max_length=20)
+    idioma: str = Field(default="pt", max_length=2)
 
 
 def _erro(status, codigo, mensagem, extra=None):
@@ -32,7 +33,7 @@ async def ask(body: Pergunta, request: Request):
     ia = request.app.state.inteligencia
     ip = request.client.host if request.client else "?"
     try:
-        resultado = await run_in_threadpool(ia.perguntar, body.pergunta, body.perfil, ip)
+        resultado = await run_in_threadpool(ia.perguntar, body.pergunta, body.perfil, ip, body.idioma)
         return JSONResponse(content=resultado, headers=_NO_STORE)
     except ValueError:
         return _erro(422, "invalid_request", "Pergunta inválida: use de 3 a 300 caracteres.")

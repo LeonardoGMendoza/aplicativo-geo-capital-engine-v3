@@ -9,7 +9,7 @@ export type Status = {
   estado: 'sem_chave' | 'parado' | 'preparando' | 'pronto' | 'erro'; trechos: number; prontos: number
   iaConfigurada: boolean; paginas: number; documentos: { fonte: string; paginas: number }[]
 }
-type Options = { baseUrl?: string; signal?: AbortSignal; fetcher?: typeof fetch }
+type Options = { baseUrl?: string; signal?: AbortSignal; fetcher?: typeof fetch; idioma?: 'pt' | 'es' | 'en' }
 
 export const perfis: { id: Perfil; label: string }[] = [
   { id: 'defesa_civil', label: 'Defesa Civil / coordenação' },
@@ -59,7 +59,7 @@ export async function ask(pergunta: string, perfil: Perfil, options: Options = {
   const response = await (options.fetcher ?? fetch)(`${base(options)}/api/v1/intelligence/ask`, {
     method: 'POST', signal, cache: 'no-store',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ pergunta, perfil }),
+    body: JSON.stringify(options.idioma ? { pergunta, perfil, idioma: options.idioma } : { pergunta, perfil }),
   })
   return read<Resposta>(response)
 }

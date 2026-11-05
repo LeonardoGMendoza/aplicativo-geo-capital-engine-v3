@@ -110,6 +110,12 @@ export function fraseDoLugar(c: ResumoLugar, idioma: IdiomaVoz = 'pt', agora = n
   return `${c.nome}: no official alert now. The forecast shows bad weather on ${dia}.`
 }
 
+/** iPhone: depois que o microfone liga, o iOS deixa o som no modo "ligação" (baixo, no alto-falante de cima).
+ * 'play-and-record' antes de ouvir e 'playback' logo depois devolve o som ao alto-falante principal (Safari 16.4+). */
+export function modoSom(tipo: 'playback' | 'play-and-record') {
+  try { const n = navigator as unknown as { audioSession?: { type: string } }; if (n.audioSession) n.audioSession.type = tipo } catch { /* Safari antigo */ }
+}
+
 export function vozDisponivel() { return typeof window !== 'undefined' && 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined' }
 
 export function lerIdiomaVoz(): IdiomaVoz {
@@ -120,6 +126,7 @@ export function gravarIdiomaVoz(v: IdiomaVoz) { try { localStorage.setItem(CHAVE
 /** Fala o texto. Devolve uma função para parar. Escolhe a voz do aparelho no idioma pedido. */
 export function falar(texto: string, idioma: IdiomaVoz = 'pt', aoTerminar?: () => void) {
   if (!vozDisponivel()) { aoTerminar?.(); return () => {} }
+  modoSom('playback')
   const bcp = IDIOMAS_VOZ.find(i => i.id === idioma)!.bcp
   window.speechSynthesis.cancel()
   const u = new SpeechSynthesisUtterance(texto)

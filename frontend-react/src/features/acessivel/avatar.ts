@@ -4,7 +4,7 @@
 import { TalkingHead } from './talkinghead/talkinghead.mjs'
 import { LipsyncPt_br } from './talkinghead/lipsync-pt_br.mjs'
 import type { IdiomaVoz } from '../oficiais/voz'
-import { IDIOMAS_VOZ } from '../oficiais/voz'
+import { IDIOMAS_VOZ, modoSom } from '../oficiais/voz'
 
 export type NomeAssistente = 'Clara' | 'Rafael'
 // Mesmos ajustes do VinaCare (postura e piscar)
@@ -63,7 +63,7 @@ export class Assistente {
 
   /** Precisa ser chamado dentro de um toque (iPhone): libera o som e volta o áudio para o alto-falante principal. */
   liberarSom() {
-    try { (navigator as unknown as { audioSession?: { type: string } }).audioSession!.type = 'playback' } catch { /* Safari antigo */ }
+    modoSom('playback')
     try { void this.head.audioCtx.resume() } catch { /* ignore */ }
     this.player.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='
     void this.player.play().catch(() => {})
@@ -122,6 +122,7 @@ export class Assistente {
   /** Fala o texto com o rosto. Chama aoTerminar quando acaba. */
   async falar(texto: string, idioma: IdiomaVoz, nome: NomeAssistente, aoTerminar?: () => void) {
     this.parar()
+    modoSom('playback')
     this.fim = aoTerminar ?? null
     if (this.nuvem && navigator.onLine !== false) {
       try { await this.pelaNuvem(texto, idioma, nome); return } catch { /* cai para a voz do celular */ }

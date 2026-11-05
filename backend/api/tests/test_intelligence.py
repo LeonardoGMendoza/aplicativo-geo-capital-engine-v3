@@ -228,3 +228,11 @@ class Rotas(Base):
             r = c.post("/api/v1/intelligence/ask", json={"pergunta": "enchente dois"})
             self.assertEqual(r.status_code, 429)
             self.assertNotIn("Traceback", r.text)
+
+
+class TestIdiomaDaResposta(unittest.TestCase):
+    def test_prompt_no_idioma_pedido(self):
+        trechos = [{"fonte": "a.pdf", "pagina": 1, "paginaFim": 1, "texto": "x", "similaridade": 0.9}]
+        self.assertIn("Responda em português", montar_prompt("P?", "comunidade", trechos))
+        self.assertIn("Responda em espanhol", montar_prompt("P?", "comunidade", trechos, "es"))
+        self.assertIn("traduza para o inglês", montar_prompt("P?", "comunidade", trechos, "en"))
