@@ -256,11 +256,11 @@ QUEM PERGUNTA: {PERFIS[perfil]}
 
 PERGUNTA: {pergunta}
 
-TRECHOS DE DOCUMENTOS OFICIAIS (planos de contingência, relatório de Brumadinho, RIMAs):
+TRECHOS DE DOCUMENTOS OFICIAIS (planos de contingência, relatórios de desastres, RIMAs e guias de emergência nuclear):
 {contexto}
 
 INSTRUÇÕES:
-- Responda em português, em no máximo 5 frases curtas e práticas.
+- Responda em português, em no máximo 5 frases curtas e práticas. Se o trecho estiver em inglês, traduza para o português.
 - Use somente as informações dos trechos. Depois de cada informação, cite a fonte entre parênteses, por exemplo (brumadinho.pdf, pág. 12).
 - Se os trechos não tratarem da pergunta, diga isso claramente e não invente.
 - Não prometa rota segura, vaga em abrigo ou resgate. A decisão final é humana e da Defesa Civil."""

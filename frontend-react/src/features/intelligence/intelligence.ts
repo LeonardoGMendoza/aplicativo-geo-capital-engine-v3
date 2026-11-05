@@ -21,6 +21,8 @@ export const perguntasProntas = [
   'O que fazer se as sirenes falharem num rompimento de barragem?',
   'Como preparar um abrigo temporário para famílias desalojadas?',
   'Quais sinais indicam risco de deslizamento em encosta?',
+  'O que fazer nas primeiras horas depois de uma explosão nuclear?',
+  'Como proteger a população num acidente na usina nuclear de Angra?',
 ]
 export const nomesDocumentos: Record<string, string> = {
   'brumadinho.pdf': 'Relatório sobre o rompimento em Brumadinho',
@@ -28,6 +30,9 @@ export const nomesDocumentos: Record<string, string> = {
   'sao_sebastiao.pdf': 'Plano de contingência de São Sebastião',
   'rima_petrobras.pdf': 'RIMA Petrobras',
   'rima_bacia_campos.pdf': 'RIMA Bacia de Campos',
+  'fema_detonacao_nuclear.pdf': 'FEMA (EUA): resposta a uma detonação nuclear',
+  'fema_72h_nuclear.pdf': 'FEMA (EUA): as primeiras 72 horas após uma detonação nuclear',
+  'acidente_nuclear_defesa_civil.pdf': 'Defesa Civil: resposta a acidentes nucleares',
 }
 
 export class IntelligenceError extends Error {

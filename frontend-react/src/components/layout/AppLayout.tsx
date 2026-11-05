@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Activity, FlaskConical, Languages, MapPin, Menu, Smartphone, PanelLeftClose, PanelLeftOpen, Satellite } from 'lucide-react'
+import { Activity, FlaskConical, Languages, MapPin, Menu, Smartphone, Backpack, PanelLeftClose, PanelLeftOpen, Satellite } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { menuNavigation } from '@/app/navigation'
 import { Brand, BrandSymbol } from '@/components/shared/Brand'
@@ -18,6 +18,7 @@ function SidebarContent({ onNavigate, collapsed = false, onToggle }: { onNavigat
       {menuNavigation.map(({ path, label, icon: Icon }) => <NavLink key={path} to={path} end={path === '/'} onClick={onNavigate} title={collapsed ? label : undefined} aria-label={collapsed ? label : undefined} className={`sidebar-link ${collapsed ? 'justify-center' : ''}`}><Icon className="size-4 shrink-0" aria-hidden="true" /><span className={collapsed ? 'sr-only' : undefined}>{label}</span></NavLink>)}
     {/* Área do cidadão separada da gestão (pedido da Defesa Civil): abre a tela simples do celular. */}
     <Link to="/cidadao" onClick={onNavigate} title={collapsed ? 'Área do cidadão' : undefined} aria-label={collapsed ? 'Área do cidadão' : undefined} className={`mt-3 flex items-center gap-2 rounded-md border border-[#20d8c1] bg-[#0b3b4f] px-3 py-2 text-sm font-semibold text-[#2ce3c1] hover:bg-[#0f4a62] ${collapsed ? 'justify-center' : ''}`}><Smartphone className="size-4 shrink-0" aria-hidden="true" /><span className={collapsed ? 'sr-only' : undefined}>Área do cidadão</span></Link>
+    <Link to="/preparar" onClick={onNavigate} title={collapsed ? 'Preparação: guerra, nuclear, apagão' : undefined} aria-label={collapsed ? 'Preparação: guerra, nuclear, apagão' : undefined} className={`mt-2 flex items-center gap-2 rounded-md border border-[#f59e0b] bg-[#3b2a0b] px-3 py-2 text-sm font-semibold text-[#fbbf24] hover:bg-[#4a3510] ${collapsed ? 'justify-center' : ''}`}><Backpack className="size-4 shrink-0" aria-hidden="true" /><span className={collapsed ? 'sr-only' : undefined}>Preparação: guerra, nuclear, apagão</span></Link>
     <label title={collapsed ? 'Idioma / Language' : undefined} className={`relative mt-3 border-t border-[#25617c] flex items-center gap-2 rounded-md px-3 pt-3 pb-2 text-[#b4d3e1] hover:bg-white/10 hover:text-white ${collapsed ? 'justify-center' : ''}`}>
       <Languages className="size-4 shrink-0" aria-hidden="true" />
       <LanguageSelector className={collapsed ? 'absolute inset-0 cursor-pointer opacity-0' : 'w-full min-w-0 cursor-pointer rounded border border-[#25617c] bg-[#06283a] px-1 py-1 text-xs text-white'} />

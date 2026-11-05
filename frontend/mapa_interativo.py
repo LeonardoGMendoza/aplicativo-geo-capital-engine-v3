@@ -74,6 +74,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .sep{width:1px;height:20px;background:#374151;margin:0 3px}
 .fb{padding:3px 10px;border-radius:14px;border:2px solid;cursor:pointer;font-size:11px;font-weight:700;background:transparent;transition:opacity .2s}
 .fb.on{opacity:1}.fb.off{opacity:.28}
+.fw{border-color:#38bdf8;color:#38bdf8}
+.fv{border-color:#a3e635;color:#a3e635}
+#legclima{display:none;position:absolute;left:10px;bottom:28px;z-index:900;background:#111827ee;border:1px solid #374151;border-radius:8px;padding:6px 10px;color:#f9fafb;font-size:11px;font-weight:600;line-height:1.5}
+#legclima.show{display:block}
+#legclima i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
 .fa{border-color:#22c55e;color:#22c55e}
 .fh{border-color:#ef4444;color:#ef4444}
 .fu{border-color:#f97316;color:#f97316}
@@ -170,6 +175,8 @@ body.light #spinner{background:#f8fafccc;color:#0f172a}
     <button class="fb fm on" onclick="toggleLayer('m',this)">💊 Medicamento</button>
     <button class="fb fs2 on" onclick="toggleLayer('s2',this)">🛏️ Dormir</button>
     <button class="fb fc on" onclick="toggleLayer('c',this)">🛒 Compras</button>
+    <button class="fb fw off" onclick="toggleChuva(this)">🌧️ Chuva</button>
+    <button class="fb fv off" onclick="toggleVento(this)">💨 Vento</button>
   </div>
   <div class="sep"></div>
   <input id="searchbox" placeholder="🔍 Buscar qualquer cidade, bairro ou endereço…" onkeydown="if(event.key==='Enter')buscarLocal()">
@@ -184,6 +191,7 @@ body.light #spinner{background:#f8fafccc;color:#0f172a}
   <div id="map">
     <div id="spinner">🛰️ Buscando locais<br>no OpenStreetMap…</div>
     <div id="aviso"></div>
+    <div id="legclima"></div>
   </div>
   <div id="panel">
     <div class="ph">
@@ -637,6 +645,101 @@ function toggleLayer(t,btn){
     btn.parentElement.scrollTo({left: btn.offsetLeft - 4, behavior:'smooth'});
   }
 }
+
+/* ── CLIMA: chuva (radar RainViewer) e vento (Open-Meteo) ── */
+/* painel proprio, fora do filtro escuro, para as cores nao ficarem invertidas */
+map.createPane('clima'); map.getPane('clima').style.zIndex=250;
+var chuvaOn=false, ventoOn=false, radarLayer=null, ventoLayer=L.layerGroup(), ventoTimer=null, ventoSeq=0;
+
+function atualizarLegenda(){
+  var el=document.getElementById('legclima'), h='';
+  if(chuvaOn) h+='🌧️ Radar de chuva (últimas 2 h): azul claro = fraca, azul escuro = forte<br>';
+  if(ventoOn) h+='💨 Vento (seta = para onde vai; número = rajada km/h)<br><i style="background:#22c55e"></i>&lt;30 <i style="background:#eab308"></i>30–50 <i style="background:#f97316"></i>50–70 <i style="background:#ef4444"></i>&gt;70<br>';
+  if(chuvaOn) h+='<span style="font-weight:400;opacity:.8">Radar: <a href="https://www.rainviewer.com" target="_blank" style="color:#7dd3fc">RainViewer</a></span> ';
+  if(ventoOn) h+='<span style="font-weight:400;opacity:.8">Vento: <a href="https://open-meteo.com" target="_blank" style="color:#bef264">Open-Meteo</a></span>';
+  el.innerHTML=h; el.classList.toggle('show',!!h);
+}
+
+async function toggleChuva(btn){
+  chuvaOn=!chuvaOn;
+  btn.classList.toggle('on',chuvaOn); btn.classList.toggle('off',!chuvaOn);
+  if(!chuvaOn){ if(radarLayer){map.removeLayer(radarLayer);radarLayer=null;} atualizarLegenda(); return; }
+  try{
+    var r=await fetch('https://api.rainviewer.com/public/weather-maps.json');
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    var j=await r.json();
+    var quadros=(j.radar&&j.radar.past)||[];
+    if(!quadros.length) throw new Error('sem quadros');
+    var q=quadros[quadros.length-1];
+    if(!chuvaOn) return;
+    /* plano gratuito: zoom nativo maximo 7, paleta 2 (Universal Blue) */
+    radarLayer=L.tileLayer(j.host+q.path+'/256/{z}/{x}/{y}/2/1_1.png',
+      {pane:'clima',opacity:0.75,maxNativeZoom:7,maxZoom:19});
+    radarLayer.addTo(map);
+    atualizarLegenda();
+    var min=Math.max(0,Math.round((Date.now()/1000-q.time)/60));
+    mostrarAviso('🌧️ Radar de chuva atualizado há '+min+' min. Se o mapa estiver sem cor, não há chuva detectada ou a região está fora da cobertura do radar.',true);
+  }catch(e){
+    console.warn('Radar falhou',e);
+    chuvaOn=false; btn.classList.remove('on'); btn.classList.add('off'); atualizarLegenda();
+    mostrarAviso('Não foi possível carregar o radar de chuva agora. Tente de novo em instantes.',true);
+  }
+}
+
+function corVento(g){return g>=70?'#ef4444':g>=50?'#f97316':g>=30?'#eab308':'#22c55e';}
+
+function setaVento(la,lo,dirDe,vel,rajada){
+  var rot=(dirDe+180)%360;   /* direcao meteorologica = de onde vem; a seta mostra para onde vai */
+  var cor=corVento(rajada);
+  var html='<div style="text-align:center;line-height:1;width:34px">'
+    +'<svg width="24" height="24" viewBox="0 0 24 24" style="transform:rotate('+rot+'deg)"><path d="M12 2 L19 21 L12 16 L5 21 Z" fill="'+cor+'" stroke="#000" stroke-width="1.2"/></svg>'
+    +'<div style="font:700 10px sans-serif;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000">'+Math.round(rajada)+'</div></div>';
+  return L.marker([la,lo],{pane:'clima',interactive:true,
+    title:'Vento '+Math.round(vel)+' km/h, rajadas '+Math.round(rajada)+' km/h',
+    icon:L.divIcon({html:html,className:'',iconSize:[34,36],iconAnchor:[17,18]})});
+}
+
+async function atualizarVento(){
+  if(!ventoOn) return;
+  var id=++ventoSeq;
+  var b=map.getBounds().pad(-0.08), n=6, lats=[], lons=[];
+  for(var i=0;i<n;i++) for(var k=0;k<n;k++){
+    lats.push((b.getSouth()+(b.getNorth()-b.getSouth())*(i+0.5)/n).toFixed(3));
+    lons.push((b.getWest()+(b.getEast()-b.getWest())*(k+0.5)/n).toFixed(3));
+  }
+  try{
+    var url='https://api.open-meteo.com/v1/forecast?latitude='+lats.join(',')+'&longitude='+lons.join(',')
+      +'&current=wind_speed_10m,wind_gusts_10m,wind_direction_10m&wind_speed_unit=kmh';
+    var r=await fetch(url);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    var j=await r.json();
+    if(id!==ventoSeq||!ventoOn) return;
+    var arr=Array.isArray(j)?j:[j];
+    ventoLayer.clearLayers();
+    arr.forEach(function(d){
+      if(!d||!d.current) return;
+      var c=d.current;
+      if(c.wind_speed_10m==null||c.wind_direction_10m==null) return;
+      setaVento(d.latitude,d.longitude,c.wind_direction_10m,c.wind_speed_10m,c.wind_gusts_10m==null?c.wind_speed_10m:c.wind_gusts_10m).addTo(ventoLayer);
+    });
+  }catch(e){
+    console.warn('Vento falhou',e);
+    mostrarAviso('Não foi possível carregar o vento agora. Mova o mapa para tentar de novo.',true);
+  }
+}
+
+function toggleVento(btn){
+  ventoOn=!ventoOn;
+  btn.classList.toggle('on',ventoOn); btn.classList.toggle('off',!ventoOn);
+  if(ventoOn){ventoLayer.addTo(map);atualizarVento();}
+  else{map.removeLayer(ventoLayer);ventoLayer.clearLayers();}
+  atualizarLegenda();
+}
+map.on('moveend',function(){
+  if(!ventoOn) return;
+  if(ventoTimer) clearTimeout(ventoTimer);
+  ventoTimer=setTimeout(atualizarVento,700);
+});
 
 /* ── MAIS PRÓXIMO ── */
 function irMaisProximo(t){
