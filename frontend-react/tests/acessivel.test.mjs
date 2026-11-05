@@ -26,3 +26,16 @@ test('responde sem internet com os guias guardados e lê em voz alta', () => {
     assert.ok(re.test(frase), `${frase} -> ${guia}`)
   }
 })
+
+test('assistente com rosto (Clara/Rafael): só no lado do cidadão e carregado sob demanda', async () => {
+  const pagina = source('features/acessivel/ModoAcessivel.tsx')
+  assert.match(pagina, /Com assistente \(rosto que fala\)/)
+  assert.match(pagina, /await import\('\.\/avatar'\)/, 'o 3D só baixa quando a pessoa liga')
+  assert.doesNotMatch(pagina, /^import \{ Assistente \}/m)
+  const avatar = source('features/acessivel/avatar.ts')
+  assert.match(avatar, /\/api\/v1\/voz/)
+  assert.match(avatar, /peloAparelho/, 'sem a voz da nuvem, usa a do celular')
+  for (const f of ['features/oficiais/OficiaisSecao.tsx', 'features/operations/OperationsPage.tsx', 'components/layout/AppLayout.tsx']) assert.doesNotMatch(source(f), /talkinghead|avatar\.ts|Assistente\b/, `${f}: painel de gestão sem boneco`)
+  const { tempos } = await import('../src/features/acessivel/avatar.ts').catch(() => ({}))
+  if (tempos) assert.equal(tempos('Oi, tudo bem').words.length, 3)
+})

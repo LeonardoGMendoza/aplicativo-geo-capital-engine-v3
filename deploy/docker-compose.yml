@@ -12,7 +12,9 @@ services:
       NASA_CACHE_SECONDS: "600"
     # Chaves da IA (Cohere + Oracle). Arquivo só no servidor, fora do GitHub.
     # Gerado no PC com: python deploy/gerar_ia_env.py
-    env_file: ia.env
+    env_file:
+      - ia.env
+      - azure.env   # voz da Clara/Rafael (Azure). Arquivo só no servidor, fora do GitHub.
     volumes:
       - omni-rag:/data          # vetores da IA: calculados uma vez só
     mem_limit: 768m             # o SDK da Oracle pesa; 384m era só para a API sem IA

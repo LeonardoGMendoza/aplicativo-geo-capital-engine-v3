@@ -14,6 +14,7 @@ from .intelligence_router import router as intelligence_router
 from .intelligence import criar_do_ambiente
 from .global_alerts import AlertasGlobais
 from .global_alerts_router import router as global_alerts_router
+from .voz_router import router as voz_router
 from .alertas_oficiais import AlertasOficiais
 from .mercado import Mercado
 from .mercado_router import router as mercado_router
@@ -104,6 +105,7 @@ def create_app(service: NasaService | None = None, inteligencia=None, alertas=No
     app.include_router(places_router)
     app.include_router(intelligence_router)
     app.include_router(global_alerts_router)
+    app.include_router(voz_router)
     app.include_router(cadastros_router)
     app.include_router(alerta_whatsapp_router)
     app.include_router(mercado_router)

@@ -6,6 +6,9 @@ __pycache__/
 .streamlit/secrets.toml
 # Chaves da IA para o servidor (gerado por deploy/gerar_ia_env.py)
 deploy/ia.env
+# Chave da voz Azure (assistente do Modo acessível): só no servidor
+deploy/azure.env
+*.env
 banco_historico/
 *.bak*
 

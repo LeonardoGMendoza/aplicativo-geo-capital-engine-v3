@@ -14,6 +14,9 @@ echo "== 2/4 Subindo a API (Docker, porta 8010 só local) =="
 # Sem deploy/ia.env a API sobe normal e a tela de IA avisa que não está configurada.
 [ -f deploy/ia.env ] || { touch deploy/ia.env; echo "(aviso: deploy/ia.env não existe; IA desligada)"; }
 chmod 600 deploy/ia.env
+# Voz da Clara/Rafael (Azure) no Modo acessível. Sem o arquivo, o assistente usa a voz do celular.
+[ -f deploy/azure.env ] || { touch deploy/azure.env; echo "(aviso: deploy/azure.env não existe; assistente usa a voz do celular)"; }
+chmod 600 deploy/azure.env
 docker compose -f deploy/docker-compose.yml up -d --build
 docker image prune -f >/dev/null
 

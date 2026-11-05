@@ -3,7 +3,8 @@
 // Sem internet: responde com os guias de emergência guardados no aparelho (a voz do celular funciona offline).
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Mic, Square, Volume2 } from 'lucide-react'
+import { ArrowLeft, Mic, Square, UserRound, Volume2 } from 'lucide-react'
+import type { Assistente, NomeAssistente } from './avatar'
 import { BrandSymbol } from '@/components/shared/Brand'
 import { guias } from '../preparar/conteudo'
 import type { Guia } from '../preparar/conteudo'
@@ -66,6 +67,41 @@ export function ModoAcessivelPage() {
   const [ocupado, setOcupado] = useState(false)
   const [msg, setMsg] = useState('')
   const parar = useRef<(() => void) | null>(null)
+  // Assistente com rosto (opcional): o 3D só é baixado quando a pessoa liga
+  const [comAssistente, setComAssistente] = useState(false)
+  const [nomeAssistente, setNomeAssistente] = useState<NomeAssistente>(() => { try { return localStorage.getItem('omni-assistente') === 'Rafael' ? 'Rafael' : 'Clara' } catch { return 'Clara' } })
+  const [carregando, setCarregando] = useState<number | null>(null)
+  const assistente = useRef<Assistente | null>(null)
+  const palco = useRef<HTMLDivElement>(null)
+  useEffect(() => () => { assistente.current?.destruir(); assistente.current = null }, [])
+
+  async function ligarAssistente() {
+    if (comAssistente) { assistente.current?.destruir(); assistente.current = null; setComAssistente(false); return }
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) { setMsg('Sem internet o assistente com rosto não abre. A voz do celular continua funcionando.'); return }
+    setComAssistente(true); setCarregando(0); setMsg('')
+    await new Promise(r => requestAnimationFrame(r))
+    try {
+      const { Assistente } = await import('./avatar')
+      if (!palco.current) return
+      const a = await Assistente.criar(palco.current, nomeAssistente, setCarregando)
+      a.liberarSom()
+      assistente.current = a
+      setCarregando(null)
+      const ola = { pt: `Oi, eu sou a ${nomeAssistente === 'Clara' ? 'Clara' : 'o Rafael'}. Toque no botão e me faça uma pergunta.`, es: `Hola, soy ${nomeAssistente}. Toque el botón y hágame una pregunta.`, en: `Hi, I am ${nomeAssistente}. Tap the button and ask me a question.` }
+      dizer(ola[idioma])
+    } catch {
+      setComAssistente(false); setCarregando(null)
+      setMsg('Não consegui abrir o assistente neste aparelho. A voz do celular continua funcionando.')
+    }
+  }
+  async function trocarAssistente() {
+    const novo: NomeAssistente = nomeAssistente === 'Clara' ? 'Rafael' : 'Clara'
+    setNomeAssistente(novo)
+    try { localStorage.setItem('omni-assistente', novo) } catch { /* ignore */ }
+    if (!assistente.current) return
+    setCarregando(0)
+    try { await assistente.current.trocar(novo, setCarregando) } finally { setCarregando(null) }
+  }
   const rec = useRef<Reconhecedor | null>(null)
   const temMicrofone = typeof window !== 'undefined' && !!criarReconhecedor()
   const bcp = IDIOMAS_VOZ.find(i => i.id === idioma)!.bcp
@@ -76,6 +112,12 @@ export function ModoAcessivelPage() {
   function dizer(texto: string, lingua: IdiomaVoz = idioma) {
     parar.current?.()
     setFalando(true)
+    const a = assistente.current
+    if (a) {  // com rosto: voz da Azure (ou do celular) e boca mexendo
+      void a.falar(texto, lingua, nomeAssistente, () => setFalando(false))
+      parar.current = () => a.parar()
+      return
+    }
     parar.current = falar(texto, lingua, () => setFalando(false))
   }
   function mostrar(titulo: string, texto: string, fonte: string, lingua: IdiomaVoz = idioma) {
@@ -140,6 +182,15 @@ export function ModoAcessivelPage() {
     </header>
 
     <main className="ac-main" id="main-content">
+      <div className="ac-assistente-barra">
+        <button type="button" className={`ac-assistente-btn ${comAssistente ? 'is-on' : ''}`} onClick={() => void ligarAssistente()} aria-pressed={comAssistente}>
+          <UserRound aria-hidden="true" />{comAssistente ? 'Desligar assistente' : 'Com assistente (rosto que fala)'}</button>
+        {comAssistente && <button type="button" className="ac-assistente-troca" onClick={() => void trocarAssistente()} disabled={carregando !== null}>Trocar para {nomeAssistente === 'Clara' ? 'Rafael' : 'Clara'}</button>}
+      </div>
+      {comAssistente && <div className="ac-palco">
+        <div ref={palco} className="ac-palco-3d" aria-label={`Assistente ${nomeAssistente}`} role="img" />
+        {carregando !== null && <p className="ac-palco-carregando" role="status">Abrindo {nomeAssistente === 'Clara' ? 'a Clara' : 'o Rafael'}… {carregando > 0 ? `${carregando}%` : ''}</p>}
+      </div>}
       <section className="ac-emergencia" aria-label="Ligar para emergência">
         <a href="tel:199"><strong>199</strong>Defesa Civil</a><a href="tel:193"><strong>193</strong>Bombeiros</a><a href="tel:192"><strong>192</strong>SAMU</a>
       </section>
