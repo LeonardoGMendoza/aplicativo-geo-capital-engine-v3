@@ -40,6 +40,19 @@ function EventMarker({ event, selected, onSelect }: { event: NasaEvent; selected
   </>
 }
 
+// Visão de continente: paleta do Felipe (terra e mar em duas cores). Ao aproximar (zoom 7+), o mapa normal do
+// OpenStreetMap, com cidades, bairros e ruas: a paleta apaga os nomes e as ruas.
+const ZOOM_RUAS = 7
+function BaseMapa({ onErro }: { onErro: (erro: boolean) => void }) {
+  const map = useMap()
+  const [zoom, setZoom] = useState(() => map.getZoom())
+  useMapEvents({ zoomend: () => setZoom(map.getZoom()) })
+  const osm = { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', noWrap: true,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    eventHandlers: { loading: () => onErro(false), tileerror: () => onErro(true) } }
+  return zoom >= ZOOM_RUAS ? <TileLayer key="ruas" className="mapa-ruas" {...osm} /> : <TileLayer key="felipe" className="mapa-felipe" {...osm} />
+}
+
 function GeographicLayers({ events, selectedId, onSelect }: { events: NasaEvent[]; selectedId: string | null; onSelect: (id: string) => void }) {
   const map = useMap()
   function currentView() {
@@ -94,13 +107,13 @@ export default function NasaGeographicMap({ events, selectedId, onSelect, assets
     <div role="region" aria-label="Mapa geográfico de eventos NASA, sem avaliação de risco" className="nasa-map relative isolate z-0 h-[340px] overflow-hidden rounded border sm:h-[420px]">
       <MapContainer center={[-15, -55]} zoom={3} minZoom={2} maxZoom={18} maxBounds={[[-85.0511287798, -180], [85.0511287798, 180]]} maxBoundsViscosity={1} scrollWheelZoom={false} className="h-full w-full">
         <FiltroMapaFelipe />
-        <TileLayer className="mapa-felipe" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" noWrap attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' eventHandlers={{ loading: () => setTileError(false), tileerror: () => setTileError(true) }} />
+        <BaseMapa onErro={setTileError} />
         {placas && <PlacasCamada dados={placas} />}
         <FocoPacifico pedido={focoPacifico} />
         <GeographicLayers events={events} selectedId={selectedId} onSelect={onSelect} />
         <AssetLayers assets={assets} selectedId={selectedAssetId} onSelect={onAssetSelect} />
       </MapContainer>
     </div>
-    <p className="mt-1 text-xs text-muted-foreground">Arraste ou use +/− para ver o mundo · número = grupo de eventos (clique para abrir).</p>
+    <p className="mt-1 text-xs text-muted-foreground">Arraste ou use +/− para ver o mundo; aproxime para ver cidades e ruas · número = grupo de eventos (clique para abrir).</p>
   </div>
 }
