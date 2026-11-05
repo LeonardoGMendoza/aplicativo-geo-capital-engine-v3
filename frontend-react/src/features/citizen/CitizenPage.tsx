@@ -9,6 +9,7 @@ import { MSG_SEM_INTERNET, useNearbySearch } from './useNearbySearch'
 import { AlertsSignup } from './AlertsSignup'
 import { dicas, minutosAPe } from './dicas'
 import { OficiaisPerto } from './OficiaisPerto'
+import { CartaoAssistente } from '../acessivel/CartaoAssistente'
 import { LanguageSelector } from '@/i18n'
 import './citizen.css'
 const NearbyPlacesMap = lazy(() => import('../shelters/NearbyPlacesMap'))
@@ -57,7 +58,7 @@ export function CitizenPage() {
         </div>
       </section>
 
-      <Link to="/cidadao/acessivel" className="citizen-acessivel"><span aria-hidden="true">🔊</span><span><b>Modo acessível</b><small>Pergunte falando e ouça a resposta. Letras grandes.</small></span></Link>
+      <CartaoAssistente />
 
       <AlertsSignup />
 

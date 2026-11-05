@@ -9,7 +9,8 @@ test('Modo acessível: rota fora do painel da central e atalho na Área do cidad
   const layout = app.indexOf('<Route element={<NasaSessionProvider><AppLayout /></NasaSessionProvider>}>')
   const rota = app.indexOf('<Route path="/cidadao/acessivel" element={<ModoAcessivelPage />} />')
   assert.ok(rota > 0 && rota < layout)
-  assert.match(source('features/citizen/CitizenPage.tsx'), /to="\/cidadao\/acessivel"/)
+  assert.match(source('features/citizen/CitizenPage.tsx'), /<CartaoAssistente \/>/)
+  assert.match(source('features/acessivel/CartaoAssistente.tsx'), /to="\/cidadao\/acessivel"/)
 })
 
 test('responde sem internet com os guias guardados e lê em voz alta', () => {
@@ -29,7 +30,7 @@ test('responde sem internet com os guias guardados e lê em voz alta', () => {
 
 test('assistente com rosto (Clara/Rafael): só no lado do cidadão e carregado sob demanda', async () => {
   const pagina = source('features/acessivel/ModoAcessivel.tsx')
-  assert.match(pagina, /Com assistente \(rosto que fala\)/)
+  assert.match(pagina, /Só voz \(sem o rosto\)/)
   assert.match(pagina, /await import\('\.\/avatar'\)/, 'o 3D só baixa quando a pessoa liga')
   assert.doesNotMatch(pagina, /^import \{ Assistente \}/m)
   const avatar = source('features/acessivel/avatar.ts')

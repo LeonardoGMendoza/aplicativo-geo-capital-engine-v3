@@ -67,32 +67,42 @@ export function ModoAcessivelPage() {
   const [ocupado, setOcupado] = useState(false)
   const [msg, setMsg] = useState('')
   const parar = useRef<(() => void) | null>(null)
-  // Assistente com rosto (opcional): o 3D só é baixado quando a pessoa liga
-  const [comAssistente, setComAssistente] = useState(false)
+  // Assistente com rosto: abre sozinho (como no VinaCare). Sem internet, fica só a voz do celular.
+  const [comAssistente, setComAssistente] = useState(() => {
+    try { if (navigator.onLine === false || localStorage.getItem('omni-assistente-ligado') === 'nao') return false } catch { /* ignore */ }
+    return true
+  })
   const [nomeAssistente, setNomeAssistente] = useState<NomeAssistente>(() => { try { return localStorage.getItem('omni-assistente') === 'Rafael' ? 'Rafael' : 'Clara' } catch { return 'Clara' } })
   const [carregando, setCarregando] = useState<number | null>(null)
   const assistente = useRef<Assistente | null>(null)
   const palco = useRef<HTMLDivElement>(null)
   useEffect(() => () => { assistente.current?.destruir(); assistente.current = null }, [])
+  useEffect(() => {
+    if (!comAssistente || assistente.current) return
+    let cancelado = false
+    setCarregando(0)
+    void (async () => {
+      try {
+        const { Assistente } = await import('./avatar')
+        if (cancelado || !palco.current) return
+        const a = await Assistente.criar(palco.current, nomeAssistente, setCarregando)
+        if (cancelado) { a.destruir(); return }
+        assistente.current = a
+        setCarregando(null)
+      } catch {
+        if (!cancelado) { setComAssistente(false); setCarregando(null); setMsg('Não consegui abrir o assistente neste aparelho. A voz do celular continua funcionando.') }
+      }
+    })()
+    return () => { cancelado = true }
+  }, [comAssistente]) // eslint-disable-line
 
-  async function ligarAssistente() {
-    if (comAssistente) { assistente.current?.destruir(); assistente.current = null; setComAssistente(false); return }
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) { setMsg('Sem internet o assistente com rosto não abre. A voz do celular continua funcionando.'); return }
-    setComAssistente(true); setCarregando(0); setMsg('')
-    await new Promise(r => requestAnimationFrame(r))
-    try {
-      const { Assistente } = await import('./avatar')
-      if (!palco.current) return
-      const a = await Assistente.criar(palco.current, nomeAssistente, setCarregando)
-      a.liberarSom()
-      assistente.current = a
-      setCarregando(null)
-      const ola = { pt: `Oi, eu sou a ${nomeAssistente === 'Clara' ? 'Clara' : 'o Rafael'}. Toque no botão e me faça uma pergunta.`, es: `Hola, soy ${nomeAssistente}. Toque el botón y hágame una pregunta.`, en: `Hi, I am ${nomeAssistente}. Tap the button and ask me a question.` }
-      dizer(ola[idioma])
-    } catch {
-      setComAssistente(false); setCarregando(null)
-      setMsg('Não consegui abrir o assistente neste aparelho. A voz do celular continua funcionando.')
-    }
+  /** No iPhone o som só é liberado dentro de um toque: chamar no começo de cada botão. */
+  function liberar() { assistente.current?.liberarSom() }
+  function alternarAssistente() {
+    const ligar = !comAssistente
+    try { localStorage.setItem('omni-assistente-ligado', ligar ? 'sim' : 'nao') } catch { /* ignore */ }
+    if (!ligar) { assistente.current?.destruir(); assistente.current = null }
+    setComAssistente(ligar)
   }
   async function trocarAssistente() {
     const novo: NomeAssistente = nomeAssistente === 'Clara' ? 'Rafael' : 'Clara'
@@ -146,6 +156,7 @@ export function ModoAcessivelPage() {
   }
 
   function ouvirPergunta() {
+    liberar()
     if (ouvindo) { rec.current?.stop(); return }
     const r = criarReconhecedor()
     if (!r) return
@@ -160,6 +171,7 @@ export function ModoAcessivelPage() {
   }
 
   async function ouvirMeusLugares() {
+    liberar()
     const lugares = lerLugares()
     if (!lugares.length) { mostrar('Meus lugares', 'Você ainda não adicionou lugares. Peça ajuda a alguém para adicionar a sua cidade na tela de Alertas oficiais.', 'Omni'); return }
     setOcupado(true)
@@ -182,27 +194,27 @@ export function ModoAcessivelPage() {
     </header>
 
     <main className="ac-main" id="main-content">
-      <div className="ac-assistente-barra">
-        <button type="button" className={`ac-assistente-btn ${comAssistente ? 'is-on' : ''}`} onClick={() => void ligarAssistente()} aria-pressed={comAssistente}>
-          <UserRound aria-hidden="true" />{comAssistente ? 'Desligar assistente' : 'Com assistente (rosto que fala)'}</button>
-        {comAssistente && <button type="button" className="ac-assistente-troca" onClick={() => void trocarAssistente()} disabled={carregando !== null}>Trocar para {nomeAssistente === 'Clara' ? 'Rafael' : 'Clara'}</button>}
-      </div>
-      {comAssistente && <div className="ac-palco">
-        <div ref={palco} className="ac-palco-3d" aria-label={`Assistente ${nomeAssistente}`} role="img" />
-        {carregando !== null && <p className="ac-palco-carregando" role="status">Abrindo {nomeAssistente === 'Clara' ? 'a Clara' : 'o Rafael'}… {carregando > 0 ? `${carregando}%` : ''}</p>}
-      </div>}
-      <section className="ac-emergencia" aria-label="Ligar para emergência">
-        <a href="tel:199"><strong>199</strong>Defesa Civil</a><a href="tel:193"><strong>193</strong>Bombeiros</a><a href="tel:192"><strong>192</strong>SAMU</a>
-      </section>
-
+      {comAssistente && <section className="ac-cartao" aria-label={`Assistente ${nomeAssistente}`}>
+        <header className="ac-cartao-topo">
+          <div><h1>{nomeAssistente === 'Clara' ? 'Clara' : 'Rafael'} · assistente de emergência</h1><p>Fale a sua pergunta. Entende português, espanhol e inglês.</p></div>
+          <i className={`ac-ponto ${carregando === null ? 'is-pronto' : ''}`} aria-hidden="true" />
+        </header>
+        <div className="ac-palco">
+          <div ref={palco} className="ac-palco-3d" role="img" aria-label={`Rosto da assistente ${nomeAssistente}`} />
+          {carregando !== null && <p className="ac-palco-carregando" role="status">Abrindo {nomeAssistente === 'Clara' ? 'a Clara' : 'o Rafael'}… {carregando > 0 ? `${carregando}%` : ''}</p>}
+          {carregando === null && !resposta && !falando && <p className="ac-balao">Oi! Eu sou {nomeAssistente === 'Clara' ? 'a Clara' : 'o Rafael'}. Toque no botão azul e fale comigo.</p>}
+          <button type="button" className="ac-troca" onClick={() => void trocarAssistente()} disabled={carregando !== null}>{nomeAssistente === 'Clara' ? 'Rafael' : 'Clara'}</button>
+        </div>
+      </section>}
       {temMicrofone
         ? <button type="button" className={`ac-mic ${ouvindo ? 'is-ouvindo' : ''}`} onClick={ouvirPergunta} disabled={ocupado} aria-pressed={ouvindo}>
-            <Mic aria-hidden="true" /><span>{ouvindo ? 'Estou ouvindo… fale agora' : ocupado ? 'Pensando…' : 'Toque e fale a sua pergunta'}</span></button>
-        : <form className="ac-escrever" onSubmit={e => { e.preventDefault(); void perguntar(pergunta) }}>
+            <Mic aria-hidden="true" /><span>{ouvindo ? 'Estou ouvindo… fale agora' : ocupado ? 'Pensando…' : comAssistente ? `Falar com ${nomeAssistente === 'Clara' ? 'a Clara' : 'o Rafael'}` : 'Toque e fale a sua pergunta'}</span></button>
+        : <form className="ac-escrever" onSubmit={e => { e.preventDefault(); liberar(); void perguntar(pergunta) }}>
             <label htmlFor="ac-pergunta">Escreva a sua pergunta</label>
             <textarea id="ac-pergunta" name="pergunta" rows={2} value={pergunta} onChange={e => setPergunta(e.target.value)} placeholder="Ex.: o que eu faço se a água subir?" />
             <button type="submit" disabled={ocupado || pergunta.trim().length < 3}>{ocupado ? 'Pensando…' : 'Perguntar'}</button>
           </form>}
+      <button type="button" className="ac-so-voz" onClick={alternarAssistente}><UserRound aria-hidden="true" />{comAssistente ? 'Só voz (sem o rosto)' : 'Mostrar a assistente (rosto que fala)'}</button>
       {pergunta && temMicrofone && <p className="ac-pergunta">Você perguntou: “{pergunta}”</p>}
       {msg && <p className="ac-msg" role="status">{msg}</p>}
 
@@ -216,12 +228,16 @@ export function ModoAcessivelPage() {
         <p className="ac-fonte">{resposta.fonte}</p>
       </section>}
 
+      <section className="ac-emergencia" aria-label="Ligar para emergência">
+        <a href="tel:199"><strong>199</strong>Defesa Civil</a><a href="tel:193"><strong>193</strong>Bombeiros</a><a href="tel:192"><strong>192</strong>SAMU</a>
+      </section>
+
       <button type="button" className="ac-lugares" onClick={() => void ouvirMeusLugares()} disabled={ocupado}><Volume2 aria-hidden="true" />Ouvir os alertas dos meus lugares</button>
 
       <section aria-label="Perguntas prontas (funcionam sem internet)">
         <h2 className="ac-titulo">Ou toque num destes (funcionam sem internet):</h2>
         <div className="ac-atalhos">{ATALHOS.map(a => { const g = guias.find(x => x.id === a.guia); return g
-          ? <button key={a.guia} type="button" onClick={() => { setPergunta(a.texto); setMsg(''); responderComGuia(g) }}><span aria-hidden="true">{g.emoji}</span>{a.texto}</button> : null })}</div>
+          ? <button key={a.guia} type="button" onClick={() => { liberar(); setPergunta(a.texto); setMsg(''); responderComGuia(g) }}><span aria-hidden="true">{g.emoji}</span>{a.texto}</button> : null })}</div>
       </section>
       <p className="ac-nota">As respostas resumem orientações oficiais. Em perigo, ligue 199. Os guias são lidos em português.</p>
     </main>
