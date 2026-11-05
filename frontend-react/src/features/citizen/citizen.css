@@ -81,3 +81,9 @@
 .citizen-oficial-status { border-radius: 999px; padding: 4px 10px; font-size: 14px; font-weight: 800; white-space: nowrap; }
 .citizen-oficial-tipo { font-size: 15px; color: #36536b; }
 .citizen-oficial-rotas { display: grid; gap: 8px; margin-top: 8px; }
+
+/* Atalho para o Modo acessível (voz, letras grandes) */
+.citizen-acessivel { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 14px; border-radius: 16px; background: #06243a; color: #fff; text-decoration: none; }
+.citizen-acessivel > span:first-child { font-size: 28px; }
+.citizen-acessivel b { display: block; font-size: 19px; }
+.citizen-acessivel small { display: block; font-size: 14px; color: #c9dce8; }

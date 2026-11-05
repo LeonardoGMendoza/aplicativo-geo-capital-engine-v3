@@ -60,14 +60,49 @@ test('guarda a última resposta e mostra sem internet', async () => {
   await assert.rejects(buscarOficiais([], { baseUrl: 'https://x', fetcher: semRede, armazem: memoria() }))
 })
 
-test('Mapa de Riscos mostra Meus lugares e os alertas oficiais antes da NASA', () => {
-  const pagina = source('src/features/nasa/RiskMapPage.tsx')
-  assert.ok(pagina.indexOf('<OficiaisSecao />') > -1 && pagina.indexOf('<OficiaisSecao />') < pagina.indexOf('<NasaEventsPanel />'))
+test('página própria "Alertas oficiais" no menu; o Mapa de Riscos volta a ser o original', () => {
+  const risco = source('src/features/nasa/RiskMapPage.tsx')
+  assert.doesNotMatch(risco, /OficiaisSecao/)
+  assert.match(risco, /Explorador geográfico · eventos catalogados não confirmam risco local\./)
+  assert.match(source('src/app/App.tsx'), /path="\/alertas-oficiais" element={<AlertasOficiaisPage \/>}/)
+  assert.match(source('src/app/navigation.ts'), /'\/alertas-oficiais', label: 'Alertas oficiais'/)
   const secao = source('src/features/oficiais/OficiaisSecao.tsx')
-  assert.match(secao, /Meus lugares/)
-  assert.match(secao, /Locais monitorados/)
+  for (const t of [/Meus lugares/, /Locais monitorados/, /Em vigor/, /Próximos dias/, /Avisos em vigor por estado/, /Ouvir alerta/, /199/]) assert.match(secao, t)
+  assert.doesNotMatch(secao + source('src/features/oficiais/OficiaisMapa.tsx'), /[🏠🌪️⛈️🌧️❄️🔥]/u, 'visual profissional: sem emojis')
   assert.doesNotMatch(source('src/features/oficiais/oficiais.ts'), /Tarapoto|Iquitos|Utah/)
-  assert.match(secao, /Acontecendo agora/)
-  assert.match(secao, /Vem aí/)
-  assert.match(secao, /199/)
+})
+
+test('tabela por estado: nível mais alto de cada tipo, estados com aviso primeiro', async () => {
+  const { tabelaPorEstado, tipoDoAlerta } = await import('../src/features/oficiais/oficiais.ts')
+  assert.equal(tipoDoAlerta('Tempestade'), 'tempestade')
+  assert.equal(tipoDoAlerta('Tempestade de neve'), 'frio')
+  assert.equal(tipoDoAlerta('Acumulado de Chuva'), 'chuva')
+  assert.equal(tipoDoAlerta('Vendaval'), 'vento')
+  assert.equal(tipoDoAlerta('Baixa Umidade'), 'calor')
+  assert.equal(tipoDoAlerta('Declínio de Temperatura'), 'frio')
+  const linhas = tabelaPorEstado([
+    alerta('a', 'moderado', 'agora', 'brasil', { evento: 'Tempestade', ufs: ['PR', 'SC'] }),
+    alerta('b', 'extremo', 'agora', 'brasil', { evento: 'Tempestade', ufs: ['SC'] }),
+    alerta('c', 'severo', 'agora', 'brasil', { evento: 'Vendaval', ufs: ['SC'] }),
+  ])
+  assert.equal(linhas.length, 27)
+  assert.deepEqual(linhas.slice(0, 2).map(l => l.uf), ['SC', 'PR'])
+  assert.deepEqual(linhas[0].tipos, { tempestade: 'extremo', vento: 'severo' })
+  assert.equal(linhas[1].max, 'moderado')
+  assert.equal(linhas[2].max, null)
+})
+
+test('"Ouvir alerta": frase curta em português, espanhol e inglês', async () => {
+  const { fraseDoAlerta, fraseDoLugar, eventoNoIdioma } = await import('../src/features/oficiais/voz.ts')
+  const a = { evento: 'Tempestade', severidade: 'severo', quando: 'agora', inicio: null, fim: null, area: 'PR: Foz do Iguaçu - PR (4108304)', instrucao: 'Não se abrigue debaixo de árvores. Evite usar aparelhos ligados na tomada. Outra.', pais: 'Brasil' }
+  const pt = fraseDoAlerta(a, 'pt', 'Foz do Iguaçu')
+  assert.match(pt, /^Aviso de tempestade, nível perigo, em Foz do Iguaçu\./)
+  assert.match(pt, /Não se abrigue debaixo de árvores\. Evite usar aparelhos ligados na tomada\./)
+  assert.doesNotMatch(pt, /Outra/)
+  assert.match(fraseDoAlerta(a, 'es', 'Foz'), /^Alerta de tormenta, nivel peligro, en Foz\./)
+  assert.match(fraseDoAlerta(a, 'en', 'Foz'), /^Thunderstorm alert, danger level, in Foz\./)
+  assert.equal(eventoNoIdioma('Tempestade de neve', 'en'), 'winter storm')
+  const lugar = { id: 'l', nome: 'Lima', pais: 'Peru', latitude: 0, longitude: 0, nivel: null, alertas: [], previsao: [] }
+  assert.match(fraseDoLugar(lugar, 'pt'), /Lima: sem alertas oficiais/)
+  assert.match(fraseDoLugar(lugar, 'es'), /Lima: sin alertas oficiales/)
 })

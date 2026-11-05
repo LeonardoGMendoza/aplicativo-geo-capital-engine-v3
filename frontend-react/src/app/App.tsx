@@ -12,6 +12,8 @@ import { IntelligencePage } from '@/features/intelligence/IntelligencePage'
 import { ClimatePage } from '@/features/climate/ClimatePage'
 import { QrPage } from '@/features/citizen/QrPage'
 import { AlertasPage } from '@/features/alerts/AlertasPage'
+import { AlertasOficiaisPage } from '@/features/oficiais/OficiaisSecao'
+import { ModoAcessivelPage } from '@/features/acessivel/ModoAcessivel'
 import { NasaSessionProvider } from '@/features/nasa/NasaSession'
 import { navigation } from '@/app/navigation'
 import { Button } from '@/components/ui/button'
@@ -38,18 +40,21 @@ export function App() {
       <Route path="/cidadao" element={<CitizenPage />} />
       {/* Preparar e usar sem internet: guias, kit, plano da família e locais guardados no celular */}
       <Route path="/preparar" element={<PrepararPage />} />
+      {/* Modo acessível: perguntar falando e ouvir a resposta (idosos, baixa visão, pouca leitura) */}
+      <Route path="/cidadao/acessivel" element={<ModoAcessivelPage />} />
       {/* A consulta NASA roda só nas telas da central, não na tela do cidadão */}
       <Route element={<NasaSessionProvider><AppLayout /></NasaSessionProvider>}>
         <Route index element={<OperationsPage />} />
         <Route path="/alertas" element={<AlertasPage />} />
         <Route path="/mapa" element={<RiskMapPage />} />
+        <Route path="/alertas-oficiais" element={<AlertasOficiaisPage />} />
         <Route path="/corporativo" element={<CorporatePage />} />
         <Route path="/comunidade" element={<CommunityPage />} />
         <Route path="/abrigos" element={<SheltersPage />} />
         <Route path="/inteligencia" element={<IntelligencePage />} />
         <Route path="/clima" element={<ClimatePage />} />
         <Route path="/qrcode" element={<QrPage />} />
-        {navigation.slice(1).filter(item => !['/alertas', '/mapa', '/corporativo', '/comunidade', '/abrigos', '/inteligencia', '/clima', '/qrcode'].includes(item.path)).map((item) => <Route key={item.path} path={item.path} element={<ReservedPage title={item.label} description={item.description} />} />)}
+        {navigation.slice(1).filter(item => !['/alertas', '/mapa', '/alertas-oficiais', '/corporativo', '/comunidade', '/abrigos', '/inteligencia', '/clima', '/qrcode'].includes(item.path)).map((item) => <Route key={item.path} path={item.path} element={<ReservedPage title={item.label} description={item.description} />} />)}
         <Route path="*" element={<ReservedPage title="Página não encontrada" description="Este endereço não corresponde a uma área do protótipo." />} />
       </Route>
     </Routes>

@@ -1,0 +1,39 @@
+/* Modo acessível: letras grandes, alto contraste, botões enormes (mínimo 64 px de altura). */
+.ac-app { min-height: 100vh; background: #fff; color: #0b1724; font-family: "Segoe UI", system-ui, sans-serif; }
+.ac-topo { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #06243a; color: #fff; flex-wrap: wrap; }
+.ac-voltar { display: inline-flex; align-items: center; gap: 6px; font-size: 18px; font-weight: 700; color: #fff; text-decoration: none; padding: 8px 10px; border: 2px solid #ffffff55; border-radius: 10px; }
+.ac-voltar svg { width: 22px; height: 22px; }
+.ac-marca { font-size: 20px; font-weight: 800; }
+.ac-sub { font-size: 15px; color: #c9dce8; }
+.ac-idioma { margin-left: auto; }
+.ac-idioma select { font-size: 17px; font-weight: 700; color: #06243a; background: #fff; border-radius: 10px; padding: 8px 10px; }
+.ac-main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.ac-emergencia { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ac-emergencia a { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 84px; border-radius: 14px; background: #b91c1c; color: #fff; font-size: 17px; font-weight: 700; text-decoration: none; }
+.ac-emergencia strong { font-size: 34px; line-height: 1; }
+.ac-mic { display: flex; align-items: center; justify-content: center; gap: 14px; min-height: 120px; border-radius: 20px; background: #06243a; color: #fff; font-size: 26px; font-weight: 800; padding: 16px; }
+.ac-mic svg { width: 48px; height: 48px; flex-shrink: 0; }
+.ac-mic.is-ouvindo { background: #0e7a52; box-shadow: 0 0 0 6px #0e7a5240; }
+.ac-mic:disabled { opacity: .75; }
+.ac-escrever { display: flex; flex-direction: column; gap: 8px; }
+.ac-escrever label { font-size: 20px; font-weight: 800; }
+.ac-escrever textarea { font-size: 22px; border: 3px solid #06243a; border-radius: 14px; padding: 12px; font-family: inherit; }
+.ac-escrever button { min-height: 72px; border-radius: 16px; background: #06243a; color: #fff; font-size: 24px; font-weight: 800; }
+.ac-escrever button:disabled { opacity: .5; }
+.ac-pergunta { font-size: 20px; color: #36536b; }
+.ac-msg { font-size: 20px; font-weight: 700; color: #8a4b00; background: #fff7ed; border: 2px solid #f59e0b; border-radius: 12px; padding: 12px; }
+.ac-resposta { border: 3px solid #06243a; border-radius: 16px; padding: 16px; }
+.ac-resposta h1 { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+.ac-resposta p { font-size: 22px; line-height: 1.55; }
+.ac-resposta-acoes { margin-top: 12px; }
+.ac-resposta-acoes button { display: inline-flex; align-items: center; gap: 10px; min-height: 64px; padding: 0 22px; border-radius: 14px; background: #0b5d7a; color: #fff; font-size: 21px; font-weight: 800; }
+.ac-resposta-acoes svg { width: 28px; height: 28px; }
+.ac-resposta .ac-fonte { font-size: 15px; color: #5b6b7a; margin-top: 10px; }
+.ac-lugares { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 80px; border-radius: 16px; border: 3px solid #0b5d7a; background: #eef7fb; color: #0b3b52; font-size: 22px; font-weight: 800; }
+.ac-lugares svg { width: 30px; height: 30px; }
+.ac-titulo { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+.ac-atalhos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ac-atalhos button { display: flex; align-items: center; gap: 10px; min-height: 84px; padding: 10px 14px; border-radius: 16px; border: 3px solid #c9dbe6; background: #f4f9fc; font-size: 21px; font-weight: 800; text-align: left; color: #0b1724; }
+.ac-atalhos button span { font-size: 30px; }
+.ac-nota { font-size: 15px; color: #5b6b7a; }
+@media (max-width: 420px) { .ac-atalhos { grid-template-columns: 1fr; } .ac-mic { font-size: 22px; } }

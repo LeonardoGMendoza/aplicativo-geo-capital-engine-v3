@@ -259,7 +259,7 @@ def _poligono_livre(valor):
 def _alerta(**campos):
     base = {"id": None, "fonte": None, "fonteUrl": None, "pais": None, "regiao": "mundo", "evento": None, "eventoOriginal": None,
             "severidade": "severo", "quando": "agora", "inicio": None, "fim": None, "area": None, "titulo": None,
-            "descricao": None, "instrucao": None, "latitude": None, "longitude": None, "poligono": None, "link": None}
+            "descricao": None, "instrucao": None, "latitude": None, "longitude": None, "poligono": None, "link": None, "ufs": []}
     base.update(campos)
     if base["poligono"] and base["latitude"] is None:
         base["latitude"], base["longitude"] = _centro(base["poligono"])
@@ -288,6 +288,18 @@ def _nomes(valor):
     if isinstance(valor, list):
         return [str(_campo(v, "nome", "municipio", "name") or "") if isinstance(v, dict) else str(v) for v in valor]
     return valor
+
+
+UFS = {"AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+       "RS", "RO", "RR", "SC", "SP", "SE", "TO"}
+
+
+def ufs_do_texto(*textos):
+    """Siglas dos estados citadas no aviso ("SC, PR" ou "Chapecó - SC (4204202)")."""
+    achadas = set()
+    for t in textos:
+        achadas |= {m for m in re.findall(r"\b([A-Z]{2})\b", str(_nomes(t) or "")) if m in UFS}
+    return sorted(achadas)
 
 
 def _area_inmet(estados, municipios):
@@ -333,6 +345,7 @@ def parse_inmet_json(dados, agora=None):
                 evento=evento, eventoOriginal=evento, severidade=severidade,
                 quando=quando_grupo or _quando(inicio, agora), inicio=inicio, fim=fim,
                 area=_area_inmet(_campo(item, "estados", "ufs"), municipios),
+                ufs=ufs_do_texto(_campo(item, "estados", "ufs"), municipios),
                 titulo=f"{evento} · {sev_txt.title() or severidade}",
                 descricao=_texto(_campo(item, "riscos", "risco", "description"), 600),
                 instrucao=_texto(_campo(item, "instrucoes", "instrucao", "instruction"), 500),
@@ -381,6 +394,7 @@ def parse_cap(xml_texto, fonte, fonte_url, pais, regiao, agora=None, link=None):
         id=f"{fonte.lower()}-{ident}"[:120], fonte=fonte, fonteUrl=fonte_url, pais=pais, regiao=regiao,
         evento=evento, eventoOriginal=evento, severidade=severidade, quando=_quando(inicio, agora), inicio=inicio, fim=fim,
         area=_texto([a.findtext(f"{p}areaDesc", "", ns) for a in areas], 400), titulo=_texto(t("headline"), 200) or evento,
+        ufs=ufs_do_texto(*[a.findtext(f"{p}areaDesc", "", ns) for a in areas]) if pais == "Brasil" else [],
         descricao=_texto(t("description"), 600), instrucao=_texto(t("instruction"), 500), poligono=poligono,
         link=t("web") if (t("web") or "").startswith("https://") else link,
     )]

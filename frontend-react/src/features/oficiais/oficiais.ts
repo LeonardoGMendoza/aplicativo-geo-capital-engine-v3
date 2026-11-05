@@ -7,6 +7,7 @@ export type AlertaOficial = {
   id: string; fonte: string; fonteUrl: string | null; pais: string | null; regiao: Regiao; evento: string; eventoOriginal: string | null
   severidade: Nivel; quando: 'agora' | 'vem'; inicio: string | null; fim: string | null; area: string | null; titulo: string | null
   descricao: string | null; instrucao: string | null; latitude: number | null; longitude: number | null; poligono: [number, number][] | null; link: string | null
+  ufs?: string[]
 }
 export type AlertaResumo = Pick<AlertaOficial, 'id' | 'evento' | 'severidade' | 'quando' | 'fonte' | 'inicio' | 'fim' | 'area' | 'instrucao' | 'link'>
 export type DiaPrevisao = { data: string; nivel: Nivel | null; motivos: string[]; codigo: number | null; tmax: number | null; tmin: number | null; chuva: number | null; rajada: number | null }
@@ -123,7 +124,8 @@ export function quandoTexto(a: Pick<AlertaOficial, 'quando' | 'inicio' | 'fim'>,
     const d = new Date(iso)
     if (Number.isNaN(d.getTime())) return null
     const mesmoDia = d.toDateString() === agora.toDateString()
-    return mesmoDia ? `hoje ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : d.toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+    const h = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    return mesmoDia ? `hoje às ${h}` : `${d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')} ${String(d.getDate()).padStart(2, '0')} às ${h}`
   }
   if (a.quando === 'vem' && a.inicio) return `Começa ${fmt(a.inicio) ?? 'em breve'}`
   return a.fim && fmt(a.fim) ? `Até ${fmt(a.fim)}` : 'Em andamento'
@@ -142,4 +144,45 @@ export function fraseCidade(c: ResumoLugar) {
 export function seloCidade(c: Pick<ResumoLugar, 'nivel' | 'nivelOficial'>) {
   if (!c.nivel) return 'Tranquilo'
   return c.nivelOficial === c.nivel ? `${ROTULO_NIVEL[c.nivel]} · oficial` : `${ROTULO_NIVEL[c.nivel]} · previsão`
+}
+
+// ---------- Tabela por estado (estilo MeteoAlarm) ----------
+export type Tipo = 'tempestade' | 'chuva' | 'vento' | 'calor' | 'frio' | 'outro'
+export const TIPOS: { id: Exclude<Tipo, 'outro'>; nome: string }[] = [
+  { id: 'tempestade', nome: 'Tempestade' }, { id: 'chuva', nome: 'Chuva' }, { id: 'vento', nome: 'Vento' },
+  { id: 'calor', nome: 'Calor e seca' }, { id: 'frio', nome: 'Frio' },
+]
+export function tipoDoAlerta(evento: string | null): Tipo {
+  const t = (evento ?? '').toLowerCase()
+  if (/tempestade(?! de neve)|tornado|granizo|trovoada|thunder/.test(t)) return 'tempestade'
+  if (/chuva|enchente|enxurrada|inunda|alagamento|flood|rain/.test(t)) return 'chuva'
+  if (/vento|vendaval|ventania|ciclone|wind/.test(t)) return 'vento'
+  if (/calor|umidade|seca|estiagem|incêndio|heat|fire/.test(t)) return 'calor'
+  if (/frio|geada|temperatura|neve|nevasca|cold|snow|frost/.test(t)) return 'frio'
+  return 'outro'
+}
+
+export const ESTADOS: Record<string, string> = {
+  AC: 'Acre', AL: 'Alagoas', AP: 'Amapá', AM: 'Amazonas', BA: 'Bahia', CE: 'Ceará', DF: 'Distrito Federal', ES: 'Espírito Santo',
+  GO: 'Goiás', MA: 'Maranhão', MT: 'Mato Grosso', MS: 'Mato Grosso do Sul', MG: 'Minas Gerais', PA: 'Pará', PB: 'Paraíba', PR: 'Paraná',
+  PE: 'Pernambuco', PI: 'Piauí', RJ: 'Rio de Janeiro', RN: 'Rio Grande do Norte', RS: 'Rio Grande do Sul', RO: 'Rondônia', RR: 'Roraima',
+  SC: 'Santa Catarina', SP: 'São Paulo', SE: 'Sergipe', TO: 'Tocantins',
+}
+export type LinhaUF = { uf: string; nome: string; tipos: Partial<Record<Tipo, Nivel>>; max: Nivel | null; alertas: string[] }
+
+/** Uma linha por estado, com o nível mais alto de cada tipo de aviso. Estados com aviso primeiro (mais grave no topo). */
+export function tabelaPorEstado(alertas: AlertaOficial[]): LinhaUF[] {
+  const linhas = new Map(Object.entries(ESTADOS).map(([uf, nome]) => [uf, { uf, nome, tipos: {}, max: null, alertas: [] } as LinhaUF]))
+  for (const a of alertas) {
+    for (const uf of a.ufs ?? []) {
+      const l = linhas.get(uf)
+      if (!l) continue
+      const tipo = tipoDoAlerta(a.evento)
+      const atual = l.tipos[tipo]
+      if (!atual || ORDEM[a.severidade] < ORDEM[atual]) l.tipos[tipo] = a.severidade
+      if (!l.max || ORDEM[a.severidade] < ORDEM[l.max]) l.max = a.severidade
+      l.alertas.push(a.id)
+    }
+  }
+  return [...linhas.values()].sort((a, b) => (a.max ? ORDEM[a.max] : 9) - (b.max ? ORDEM[b.max] : 9) || a.nome.localeCompare(b.nome, 'pt-BR'))
 }

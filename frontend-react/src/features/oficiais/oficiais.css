@@ -1,31 +1,105 @@
-/* Alertas oficiais + Meus lugares (Mapa de Riscos) */
-.ofc-faixa { background: #fef2f2; border: 2px solid #b91c1c; color: #7f1d1d; border-radius: 10px; padding: 8px 10px; font-size: 14px; }
-.ofc-cidades { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; }
-.ofc-cidade { border: 2px solid; border-left-width: 8px; border-radius: 12px; background: #fff; padding: 8px 10px; }
-.ofc-cidade summary { list-style: none; cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
-.ofc-cidade summary::-webkit-details-marker { display: none; }
-.ofc-cidade-topo { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 15px; }
-.ofc-selo { color: #fff; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
-.ofc-cidade-frase { font-size: 13px; font-weight: 600; color: #0b2235; }
-.ofc-dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: 2px; }
-.ofc-dia { display: flex; flex-direction: column; align-items: center; font-size: 16px; line-height: 1.1; }
-.ofc-dia small { font-size: 10px; line-height: 1.15; text-align: center; color: #36536b; white-space: nowrap; }
-.ofc-pais { font-size: 12px; font-weight: 600; color: #64748b; }
-.ofc-dia i { display: block; width: 8px; height: 8px; border-radius: 999px; margin-top: 2px; }
-.ofc-dia i.is-ok { background: #cbd5e1; }
-.ofc-cidade-detalhe { margin-top: 6px; border-top: 1px solid #e2ecf2; padding-top: 6px; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
-.ofc-nota { color: #64748b; font-size: 11px; }
-.ofc-mapa { height: 340px; }
-@media (min-width: 640px) { .ofc-mapa { height: 440px; } }
-.ofc-listas { max-height: 440px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 4px; border-radius: 8px; background: #f4f9fc; }
-.ofc-listas h3 { font-size: 14px; font-weight: 800; margin-top: 4px; color: #0b2235; }
-.ofc-listas h3 small { font-weight: 600; color: #64748b; }
-.ofc-item { display: flex; flex-direction: column; gap: 1px; text-align: left; background: #fff; border: 1px solid #e2ecf2; border-left: 6px solid; border-radius: 8px; padding: 6px 8px; font-size: 12px; }
-.ofc-item.is-ativo { box-shadow: 0 0 0 2px #0b2235; }
-.ofc-item-titulo { font-weight: 800; font-size: 13px; color: #0b2235; }
-.ofc-item-info { font-weight: 700; }
-.ofc-item-area { color: #475569; }
-.ofc-selecionado { border: 2px solid; border-radius: 10px; padding: 8px 10px; font-size: 13px; display: flex; flex-direction: column; gap: 4px; background: #fff; }
-.ofc-selecionado a { font-weight: 700; color: #087b88; }
-.ofc-casa-icon { background: none; border: 0; }
-.ofc-casa { display: block; font-size: 20px; line-height: 28px; text-align: center; filter: drop-shadow(0 0 2px #fff); }
+/* Alertas oficiais: visual sóbrio no padrão dos serviços oficiais (NWS, MeteoAlarm, INMET). */
+.ofc { --ink: #0f2233; --muted: #5b6b7a; --line: #dde4ea; --navy: #06243a; color: var(--ink); }
+.ofc-painel { background: #fff; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.ofc-painel-topo { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 11px 16px; border-bottom: 1px solid var(--line); background: #fbfcfd; }
+.ofc-painel-topo h2 { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--navy); }
+.ofc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); }
+.ofc-idioma { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #c7d2db; border-radius: 4px; padding: 2px 6px; color: var(--ink); }
+.ofc-idioma select { background: transparent; font-size: 12px; outline: none; }
+.ofc-vazio { padding: 14px 16px; font-size: 13px; color: var(--muted); }
+.ofc-editor { padding: 10px 16px 14px; border-top: 1px solid var(--line); }
+
+/* Cartões dos lugares */
+.ofc-lugares { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
+.ofc-lugar { position: relative; padding: 14px 16px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; }
+.ofc-lugar::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--c); }
+.ofc-lugar-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.ofc-lugar-topo h3 { font-size: 16px; font-weight: 600; line-height: 1.2; }
+.ofc-lugar-topo p { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.ofc-selo { font-size: 10.5px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; padding: 3px 7px; border-radius: 3px; color: #fff; background: var(--c); white-space: nowrap; }
+.ofc-selo.is-claro { color: #3b2a00; }
+.ofc-lugar-status { margin-top: 9px; font-size: 13px; line-height: 1.45; min-height: 38px; }
+.ofc-fonte { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; margin-right: 6px; vertical-align: 1px; }
+.ofc-dias { display: grid; grid-template-columns: repeat(7, 1fr); margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+.ofc-dias li { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: var(--muted); }
+.ofc-dia-sem { font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; }
+.ofc-dia-num { font-size: 11px; }
+.ofc-dia-icone { width: 18px; height: 18px; color: #4a5d6e; margin: 4px 0 3px; }
+.ofc-dia-temp { font-size: 11.5px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.ofc-dia-temp small { font-weight: 400; color: var(--muted); font-size: 11px; }
+.ofc-dia-barra { display: block; width: 70%; height: 4px; border-radius: 2px; margin-top: 5px; background: #e6ebef; }
+.ofc-lugar-acoes { margin-top: 8px; display: flex; justify-content: flex-end; }
+.ofc-ouvir { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--navy); border: 1px solid #c7d2db; background: #fff; border-radius: 4px; padding: 5px 10px; min-height: 32px; }
+.ofc-ouvir:hover { background: #f1f5f8; }
+.ofc-ouvir[aria-pressed=true] { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+/* Barra de filtros */
+.ofc-fontes { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.ofc-fontes li { display: flex; align-items: center; gap: 5px; }
+.ofc-ponto { width: 8px; height: 8px; border-radius: 50%; background: #2e7d32; }
+.ofc-ponto.is-antigo { background: #ef6c00; }
+.ofc-ponto.is-indisponivel { background: #c62828; }
+.ofc-barra { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.ofc-seg { display: inline-flex; flex-wrap: wrap; border: 1px solid #c7d2db; border-radius: 4px; overflow: hidden; }
+.ofc-seg button { font-size: 12.5px; padding: 6px 12px; border-right: 1px solid #c7d2db; color: var(--ink); background: #fff; display: inline-flex; align-items: center; gap: 6px; }
+.ofc-seg button:last-child { border-right: 0; }
+.ofc-seg button[aria-pressed=true] { background: var(--navy); color: #fff; font-weight: 600; }
+.ofc-seg button span { font-size: 11px; background: #e9eef2; color: var(--ink); border-radius: 8px; padding: 0 6px; }
+.ofc-seg button[aria-pressed=true] span { background: #ffffff26; color: #fff; }
+.ofc-legenda { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); align-items: center; }
+.ofc-legenda i { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.ofc-legenda label { display: inline-flex; align-items: center; gap: 4px; }
+.ofc-aviso-fonte { font-size: 12px; color: #8a4b00; background: #fff7ed; padding: 6px 16px; border-bottom: 1px solid var(--line); }
+
+/* Mapa + lista */
+.ofc-corpo { display: grid; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1024px) { .ofc-corpo { grid-template-columns: minmax(0, 1fr) 440px; } }
+.ofc-mapa { height: 360px; }
+@media (min-width: 640px) { .ofc-mapa { height: 460px; } }
+.ofc-mapa .leaflet-tile-pane { filter: saturate(.55) brightness(1.04); }
+.ofc-lista { max-height: 460px; overflow-y: auto; border-left: 1px solid var(--line); }
+.ofc-filtro { font-size: 12px; padding: 6px 14px; background: #f3f7fa; border-bottom: 1px solid var(--line); }
+.ofc-filtro button { color: #0a6c8a; font-weight: 600; margin-left: 6px; }
+.ofc-linha { width: 100%; display: grid; grid-template-columns: 4px 34px minmax(0, 1fr) auto; gap: 0 10px; align-items: center; text-align: left; padding: 9px 14px 9px 0; border-bottom: 1px solid #edf1f4; background: #fff; }
+.ofc-linha::before { content: ""; align-self: stretch; background: var(--c); }
+.ofc-linha:hover { background: #f7f9fb; }
+.ofc-linha.is-ativo { background: #eef4f8; }
+.ofc-linha-icone { width: 34px; height: 34px; border-radius: 4px; display: grid; place-items: center; color: var(--c); background: color-mix(in srgb, var(--c) 13%, #fff); }
+.ofc-linha-texto { min-width: 0; display: flex; flex-direction: column; }
+.ofc-linha-texto b { font-size: 13.5px; font-weight: 600; line-height: 1.25; }
+.ofc-linha-texto small { font-size: 12px; color: var(--muted); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ofc-linha-tempo { text-align: right; font-size: 12px; font-weight: 600; white-space: nowrap; display: flex; flex-direction: column; }
+.ofc-linha-tempo small { font-weight: 500; color: var(--muted); font-size: 10.5px; letter-spacing: .4px; text-transform: uppercase; margin-top: 2px; }
+
+/* Detalhe do aviso */
+.ofc-detalhe { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px 24px; padding: 14px 16px; border-top: 1px solid var(--line); background: #fbfcfd; font-size: 13px; line-height: 1.5; }
+@media (min-width: 1024px) { .ofc-detalhe { grid-template-columns: 2fr 1.3fr 1.2fr; } }
+.ofc-detalhe-titulo { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+.ofc-detalhe h4 { font-size: 11px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.ofc-detalhe summary { cursor: pointer; font-size: 12px; color: #0a6c8a; font-weight: 600; }
+.ofc-areas { max-height: 120px; overflow-y: auto; font-size: 12px; color: var(--muted); }
+.ofc-link { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; color: #0a6c8a; font-weight: 600; }
+
+/* Tabela por estado (estilo MeteoAlarm) */
+.ofc-tabela-wrap { border-top: 1px solid var(--line); padding: 12px 16px 6px; overflow-x: auto; }
+.ofc-bloco-titulo h3 { font-size: 12px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--navy); }
+.ofc-bloco-titulo p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.ofc-tabela { width: 100%; min-width: 560px; border-collapse: collapse; margin-top: 8px; }
+.ofc-tabela th { font-size: 10.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: var(--muted); text-align: center; padding: 5px 4px; border-bottom: 1px solid var(--line); }
+.ofc-tabela td { padding: 3px 4px; border-bottom: 1px solid #eef2f5; text-align: center; }
+.ofc-tabela .is-esq { text-align: left; }
+.ofc-tabela tr { cursor: pointer; }
+.ofc-tabela tbody tr:hover, .ofc-tabela tr.is-ativo { background: #f3f7fa; }
+.ofc-uf { display: inline-block; width: 40px; font-weight: 700; font-size: 12px; border-left: 5px solid; padding-left: 6px; text-align: left; }
+.ofc-uf-nome { font-size: 13px; text-align: left; }
+.ofc-cel { display: inline-grid; place-items: center; width: 32px; height: 24px; border-radius: 3px; color: #fff; }
+.ofc-cel.is-claro { color: #3b2a00; }
+.ofc-cel.is-vazia { background: #e4f1e6; }
+.ofc-ver-todos { margin: 8px 0 6px; font-size: 12.5px; font-weight: 600; color: #0a6c8a; }
+.ofc-rodape { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; padding: 9px 16px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--muted); }
+
+/* Marcadores dos lugares no mapa */
+.ofc-pin-icon { background: none; border: 0; }
+.ofc-pin { display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); position: absolute; left: 0; top: 0; }
+.ofc-pin b { background: #06243a; color: #fff; font: 600 11px/1.4 "Segoe UI", system-ui, sans-serif; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
+.ofc-pin i { width: 10px; height: 10px; border-radius: 50%; background: #06243a; border: 2px solid #fff; margin-top: 2px; box-shadow: 0 0 0 1px #06243a; }

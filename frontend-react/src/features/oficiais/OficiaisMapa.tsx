@@ -3,7 +3,8 @@ import { divIcon, latLngBounds } from 'leaflet'
 import { CircleMarker, MapContainer, Marker, Polygon, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { AlertaOficial, ResumoLugar } from './oficiais'
-import { BANDEIRA, COR_NIVEL, emojiEvento, quandoTexto, ROTULO_NIVEL } from './oficiais'
+import { COR_NIVEL, quandoTexto, ROTULO_NIVEL } from './oficiais'
+import { IconeEvento } from './icones'
 
 function Foco({ alerta }: { alerta: AlertaOficial | null }) {
   const map = useMap()
@@ -22,7 +23,7 @@ function Foco({ alerta }: { alerta: AlertaOficial | null }) {
 
 function Detalhe({ a }: { a: AlertaOficial }) {
   return <div className="space-y-1 text-xs">
-    <strong className="text-sm">{emojiEvento(a.evento)} {a.evento}</strong>
+    <strong className="flex items-center gap-1.5 text-sm"><IconeEvento evento={a.evento} className="size-4" />{a.evento}</strong>
     <p style={{ color: COR_NIVEL[a.severidade] }} className="font-semibold">● {ROTULO_NIVEL[a.severidade]} · {quandoTexto(a)}</p>
     {a.area && <p>{a.area.length > 220 ? `${a.area.slice(0, 220)}…` : a.area}</p>}
     {a.instrucao && <p><b>O que fazer:</b> {a.instrucao.length > 220 ? `${a.instrucao.slice(0, 220)}…` : a.instrucao}</p>}
@@ -31,7 +32,9 @@ function Detalhe({ a }: { a: AlertaOficial }) {
 }
 
 export default function OficiaisMapa({ alertas, lugares, selecionado, onSelect }: { alertas: AlertaOficial[]; lugares: ResumoLugar[]; selecionado: AlertaOficial | null; onSelect: (id: string) => void }) {
-  const casa = useMemo(() => divIcon({ className: 'ofc-casa-icon', iconSize: [28, 28], iconAnchor: [14, 14], html: '<span class="ofc-casa">🏠</span>' }), [])
+  // Etiqueta escura com o nome do lugar (o texto é escapado: vem do aparelho da pessoa)
+  const etiqueta = (nome: string) => divIcon({ className: 'ofc-pin-icon', iconSize: [0, 0], iconAnchor: [0, 0],
+    html: `<span class="ofc-pin"><b>${nome.replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`)}</b><i></i></span>` })
   // Os mais graves por cima
   const ordenados = useMemo(() => [...alertas].sort((a, b) => (b.severidade === 'extremo' ? 0 : b.severidade === 'severo' ? 1 : 2) - (a.severidade === 'extremo' ? 0 : a.severidade === 'severo' ? 1 : 2)), [alertas])
   return <div role="region" aria-label="Mapa dos alertas oficiais e dos meus lugares" className="ofc-mapa relative isolate z-0 overflow-hidden rounded border">
@@ -41,16 +44,14 @@ export default function OficiaisMapa({ alertas, lugares, selecionado, onSelect }
         const cor = COR_NIVEL[a.severidade]
         const ativo = selecionado?.id === a.id
         if (a.poligono?.length) return <Polygon key={a.id} positions={a.poligono} pathOptions={{ color: cor, weight: ativo ? 4 : 2, fillColor: cor, fillOpacity: ativo ? 0.45 : 0.25 }} eventHandlers={{ click: () => onSelect(a.id) }}>
-          <Tooltip sticky>{emojiEvento(a.evento)} {a.evento}</Tooltip><Popup maxWidth={260}><Detalhe a={a} /></Popup>
+          <Tooltip sticky>{a.evento} · {ROTULO_NIVEL[a.severidade]}</Tooltip><Popup maxWidth={260}><Detalhe a={a} /></Popup>
         </Polygon>
         if (a.latitude == null || a.longitude == null) return null
         return <CircleMarker key={a.id} center={[a.latitude, a.longitude]} radius={ativo ? 13 : 9} pathOptions={{ color: '#fff', weight: 2, fillColor: cor, fillOpacity: 0.9 }} eventHandlers={{ click: () => onSelect(a.id) }}>
-          <Tooltip>{emojiEvento(a.evento)} {a.evento}{a.pais ? ` · ${a.pais}` : ''}</Tooltip><Popup maxWidth={260}><Detalhe a={a} /></Popup>
+          <Tooltip>{a.evento}{a.pais ? ` · ${a.pais}` : ''} · {ROTULO_NIVEL[a.severidade]}</Tooltip><Popup maxWidth={260}><Detalhe a={a} /></Popup>
         </CircleMarker>
       })}
-      {lugares.map(c => <Marker key={c.id} position={[c.latitude, c.longitude]} icon={casa} title={`Meu lugar: ${c.nome}`}>
-        <Tooltip direction="top">{BANDEIRA[c.pais] ?? ''} {c.nome}</Tooltip>
-      </Marker>)}
+      {lugares.map(c => <Marker key={c.id} position={[c.latitude, c.longitude]} icon={etiqueta(c.nome)} title={`Meu lugar: ${c.nome}`} />)}
       <Foco alerta={selecionado} />
     </MapContainer>
   </div>

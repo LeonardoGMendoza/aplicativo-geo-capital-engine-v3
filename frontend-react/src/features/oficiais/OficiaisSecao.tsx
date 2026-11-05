@@ -1,52 +1,135 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+// Painel "Alertas oficiais": visual no padrão dos serviços oficiais (NWS, MeteoAlarm, INMET).
+// Meus lugares no topo, tabela por estado, mapa pintado pelo nível e o detalhe do aviso com "Ouvir".
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
+import type { LucideIcon } from 'lucide-react'
+import { Cloud, CloudDrizzle, CloudFog, CloudLightning, CloudRain, CloudSun, ExternalLink, MapPin, ShieldAlert, Snowflake, Square, Sun, TriangleAlert, Volume2 } from 'lucide-react'
 import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import './oficiais.css'
-import type { AlertaOficial, Regiao, RespostaOficiais, ResumoLugar } from './oficiais'
+import type { AlertaOficial, Nivel, Regiao, RespostaOficiais, ResumoLugar } from './oficiais'
+import { buscarOficiais, COR_NIVEL, diaCurto, quandoTexto, REGIOES, ROTULO_NIVEL, separar, tabelaPorEstado, TIPOS } from './oficiais'
+import type { IdiomaVoz } from './voz'
+import { falar, fraseDoAlerta, fraseDoLugar, gravarIdiomaVoz, IDIOMAS_VOZ, lerIdiomaVoz, vozDisponivel } from './voz'
 import { MeusLugaresEditor, useMeusLugares } from '../lugares/MeusLugaresEditor'
-import { buscarOficiais, COR_NIVEL, diaCurto, diaDaSemana, emojiEvento, emojiTempo, fraseCidade, quandoTexto, REGIOES, ROTULO_NIVEL, seloCidade, separar } from './oficiais'
+import { IconeEvento } from './icones'
 
 const Mapa = lazy(() => import('./OficiaisMapa'))
 const ATUALIZAR_MS = 10 * 60 * 1000
+const COR_OK = '#2e7d32'
 
 function horario(iso: string) {
   const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-function CartaoCidade({ c }: { c: ResumoLugar }) {
-  const cor = c.nivel ? COR_NIVEL[c.nivel] : '#15803d'
-  return <details className="ofc-cidade" style={{ borderColor: cor }}>
-    <summary>
-      <span className="ofc-cidade-topo"><b>{c.nome}{c.pais ? <small className="ofc-pais"> · {c.pais}</small> : null}</b><span className="ofc-selo" style={{ background: cor }}>{seloCidade(c)}</span></span>
-      <span className="ofc-cidade-frase">{fraseCidade(c)}</span>
-      {c.previsao.length > 0 && <span className="ofc-dias" aria-label="Próximos 7 dias">{c.previsao.map(d => <span key={d.data} className="ofc-dia" title={d.motivos.join(' · ') || 'Sem perigo previsto'}>
-        <small>{diaCurto(d.data).semana}<br />{diaCurto(d.data).dia}</small><span>{emojiTempo(d.codigo)}</span>{d.nivel ? <i style={{ background: COR_NIVEL[d.nivel] }} /> : <i className="is-ok" />}
-      </span>)}</span>}
-    </summary>
-    <div className="ofc-cidade-detalhe">
-      {c.alertas.length === 0 && <p>Nenhum alerta oficial para esta cidade agora.</p>}
-      {c.alertas.map(a => <p key={a.id}><b style={{ color: COR_NIVEL[a.severidade] }}>{emojiEvento(a.evento)} {a.evento}</b> · {quandoTexto(a)} · {a.fonte}
-        {a.instrucao && <><br /><span>O que fazer: {a.instrucao}</span></>}</p>)}
-      {c.previsao.filter(d => d.nivel).map(d => <p key={d.data}><b style={{ color: COR_NIVEL[d.nivel!] }}>{diaDaSemana(d.data)}</b>: {d.motivos.join(' · ')}</p>)}
-      {c.previsao.length > 0 && <p className="ofc-nota">Previsão Open-Meteo (modelos meteorológicos). Não substitui o aviso oficial da Defesa Civil.</p>}
-    </div>
-  </details>
+function IconeTempo({ codigo }: { codigo: number | null }) {
+  const I: LucideIcon = codigo == null ? Cloud : codigo >= 95 ? CloudLightning : (codigo >= 71 && codigo <= 77) || codigo === 85 || codigo === 86 ? Snowflake
+    : (codigo >= 61 && codigo <= 67) || (codigo >= 80 && codigo <= 82) ? CloudRain : codigo >= 51 && codigo <= 57 ? CloudDrizzle
+    : codigo === 45 || codigo === 48 ? CloudFog : codigo <= 1 ? Sun : codigo === 2 ? CloudSun : Cloud
+  return <I className="ofc-dia-icone" aria-hidden="true" />
 }
 
-function ItemAlerta({ a, ativo, onSelect }: { a: AlertaOficial; ativo: boolean; onSelect: (id: string) => void }) {
-  return <button type="button" className={`ofc-item ${ativo ? 'is-ativo' : ''}`} style={{ borderLeftColor: COR_NIVEL[a.severidade] }} aria-pressed={ativo} onClick={() => onSelect(a.id)}>
-    <span className="ofc-item-titulo">{emojiEvento(a.evento)} {a.evento}{a.pais ? ` · ${a.pais}` : ''}</span>
-    <span className="ofc-item-info" style={{ color: COR_NIVEL[a.severidade] }}>{ROTULO_NIVEL[a.severidade]} · {quandoTexto(a)}</span>
-    {a.area && <span className="ofc-item-area">{a.area.length > 140 ? `${a.area.slice(0, 140)}…` : a.area}</span>}
+/** Botão "Ouvir": lê o texto com a voz do aparelho (funciona sem internet). */
+function BotaoOuvir({ texto, idioma, rotulo = 'Ouvir' }: { texto: () => string; idioma: IdiomaVoz; rotulo?: string }) {
+  const [falando, setFalando] = useState(false)
+  const parar = useRef<(() => void) | null>(null)
+  useEffect(() => () => parar.current?.(), [])
+  if (!vozDisponivel()) return null
+  function alternar() {
+    if (falando) { parar.current?.(); setFalando(false); return }
+    setFalando(true)
+    parar.current = falar(texto(), idioma, () => setFalando(false))
+  }
+  return <button type="button" className="ofc-ouvir" onClick={alternar} aria-pressed={falando} aria-label={falando ? 'Parar leitura' : `${rotulo} em voz alta`}>
+    {falando ? <Square className="size-3.5" aria-hidden="true" /> : <Volume2 className="size-4" aria-hidden="true" />}{falando ? 'Parar' : rotulo}
   </button>
+}
+
+function seloDoLugar(c: ResumoLugar) {
+  if (!c.nivel) return { texto: 'Normal', cor: COR_OK }
+  return { texto: ROTULO_NIVEL[c.nivel], cor: COR_NIVEL[c.nivel] }
+}
+
+function CartaoLugar({ c, idioma }: { c: ResumoLugar; idioma: IdiomaVoz }) {
+  const selo = seloDoLugar(c)
+  const a = c.alertas[0]
+  const pior = c.previsao.find(d => d.nivel)
+  return <article className="ofc-lugar" style={{ '--c': selo.cor } as CSSProperties}>
+    <header className="ofc-lugar-topo">
+      <div><h3>{c.nome}</h3><p>{c.pais ?? 'Meu lugar'}</p></div>
+      <span className={`ofc-selo ${c.nivel === 'moderado' ? 'is-claro' : ''}`}>{selo.texto}</span>
+    </header>
+    <p className="ofc-lugar-status">
+      {a ? <><span className="ofc-fonte">{a.fonte.split(' ')[0]}</span><b>{a.evento}</b> {a.quando === 'vem' ? quandoTexto(a).toLowerCase() : `em vigor · ${quandoTexto(a).toLowerCase()}`}.</>
+        : pior ? <><span className="ofc-fonte">Previsão</span>{pior.motivos[0]} ({diaCurto(pior.data).semana.toLowerCase()} {diaCurto(pior.data).dia}).</>
+          : 'Sem alertas oficiais. Nenhum perigo previsto para os próximos 7 dias.'}
+    </p>
+    {c.previsao.length > 0 && <ol className="ofc-dias" aria-label="Próximos 7 dias">{c.previsao.map(d => <li key={d.data} title={d.motivos.join(' · ') || 'Sem perigo previsto'}>
+      <span className="ofc-dia-sem">{diaCurto(d.data).semana}</span><span className="ofc-dia-num">{diaCurto(d.data).dia}</span>
+      <IconeTempo codigo={d.codigo} />
+      <span className="ofc-dia-temp">{d.tmax != null ? `${Math.round(d.tmax)}°` : '–'}<small>/{d.tmin != null ? `${Math.round(d.tmin)}°` : '–'}</small></span>
+      <i className="ofc-dia-barra" style={d.nivel ? { background: COR_NIVEL[d.nivel] } : undefined} />
+    </li>)}</ol>}
+    <footer className="ofc-lugar-acoes"><BotaoOuvir texto={() => fraseDoLugar(c, idioma)} idioma={idioma} /></footer>
+  </article>
+}
+
+function CelulaUF({ nivel, tipo }: { nivel?: Nivel; tipo: string }) {
+  if (!nivel) return <td><span className="ofc-cel is-vazia" aria-label={`${tipo}: sem aviso`} /></td>
+  return <td><span className={`ofc-cel ${nivel === 'moderado' ? 'is-claro' : ''}`} style={{ background: COR_NIVEL[nivel] }} aria-label={`${tipo}: ${ROTULO_NIVEL[nivel]}`} title={`${tipo}: ${ROTULO_NIVEL[nivel]}`}>
+    <IconeEvento evento={tipo} className="size-3.5" /></span></td>
+}
+
+function TabelaEstados({ alertas, onEstado, estado }: { alertas: AlertaOficial[]; onEstado: (uf: string | null) => void; estado: string | null }) {
+  const todas = useMemo(() => tabelaPorEstado(alertas), [alertas])
+  const [verTodos, setVerTodos] = useState(false)
+  const comAviso = todas.filter(l => l.max).length
+  const linhas = verTodos ? todas : todas.filter(l => l.max || l.uf === estado)
+  return <div className="ofc-tabela-wrap">
+    <div className="ofc-bloco-titulo"><h3>Avisos em vigor por estado</h3><p>{comAviso} de 27 estados com aviso · cor = nível mais alto de cada tipo</p></div>
+    <table className="ofc-tabela">
+      <thead><tr><th scope="col">UF</th><th scope="col" className="is-esq">Estado</th>{TIPOS.map(t => <th key={t.id} scope="col">{t.nome}</th>)}</tr></thead>
+      <tbody>{linhas.map(l => <tr key={l.uf} className={estado === l.uf ? 'is-ativo' : ''} onClick={() => onEstado(estado === l.uf ? null : l.uf)}>
+        <td><span className="ofc-uf" style={{ borderLeftColor: l.max ? COR_NIVEL[l.max] : COR_OK }}>{l.uf}</span></td>
+        <td className="is-esq"><button type="button" className="ofc-uf-nome" aria-pressed={estado === l.uf}>{l.nome}</button></td>
+        {TIPOS.map(t => <CelulaUF key={t.id} nivel={l.tipos[t.id]} tipo={t.nome} />)}
+      </tr>)}</tbody>
+    </table>
+    <button type="button" className="ofc-ver-todos" onClick={() => setVerTodos(v => !v)}>{verTodos ? 'Mostrar só os estados com aviso' : `Ver os 27 estados (${27 - comAviso} sem aviso)`}</button>
+  </div>
+}
+
+function LinhaAlerta({ a, ativo, onSelect }: { a: AlertaOficial; ativo: boolean; onSelect: (id: string) => void }) {
+  return <button type="button" className={`ofc-linha ${ativo ? 'is-ativo' : ''}`} style={{ '--c': COR_NIVEL[a.severidade] } as CSSProperties} aria-pressed={ativo} onClick={() => onSelect(a.id)}>
+    <span className="ofc-linha-icone"><IconeEvento evento={a.evento} className="size-[18px]" /></span>
+    <span className="ofc-linha-texto"><b>{a.evento}{a.pais && a.regiao !== 'brasil' ? ` · ${a.pais}` : ''}</b><small>{a.area ? (a.area.length > 90 ? `${a.area.slice(0, 90)}…` : a.area) : '—'}</small></span>
+    <span className="ofc-linha-tempo">{quandoTexto(a)}<small>{a.fonte.split(' ')[0]}</small></span>
+  </button>
+}
+
+function Detalhe({ a, idioma }: { a: AlertaOficial; idioma: IdiomaVoz }) {
+  return <div className="ofc-detalhe" aria-live="polite">
+    <div>
+      <h3 className="ofc-detalhe-titulo"><IconeEvento evento={a.evento} className="size-5" /><span>{a.evento} · {ROTULO_NIVEL[a.severidade]}</span></h3>
+      <p>{a.descricao ?? a.titulo ?? 'Sem descrição na fonte oficial.'}</p>
+      <div className="mt-2"><BotaoOuvir texto={() => fraseDoAlerta(a, idioma)} idioma={idioma} rotulo="Ouvir alerta" /></div>
+    </div>
+    <div><h4>O que fazer</h4><p>{a.instrucao ?? 'Siga as orientações da Defesa Civil local. Em perigo, ligue 199.'}</p></div>
+    <div><h4>Vigência e fonte</h4><p>{quandoTexto(a)}<br />{a.fonte}</p>
+      {a.area && <details className="mt-1"><summary>Áreas atingidas</summary><p className="ofc-areas">{a.area}</p></details>}
+      {a.link && <a className="ofc-link" href={a.link} target="_blank" rel="noreferrer">Ver aviso oficial <ExternalLink className="size-3.5" aria-hidden="true" /></a>}</div>
+  </div>
 }
 
 export function OficiaisSecao() {
   const [dados, setDados] = useState<RespostaOficiais | null>(null)
   const [erro, setErro] = useState<string | null>(null)
-  const [regiao, setRegiao] = useState<'todos' | Regiao>('todos')
-  const [amarelos, setAmarelos] = useState(false)
+  const [regiao, setRegiao] = useState<'todos' | Regiao>('brasil')
+  const [aba, setAba] = useState<'agora' | 'vem'>('agora')
+  const [amarelos, setAmarelos] = useState(true)
+  const [estado, setEstado] = useState<string | null>(null)
   const [selecionadoId, setSelecionadoId] = useState<string | null>(null)
+  const [idioma, setIdioma] = useState<IdiomaVoz>(() => lerIdiomaVoz())
   const [lugares, setLugares] = useMeusLugares()
   const chaveLugares = lugares.map(l => `${l.id}:${l.latitude},${l.longitude}`).join('|')
   useEffect(() => {
@@ -56,64 +139,81 @@ export function OficiaisSecao() {
     const timer = setInterval(() => { abort.abort(); abort = new AbortController(); carregar() }, ATUALIZAR_MS)
     return () => { clearInterval(timer); abort.abort() }
   }, [chaveLugares]) // busca de novo quando a lista de lugares muda
-  const { agora, vem } = useMemo(() => separar(dados?.alertas ?? [], regiao, amarelos), [dados, regiao, amarelos])
-  const noMapa = useMemo(() => [...agora, ...vem], [agora, vem])
-  const selecionado = noMapa.find(a => a.id === selecionadoId) ?? null
-  const todosLugares = [...(dados?.lugares ?? []), ...(dados?.locaisPadrao ?? [])]
-  const emPerigo = todosLugares.filter(c => c.nivel === 'extremo' || c.nivel === 'severo')
-  const fora = (dados?.fontes ?? []).filter(f => f.estado !== 'sucesso')
 
-  return <>
-    {(dados?.locaisPadrao.length ?? 0) > 0 && <section className="light-panel space-y-2 p-3" aria-label="Locais monitorados">
-      <h2 className="text-lg font-semibold">🏛️ Locais monitorados</h2>
-      <p className="text-xs text-muted-foreground">Definidos por quem administra este Omni (por exemplo, a Defesa Civil da cidade).</p>
-      <div className="ofc-cidades">{dados!.locaisPadrao.map(c => <CartaoCidade key={c.id} c={c} />)}</div>
+  const doBrasil = useMemo(() => (dados?.alertas ?? []).filter(a => a.regiao === 'brasil' && a.quando === 'agora'), [dados])
+  const { agora, vem } = useMemo(() => separar(dados?.alertas ?? [], regiao, amarelos), [dados, regiao, amarelos])
+  const filtrarUF = (l: AlertaOficial[]) => estado ? l.filter(a => a.ufs?.includes(estado)) : l
+  const lista = filtrarUF(aba === 'agora' ? agora : vem)
+  const noMapa = useMemo(() => [...agora, ...vem], [agora, vem])
+  const selecionado = noMapa.find(a => a.id === selecionadoId) ?? lista[0] ?? null
+  const todosLugares = [...(dados?.lugares ?? []), ...(dados?.locaisPadrao ?? [])]
+  const fontes = dados?.fontes ?? []
+  function trocarIdioma(v: IdiomaVoz) { setIdioma(v); gravarIdiomaVoz(v) }
+
+  return <div className="ofc space-y-3">
+    {(dados?.locaisPadrao.length ?? 0) > 0 && <section className="ofc-painel" aria-label="Locais monitorados">
+      <header className="ofc-painel-topo"><h2><ShieldAlert className="size-4" aria-hidden="true" />Locais monitorados</h2><span className="ofc-meta">Definidos pela Defesa Civil desta instalação</span></header>
+      <div className="ofc-lugares">{dados!.locaisPadrao.map(c => <CartaoLugar key={c.id} c={c} idioma={idioma} />)}</div>
     </section>}
 
-    <section className="light-panel ofc-familia space-y-2 p-3" aria-label="Meus lugares: alertas e previsão">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-semibold">📍 Meus lugares</h2>
-        {dados && <span className="text-xs text-muted-foreground">{dados.guardado ? `Sem conexão · última cópia de ${horario(dados.obtidoEm)}` : `Atualizado ${horario(dados.obtidoEm)}`}</span>}
-      </div>
-      {emPerigo.length > 0 && <p role="alert" className="ofc-faixa">⚠️ Perigo agora ou nos próximos dias em: <b>{emPerigo.map(c => c.nome).join(', ')}</b>. Toque no lugar para ver o que fazer.</p>}
-      {lugares.length > 0 && !dados && !erro && <p role="status">Buscando alertas oficiais e previsão dos seus lugares…</p>}
-      {!dados && erro && <p role="status">{erro} Isso não indica ausência de risco.</p>}
-      {dados && dados.lugares.length > 0 && <div className="ofc-cidades">{dados.lugares.map(c => <CartaoCidade key={c.id} c={c} />)}</div>}
-      <MeusLugaresEditor lugares={lugares} onChange={setLugares} />
+    <section className="ofc-painel" aria-label="Meus lugares: alertas e previsão">
+      <header className="ofc-painel-topo">
+        <h2><MapPin className="size-4" aria-hidden="true" />Meus lugares</h2>
+        <div className="ofc-meta">
+          {dados && <span>{dados.guardado ? `Sem conexão · cópia de ${horario(dados.obtidoEm)}` : `Atualizado ${horario(dados.obtidoEm)}`}</span>}
+          {vozDisponivel() && <label className="ofc-idioma"><Volume2 className="size-3.5" aria-hidden="true" /><span className="sr-only">Idioma da voz</span>
+            <select value={idioma} onChange={e => trocarIdioma(e.target.value as IdiomaVoz)}>{IDIOMAS_VOZ.map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}</select></label>}
+        </div>
+      </header>
+      {lugares.length > 0 && !dados && !erro && <p className="ofc-vazio" role="status">Buscando alertas oficiais e previsão dos seus lugares…</p>}
+      {!dados && erro && <p className="ofc-vazio" role="status">{erro} Isso não indica ausência de risco.</p>}
+      {dados && dados.lugares.length > 0 && <div className="ofc-lugares">{dados.lugares.map(c => <CartaoLugar key={c.id} c={c} idioma={idioma} />)}</div>}
+      <div className="ofc-editor"><MeusLugaresEditor lugares={lugares} onChange={setLugares} /></div>
     </section>
 
-    <section className="light-panel space-y-2 p-3" aria-label="Alertas oficiais do mundo">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-semibold">🚨 Alertas oficiais: agora e vem aí</h2>
-        <span className="text-xs text-muted-foreground">INMET · NWS/NOAA · MeteoAlarm · Tsunami NOAA · USGS · GDACS</span>
-      </div>
-      <p className="text-xs">Tornado, temporal, vendaval, granizo, enchente, nevasca, tsunami e terremoto, direto dos serviços oficiais de cada país. <b>No Brasil, em perigo ligue 199 (Defesa Civil).</b></p>
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        {REGIOES.map(r => <button key={r.id} type="button" className="mini-select" aria-pressed={regiao === r.id} style={regiao === r.id ? { background: '#0b2235', color: '#fff' } : undefined} onClick={() => { setRegiao(r.id); setSelecionadoId(null) }}>{r.nome}</button>)}
-        <label className="flex items-center gap-1.5"><input type="checkbox" checked={amarelos} onChange={e => setAmarelos(e.target.checked)} />Mostrar também avisos amarelos</label>
-      </div>
-      {fora.length > 0 && <p role="status" className="text-xs text-amber-900">Fora do ar agora: {fora.map(f => `${f.nome}${f.estado === 'antigo' ? ' (mostrando a última lista)' : ''}`).join(' · ')}. Isso não indica ausência de risco.</p>}
-      <div className="grid min-w-0 gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(260px,380px)]">
-        <MapErrorBoundary message="Mapa indisponível. A lista ao lado continua valendo."><Suspense fallback={<p role="status" className="ofc-mapa flex items-center justify-center rounded border bg-secondary">Carregando mapa…</p>}>
-          <Mapa alertas={noMapa} lugares={todosLugares} selecionado={selecionado} onSelect={setSelecionadoId} />
-        </Suspense></MapErrorBoundary>
-        <div className="ofc-listas">
-          <h3>🔴 Acontecendo agora <small>({agora.length})</small></h3>
-          {dados && agora.length === 0 && <p className="text-xs">Nenhum alerta oficial ativo nesta região.</p>}
-          {agora.slice(0, 80).map(a => <ItemAlerta key={a.id} a={a} ativo={a.id === selecionadoId} onSelect={setSelecionadoId} />)}
-          <h3>🟠 Vem aí <small>({vem.length})</small></h3>
-          {dados && vem.length === 0 && <p className="text-xs">Nenhum aviso para as próximas horas/dias nesta região.</p>}
-          {vem.slice(0, 80).map(a => <ItemAlerta key={a.id} a={a} ativo={a.id === selecionadoId} onSelect={setSelecionadoId} />)}
+    <section className="ofc-painel" aria-label="Alertas oficiais">
+      <header className="ofc-painel-topo">
+        <h2><TriangleAlert className="size-4" aria-hidden="true" />Alertas oficiais</h2>
+        <ul className="ofc-fontes" aria-label="Situação das fontes">{fontes.map(f => <li key={f.id} title={f.estado === 'sucesso' ? 'Respondendo' : f.estado === 'antigo' ? 'Fora do ar: mostrando a última lista' : 'Fora do ar'}>
+          <i className={`ofc-ponto is-${f.estado}`} />{f.nome.split(' (')[0]}</li>)}</ul>
+      </header>
+      <div className="ofc-barra">
+        <div className="flex flex-wrap gap-2">
+          <div className="ofc-seg" role="group" aria-label="Quando">
+            <button type="button" aria-pressed={aba === 'agora'} onClick={() => { setAba('agora'); setSelecionadoId(null) }}>Em vigor<span>{filtrarUF(agora).length}</span></button>
+            <button type="button" aria-pressed={aba === 'vem'} onClick={() => { setAba('vem'); setSelecionadoId(null) }}>Próximos dias<span>{filtrarUF(vem).length}</span></button>
+          </div>
+          <div className="ofc-seg" role="group" aria-label="Região">
+            {REGIOES.map(r => <button key={r.id} type="button" aria-pressed={regiao === r.id} onClick={() => { setRegiao(r.id); setEstado(null); setSelecionadoId(null) }}>{r.nome}</button>)}
+          </div>
+        </div>
+        <div className="ofc-legenda">
+          {(['extremo', 'severo', 'moderado'] as Nivel[]).map(n => <span key={n}><i style={{ background: COR_NIVEL[n] }} />{ROTULO_NIVEL[n]}</span>)}
+          <label><input type="checkbox" checked={amarelos} onChange={e => setAmarelos(e.target.checked)} /> Incluir “Atenção”</label>
         </div>
       </div>
-      {selecionado && <div role="status" className="ofc-selecionado" style={{ borderColor: COR_NIVEL[selecionado.severidade] }}>
-        <strong>{emojiEvento(selecionado.evento)} {selecionado.titulo ?? selecionado.evento}</strong>
-        <p style={{ color: COR_NIVEL[selecionado.severidade] }}>{ROTULO_NIVEL[selecionado.severidade]} · {quandoTexto(selecionado)} · {selecionado.fonte}</p>
-        {selecionado.descricao && <p>{selecionado.descricao}</p>}
-        {selecionado.instrucao && <p><b>O que fazer:</b> {selecionado.instrucao}</p>}
-        {selecionado.area && <details><summary>Áreas atingidas</summary><p>{selecionado.area}</p></details>}
-        {selecionado.link && <a href={selecionado.link} target="_blank" rel="noreferrer">Ver na fonte oficial ↗</a>}
-      </div>}
+      {fontes.some(f => f.estado !== 'sucesso') && <p className="ofc-aviso-fonte" role="status">Fonte fora do ar: {fontes.filter(f => f.estado !== 'sucesso').map(f => f.nome).join(' · ')}. Isso não indica ausência de risco.</p>}
+      <div className="ofc-corpo">
+        <MapErrorBoundary message="Mapa indisponível. A lista ao lado continua valendo."><Suspense fallback={<p role="status" className="ofc-mapa ofc-vazio">Carregando mapa…</p>}>
+          <Mapa alertas={noMapa} lugares={todosLugares} selecionado={selecionado} onSelect={setSelecionadoId} />
+        </Suspense></MapErrorBoundary>
+        <div className="ofc-lista" aria-label={aba === 'agora' ? 'Alertas em vigor' : 'Alertas dos próximos dias'}>
+          {estado && <p className="ofc-filtro">Mostrando: <b>{estado}</b> <button type="button" onClick={() => setEstado(null)}>limpar</button></p>}
+          {dados && lista.length === 0 && <p className="ofc-vazio">Nenhum alerta oficial {aba === 'agora' ? 'em vigor' : 'para os próximos dias'} nesta seleção.</p>}
+          {lista.slice(0, 100).map(a => <LinhaAlerta key={a.id} a={a} ativo={a.id === selecionado?.id} onSelect={setSelecionadoId} />)}
+        </div>
+      </div>
+      {selecionado && <Detalhe a={selecionado} idioma={idioma} />}
+      {regiao === 'brasil' && <TabelaEstados alertas={doBrasil} estado={estado} onEstado={uf => { setEstado(uf); setAba('agora'); setSelecionadoId(null) }} />}
+      <footer className="ofc-rodape"><span>Fontes oficiais de cada país. Este painel não substitui as orientações da Defesa Civil local.</span><span>Brasil: Defesa Civil 199 · Bombeiros 193 · SAMU 192</span></footer>
     </section>
-  </>
+  </div>
+}
+
+export function AlertasOficiaisPage() {
+  return <div className="space-y-3">
+    <header className="text-white"><h1 className="text-2xl font-semibold">Alertas oficiais</h1>
+      <p className="mt-1 text-xs text-[#b5d2e2]">Avisos dos serviços meteorológicos de cada país e previsão para os seus lugares.</p></header>
+    <OficiaisSecao />
+  </div>
 }

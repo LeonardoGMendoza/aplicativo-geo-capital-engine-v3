@@ -103,6 +103,9 @@ class TestFontes(unittest.TestCase):
         tempestade = alertas[0]
         self.assertEqual((tempestade["severidade"], tempestade["quando"]), ("extremo", "agora"))
         self.assertIn("Chapecó", tempestade["area"])
+        self.assertEqual(tempestade["ufs"], ["PR", "SC"])
+        self.assertEqual(alertas[1]["ufs"], ["PR"])
+        self.assertEqual(ao.ufs_do_texto("Foz do Iguaçu - PR (4108304)", ["SC", "XX"]), ["PR", "SC"])
         self.assertTrue(ao.dentro_do_poligono(-27.1, -52.6, tempestade["poligono"]), "polígono [lon,lat] virou [lat,lon]")
         self.assertIn("Granizo", tempestade["descricao"])
         self.assertEqual(alertas[1]["severidade"], "moderado")

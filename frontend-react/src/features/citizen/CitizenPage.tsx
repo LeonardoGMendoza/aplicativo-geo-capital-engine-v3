@@ -57,6 +57,8 @@ export function CitizenPage() {
         </div>
       </section>
 
+      <Link to="/cidadao/acessivel" className="citizen-acessivel"><span aria-hidden="true">🔊</span><span><b>Modo acessível</b><small>Pergunte falando e ouça a resposta. Letras grandes.</small></span></Link>
+
       <AlertsSignup />
 
       <section aria-labelledby="citizen-where" className="citizen-card">
