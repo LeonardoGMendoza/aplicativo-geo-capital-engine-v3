@@ -4,20 +4,8 @@
 import type { Coordinates, Place, PlaceCategory } from '../shelters/places'
 
 export const CHAVE_LOCAIS = 'omni-locais-offline'          // versão antiga: um só lugar
-export const CHAVE_CIDADES = 'omni-locais-offline-cidades'  // vários lugares: perto de mim + cidades da família
+export const CHAVE_CIDADES = 'omni-locais-offline-cidades'  // vários lugares: perto de mim + "Meus lugares" (ids da lista do aparelho)
 
-/** Cidades onde a família está (mesmas coordenadas que o servidor deixa prontas). */
-export const CIDADES_FAMILIA: { id: string; nome: string; pais: string; coordenadas: Coordinates }[] = [
-  { id: 'sao-paulo', nome: 'São Paulo', pais: 'Brasil', coordenadas: { latitude: -23.5505, longitude: -46.6333 } },
-  { id: 'brasilia', nome: 'Brasília', pais: 'Brasil', coordenadas: { latitude: -15.7939, longitude: -47.8828 } },
-  { id: 'foz', nome: 'Foz do Iguaçu', pais: 'Brasil', coordenadas: { latitude: -25.5469, longitude: -54.5882 } },
-  { id: 'cde', nome: 'Ciudad del Este', pais: 'Paraguai', coordenadas: { latitude: -25.5097, longitude: -54.6111 } },
-  { id: 'lima', nome: 'Lima', pais: 'Peru', coordenadas: { latitude: -12.0464, longitude: -77.0428 } },
-  { id: 'trujillo', nome: 'Trujillo', pais: 'Peru', coordenadas: { latitude: -8.1116, longitude: -79.0288 } },
-  { id: 'iquitos', nome: 'Iquitos', pais: 'Peru', coordenadas: { latitude: -3.7437, longitude: -73.2516 } },
-  { id: 'tarapoto', nome: 'Tarapoto', pais: 'Peru', coordenadas: { latitude: -6.4882, longitude: -76.361 } },
-  { id: 'utah', nome: 'Salt Lake City (Utah)', pais: 'EUA', coordenadas: { latitude: 40.7608, longitude: -111.891 } },
-]
 export const CATEGORIAS_OFFLINE: PlaceCategory[] = ['shelter', 'hospital', 'clinic', 'pharmacy', 'worship', 'police', 'food']
 const POR_CATEGORIA = 5
 

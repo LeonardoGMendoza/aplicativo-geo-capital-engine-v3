@@ -72,20 +72,18 @@ test('rotas que funcionam sem internet: Apple Mapas, Organic Maps e mapa padrão
   assert.match(source('src/features/citizen/useNearbySearch.ts'), /navigator\.onLine === false/)
 })
 
-test('cidades da família: vários lugares guardados e escolhe o mais perto pelo GPS', async () => {
+test('vários lugares guardados e escolhe o mais perto pelo GPS (sem nenhuma cidade escrita no código)', async () => {
   const m = await import('../src/features/preparar/locaisSalvos.ts')
-  assert.deepEqual(m.CIDADES_FAMILIA.map(c => c.id), ['sao-paulo', 'brasilia', 'foz', 'cde', 'lima', 'trujillo', 'iquitos', 'tarapoto', 'utah'])
+  assert.equal(m.CIDADES_FAMILIA, undefined, 'a lista vem de "Meus lugares", do aparelho')
   const memoria = new Map()
   const fake = { setItem: (k, v) => memoria.set(k, v), getItem: k => memoria.get(k) ?? null }
   const antigo = { salvoEm: '2026-11-03T12:00:00Z', origem: { latitude: -23.5, longitude: -46.45 }, rotulo: 'Casa', itens: [] }
   memoria.set(m.CHAVE_LOCAIS, JSON.stringify(antigo))
   assert.deepEqual(Object.keys(m.lerTodos(fake)), ['perto'], 'migra o lugar guardado na versão anterior')
-  const tarapoto = m.CIDADES_FAMILIA.find(c => c.id === 'tarapoto')
-  const todos = m.guardarLugar('tarapoto', { ...antigo, origem: tarapoto.coordenadas, rotulo: 'Tarapoto' }, fake)
-  assert.deepEqual(Object.keys(todos).sort(), ['perto', 'tarapoto'])
-  assert.equal(m.lugarMaisPerto(todos, { latitude: -6.5, longitude: -76.37 }), 'tarapoto')
+  const todos = m.guardarLugar('l-tarapoto', { ...antigo, origem: { latitude: -6.4882, longitude: -76.361 }, rotulo: 'Tarapoto, Peru' }, fake)
+  assert.deepEqual(Object.keys(todos).sort(), ['l-tarapoto', 'perto'])
+  assert.equal(m.lugarMaisPerto(todos, { latitude: -6.5, longitude: -76.37 }), 'l-tarapoto')
   assert.equal(m.lugarMaisPerto(todos, { latitude: -23.51, longitude: -46.46 }), 'perto')
-  // mesmas coordenadas que o servidor deixa prontas
-  const servidor = source('../backend/api/places.py')
-  for (const c of m.CIDADES_FAMILIA.filter(x => x.id !== 'sao-paulo')) assert.ok(servidor.includes(`(${c.coordenadas.latitude}, ${c.coordenadas.longitude})`), c.nome)
+  assert.doesNotMatch(source('src/features/preparar/PrepararPage.tsx'), /CIDADES_FAMILIA/)
+  assert.doesNotMatch(source('../backend/api/places.py'), /Leonardo|Tarapoto|Iquitos/)
 })

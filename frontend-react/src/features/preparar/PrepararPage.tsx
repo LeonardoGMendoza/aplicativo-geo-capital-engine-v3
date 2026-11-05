@@ -9,8 +9,9 @@ import type { Coordinates } from '../shelters/places'
 import { useNearbySearch } from '../citizen/useNearbySearch'
 import { guias, numerosPorPais } from './conteudo'
 import { DURACOES, itensDoKit, progresso } from './kit'
-import { CIDADES_FAMILIA, escolherParaGuardar, guardarLugar, lerTodos, locaisAPartirDe, lugarMaisPerto, rotasOffline } from './locaisSalvos'
+import { escolherParaGuardar, guardarLugar, lerTodos, locaisAPartirDe, lugarMaisPerto, rotasOffline } from './locaisSalvos'
 import type { LocaisSalvos } from './locaisSalvos'
+import { MeusLugaresEditor, useMeusLugares } from '../lugares/MeusLugaresEditor'
 import '../citizen/citizen.css'
 import './preparar.css'
 
@@ -47,6 +48,7 @@ export function PrepararPage() {
   const [aqui, setAqui] = useState<Coordinates | null>(null)
   const [gpsMsg, setGpsMsg] = useState('')
   const busca = useNearbySearch()
+  const [meusLugares, setMeusLugares] = useMeusLugares()
 
   useEffect(() => { gravar('omni-kit-pessoas', pessoas); gravar('omni-kit-dias', dias); gravar('omni-kit-extras', extras) }, [pessoas, dias, extras])
   useEffect(() => { gravar('omni-kit-marcados', [...marcados]) }, [marcados])
@@ -66,14 +68,14 @@ export function PrepararPage() {
   const grupos = [...new Set(itens.map(i => i.grupo))]
   const locais = lugar ? todos[lugar] ?? null : null
   const lista = locais ? locaisAPartirDe(locais, aqui) : []
-  const nomeDe = (id: string) => id === 'perto' ? 'Perto de mim' : CIDADES_FAMILIA.find(c => c.id === id)?.nome ?? id
+  const nomeDe = (id: string) => id === 'perto' ? 'Perto de mim' : meusLugares.find(c => c.id === id)?.nome ?? todos[id]?.rotulo.split(',')[0] ?? id
 
   function guardarPertoDeMim() { guardandoId.current = 'perto'; busca.locate() }
   function guardarCidade(id: string) {
-    const c = CIDADES_FAMILIA.find(x => x.id === id)
+    const c = meusLugares.find(x => x.id === id)
     if (!c) return
     guardandoId.current = id
-    void busca.searchAt(c.coordenadas, `${c.nome}, ${c.pais}`)
+    void busca.searchAt({ latitude: c.latitude, longitude: c.longitude }, c.pais ? `${c.nome}, ${c.pais}` : c.nome)
   }
 
   function marcar(id: string) { setMarcados(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n }) }
@@ -139,13 +141,14 @@ export function PrepararPage() {
         {online && <>
           <p>Com internet, guarde os abrigos, hospitais, farmácias e igrejas de cada lugar. Sem internet, o GPS mostra a distância e a direção até eles.</p>
           <button type="button" className="citizen-primary" onClick={guardarPertoDeMim} disabled={busca.busy}>📍 Guardar locais perto de mim</button>
-          <p className="prep-sub">Cidades da família (guarde antes de viajar):</p>
-          <div className="prep-cidades">{CIDADES_FAMILIA.map(c => <button key={c.id} type="button" className="prep-cidade" disabled={busca.busy} onClick={() => guardarCidade(c.id)}>
-            {todos[c.id] ? '✓ ' : '⬇ '}{c.nome}<small>{c.pais}</small></button>)}</div>
+          <p className="prep-sub">Meus lugares (guarde antes de viajar):</p>
+          {meusLugares.length > 0 && <div className="prep-cidades">{meusLugares.map(c => <button key={c.id} type="button" className="prep-cidade" disabled={busca.busy} onClick={() => guardarCidade(c.id)}>
+            {todos[c.id] ? '✓ ' : '⬇ '}{c.nome}<small>{c.pais ?? 'Meu lugar'}</small></button>)}</div>}
+          <MeusLugaresEditor lugares={meusLugares} onChange={setMeusLugares} />
           {busca.busy && <p role="status" className="citizen-status">Buscando e guardando… pode levar até 30 segundos.</p>}
           {busca.status === 'error' && <p role="alert" className="citizen-error">{busca.message}</p>}
         </>}
-        {Object.keys(todos).length === 0 && !online && <p className="citizen-warning">Nenhum local guardado ainda. Quando tiver internet, toque em “Guardar locais perto de mim” ou numa cidade da família.</p>}
+        {Object.keys(todos).length === 0 && !online && <p className="citizen-warning">Nenhum local guardado ainda. Quando tiver internet, toque em “Guardar locais perto de mim” ou num dos seus lugares.</p>}
         {Object.keys(todos).length > 1 && <div className="prep-dias prep-lugares" role="group" aria-label="Lugar guardado">
           {Object.keys(todos).map(id => <button key={id} type="button" aria-pressed={lugar === id} onClick={() => setLugar(id)}>{nomeDe(id)}</button>)}
         </div>}

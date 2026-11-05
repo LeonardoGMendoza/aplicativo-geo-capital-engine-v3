@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { divIcon, latLngBounds } from 'leaflet'
 import { CircleMarker, MapContainer, Marker, Polygon, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import type { AlertaOficial, CidadeFamilia } from './oficiais'
+import type { AlertaOficial, ResumoLugar } from './oficiais'
 import { BANDEIRA, COR_NIVEL, emojiEvento, quandoTexto, ROTULO_NIVEL } from './oficiais'
 
 function Foco({ alerta }: { alerta: AlertaOficial | null }) {
@@ -30,11 +30,11 @@ function Detalhe({ a }: { a: AlertaOficial }) {
   </div>
 }
 
-export default function OficiaisMapa({ alertas, familia, selecionado, onSelect }: { alertas: AlertaOficial[]; familia: CidadeFamilia[]; selecionado: AlertaOficial | null; onSelect: (id: string) => void }) {
+export default function OficiaisMapa({ alertas, lugares, selecionado, onSelect }: { alertas: AlertaOficial[]; lugares: ResumoLugar[]; selecionado: AlertaOficial | null; onSelect: (id: string) => void }) {
   const casa = useMemo(() => divIcon({ className: 'ofc-casa-icon', iconSize: [28, 28], iconAnchor: [14, 14], html: '<span class="ofc-casa">🏠</span>' }), [])
   // Os mais graves por cima
   const ordenados = useMemo(() => [...alertas].sort((a, b) => (b.severidade === 'extremo' ? 0 : b.severidade === 'severo' ? 1 : 2) - (a.severidade === 'extremo' ? 0 : a.severidade === 'severo' ? 1 : 2)), [alertas])
-  return <div role="region" aria-label="Mapa dos alertas oficiais e das cidades da família" className="ofc-mapa relative isolate z-0 overflow-hidden rounded border">
+  return <div role="region" aria-label="Mapa dos alertas oficiais e dos meus lugares" className="ofc-mapa relative isolate z-0 overflow-hidden rounded border">
     <MapContainer center={[-15, -55]} zoom={3} minZoom={2} maxZoom={16} maxBounds={[[-85.05, -180], [85.05, 180]]} maxBoundsViscosity={1} scrollWheelZoom={false} className="h-full w-full">
       <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" noWrap attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' />
       {ordenados.map(a => {
@@ -48,7 +48,7 @@ export default function OficiaisMapa({ alertas, familia, selecionado, onSelect }
           <Tooltip>{emojiEvento(a.evento)} {a.evento}{a.pais ? ` · ${a.pais}` : ''}</Tooltip><Popup maxWidth={260}><Detalhe a={a} /></Popup>
         </CircleMarker>
       })}
-      {familia.map(c => <Marker key={c.id} position={[c.latitude, c.longitude]} icon={casa} title={`Família: ${c.nome}`}>
+      {lugares.map(c => <Marker key={c.id} position={[c.latitude, c.longitude]} icon={casa} title={`Meu lugar: ${c.nome}`}>
         <Tooltip direction="top">{BANDEIRA[c.pais] ?? ''} {c.nome}</Tooltip>
       </Marker>)}
       <Foco alerta={selecionado} />

@@ -16,6 +16,7 @@ Cada fonte tem cache próprio. Se uma fonte cair, as outras continuam e a últim
 Nenhum dado pessoal é enviado: só pedimos dados públicos por coordenada.
 """
 import json
+import os
 import logging
 import math
 import re
@@ -44,19 +45,12 @@ TSUNAMI_URLS = ["https://www.tsunami.gov/events/xml/PHEBAtom.xml", "https://www.
 USGS_URL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson"
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 
-# Cidades da família (mesmas do modo offline). "nomes" = como a cidade aparece no texto dos avisos.
-CIDADES_FAMILIA = [
-    {"id": "sao-paulo", "nome": "São Paulo", "pais": "Brasil", "lat": -23.5505, "lon": -46.6333, "nomes": ["sao paulo"]},
-    {"id": "brasilia", "nome": "Brasília", "pais": "Brasil", "lat": -15.7939, "lon": -47.8828, "nomes": ["brasilia", "distrito federal"]},
-    {"id": "foz", "nome": "Foz do Iguaçu", "pais": "Brasil", "lat": -25.5469, "lon": -54.5882, "nomes": ["foz do iguacu"]},
-    {"id": "cde", "nome": "Ciudad del Este", "pais": "Paraguai", "lat": -25.5097, "lon": -54.6111, "nomes": ["ciudad del este", "alto parana"]},
-    {"id": "lima", "nome": "Lima", "pais": "Peru", "lat": -12.0464, "lon": -77.0428, "nomes": ["lima"]},
-    {"id": "trujillo", "nome": "Trujillo", "pais": "Peru", "lat": -8.1116, "lon": -79.0288, "nomes": ["trujillo", "la libertad"]},
-    {"id": "iquitos", "nome": "Iquitos", "pais": "Peru", "lat": -3.7437, "lon": -73.2516, "nomes": ["iquitos", "loreto"]},
-    {"id": "tarapoto", "nome": "Tarapoto", "pais": "Peru", "lat": -6.4882, "lon": -76.361, "nomes": ["tarapoto", "san martin"]},
-    {"id": "utah", "nome": "Salt Lake City (Utah)", "pais": "EUA", "lat": 40.7608, "lon": -111.891, "nomes": ["salt lake"]},
-]
-RAIO_FAMILIA_KM = 300  # terremoto, ciclone ou tsunami a até 300 km da cidade
+# Nenhum lugar fica escrito no código. Cada pessoa manda os SEUS lugares (guardados só no aparelho dela)
+# e cada instalação (ex.: uma prefeitura) pode ter locais monitorados por padrão, configurados no servidor:
+#   OMNI_LOCAIS="Centro|-25.5469|-54.5882|Brasil;Vila C|-25.47|-54.56|Brasil"
+RAIO_LUGAR_KM = 300   # terremoto, ciclone ou tsunami a até 300 km do lugar
+MAX_LUGARES = 12
+MAX_LOCAIS_PADRAO = 50
 
 NIVEL_ORDEM = {"extremo": 0, "severo": 1, "moderado": 2}
 CAP_SEVERIDADE = {"extreme": "extremo", "severe": "severo", "moderate": "moderado"}
@@ -564,39 +558,79 @@ def avaliar_dia(codigo, chuva, rajada, tmax, tmin):
     return nivel, list(dict.fromkeys(motivos))
 
 
-def parse_open_meteo(dados, cidades=CIDADES_FAMILIA):
+def parse_open_meteo(dados, quantidade):
+    """Resposta do Open-Meteo para N pontos -> lista (mesma ordem) com os 7 dias avaliados de cada ponto."""
     lista = dados if isinstance(dados, list) else [dados]
-    if len(lista) != len(cidades):
-        raise ValueError("Open-Meteo devolveu um número diferente de cidades")
-    saida = {}
-    for cidade, d in zip(cidades, lista):
+    if len(lista) != quantidade:
+        raise ValueError("Open-Meteo devolveu um número diferente de lugares")
+    saida = []
+    for d in lista:
         daily = (d or {}).get("daily") or {}
         dias = []
         for i, data in enumerate(daily.get("time") or []):
-            v = lambda k: (daily.get(k) or [None] * (i + 1))[i] if i < len(daily.get(k) or []) else None
+            v = lambda k: (daily.get(k) or [])[i] if i < len(daily.get(k) or []) else None
             nivel, motivos = avaliar_dia(v("weather_code"), v("precipitation_sum"), v("wind_gusts_10m_max"), v("temperature_2m_max"), v("temperature_2m_min"))
             dias.append({"data": data, "nivel": nivel, "motivos": motivos, "codigo": v("weather_code"),
                          "tmax": v("temperature_2m_max"), "tmin": v("temperature_2m_min"), "chuva": v("precipitation_sum"), "rajada": v("wind_gusts_10m_max")})
-        saida[cidade["id"]] = dias
+        saida.append(dias)
     return saida
 
 
-# ----------------------------------------------------------------- Família
-def alertas_da_cidade(cidade, alertas):
-    """Alertas que atingem a cidade: dentro do polígono, perto (terremoto/tsunami/ciclone) ou com o nome no texto."""
+# ----------------------------------------------------------------- Lugares (de cada pessoa ou da prefeitura)
+GENERICOS = {"onde eu moro", "meu lugar", "casa", "minha casa", "trabalho"}
+
+
+def normalizar_lugares(lista, limite=MAX_LUGARES):
+    """Valida os lugares recebidos. Cada um: {id, nome, pais?, latitude, longitude}."""
+    saida, vistos = [], set()
+    for item in lista or []:
+        if not isinstance(item, dict):
+            continue
+        try:
+            lat, lon = float(item.get("latitude", item.get("lat"))), float(item.get("longitude", item.get("lon")))
+        except (TypeError, ValueError):
+            continue
+        if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+            continue
+        ident = re.sub(r"[^\w-]", "", str(item.get("id") or f"{lat:.2f}_{lon:.2f}"))[:40] or f"l{len(saida)}"
+        if ident in vistos:
+            continue
+        vistos.add(ident)
+        nome = _texto(item.get("nome"), 80) or "Meu lugar"
+        base = _sem_acento(re.split(r"[(,]", nome)[0]).strip()
+        saida.append({"id": ident, "nome": nome, "pais": _texto(item.get("pais"), 40), "lat": round(lat, 4), "lon": round(lon, 4),
+                      "nomes": [base] if len(base) >= 3 and base not in GENERICOS else []})
+        if len(saida) >= limite:
+            break
+    return saida
+
+
+def lugares_do_ambiente(valor=None):
+    """Locais monitorados por padrão nesta instalação. Formato: 'Nome|lat|lon|País;Nome|lat|lon|País'."""
+    valor = os.getenv("OMNI_LOCAIS", "") if valor is None else valor
+    itens = []
+    for i, parte in enumerate(p for p in valor.split(";") if p.strip()):
+        campos = [c.strip() for c in parte.split("|")]
+        if len(campos) >= 3:
+            itens.append({"id": f"padrao-{i}", "nome": campos[0], "latitude": campos[1], "longitude": campos[2], "pais": campos[3] if len(campos) > 3 else None})
+    return normalizar_lugares(itens, MAX_LOCAIS_PADRAO)
+
+
+def alertas_do_lugar(lugar, alertas):
+    """Alertas que atingem o lugar: dentro do polígono, perto (terremoto/tsunami/ciclone) ou com o nome no texto."""
     achados = []
-    padroes = [re.compile(r"\b" + re.escape(n) + r"\b") for n in cidade["nomes"]]
+    padroes = [re.compile(r"\b" + re.escape(n) + r"\b") for n in lugar["nomes"]]
     for a in alertas:
         if a.get("poligono"):
-            if dentro_do_poligono(cidade["lat"], cidade["lon"], a["poligono"]):
+            if dentro_do_poligono(lugar["lat"], lugar["lon"], a["poligono"]):
                 achados.append(a)
-            continue
-        if a.get("pais") and a["pais"] != cidade["pais"]:
             continue
         if a.get("pais") is None and a.get("latitude") is not None:  # evento sem país (terremoto, tsunami, GDACS)
-            if distancia_km(cidade["lat"], cidade["lon"], a["latitude"], a["longitude"]) <= RAIO_FAMILIA_KM:
+            if distancia_km(lugar["lat"], lugar["lon"], a["latitude"], a["longitude"]) <= RAIO_LUGAR_KM:
                 achados.append(a)
             continue
+        if not padroes or not lugar.get("pais") or a.get("pais") != lugar["pais"]:
+            continue  # pelo nome só no mesmo país (há "Lima" no Peru e nos EUA)
         texto = _sem_acento(a.get("area"))
         if any(p.search(texto) for p in padroes):
             achados.append(a)
@@ -604,11 +638,16 @@ def alertas_da_cidade(cidade, alertas):
     return achados
 
 
-def resumo_familia(alertas, previsao):
+def chave_ponto(lugar):
+    return (round(lugar["lat"], 2), round(lugar["lon"], 2))
+
+
+def resumo_lugares(lugares, alertas, previsao):
+    """previsao: {(lat, lon) arredondados: dias}."""
     saida = []
-    for c in CIDADES_FAMILIA:
-        dele = alertas_da_cidade(c, alertas)
-        dias = previsao.get(c["id"], []) if previsao else []
+    for c in lugares:
+        dele = alertas_do_lugar(c, alertas)
+        dias = (previsao or {}).get(chave_ponto(c), [])
         niveis = [a["severidade"] for a in dele] + [d["nivel"] for d in dias if d.get("nivel")]
         nivel = min(niveis, key=NIVEL_ORDEM.get) if niveis else None
         oficial = min((a["severidade"] for a in dele), key=NIVEL_ORDEM.get) if dele else None
@@ -635,7 +674,7 @@ def gdacs_para_oficiais(lista_gdacs):
 
 # ----------------------------------------------------------------- Serviço
 class AlertasOficiais:
-    def __init__(self, buscadores=None, buscar_previsao=None, gdacs=None, agora=time.time):
+    def __init__(self, buscadores=None, buscar_previsao=None, gdacs=None, agora=time.time, padrao=None):
         self._agora = agora
         self._buscadores = buscadores if buscadores is not None else {
             "inmet": ("INMET (Brasil)", self._inmet), "nws": ("NWS / NOAA (EUA)", self._nws),
@@ -645,7 +684,8 @@ class AlertasOficiais:
         self._buscar_previsao = buscar_previsao or self._open_meteo
         self._gdacs = gdacs  # função que devolve a lista do GDACS (ou None)
         self._cache = {}     # fonte -> (momento, alertas)
-        self._previsao = None
+        self._previsao = {}  # (lat, lon) -> (momento, dias)
+        self._padrao = lugares_do_ambiente() if padrao is None else normalizar_lugares(padrao, MAX_LOCAIS_PADRAO)
         self._lock = threading.Lock()
 
     # --- rede (httpx só é importado aqui: os testes rodam sem internet)
@@ -703,12 +743,11 @@ class AlertasOficiais:
     def _usgs(self):
         return parse_usgs(self._get(USGS_URL), self._agora())
 
-    def _open_meteo(self):
+    def _open_meteo(self, pontos):
         return parse_open_meteo(self._get(
-            OPEN_METEO_URL, latitude=",".join(str(c["lat"]) for c in CIDADES_FAMILIA),
-            longitude=",".join(str(c["lon"]) for c in CIDADES_FAMILIA),
+            OPEN_METEO_URL, latitude=",".join(str(p[0]) for p in pontos), longitude=",".join(str(p[1]) for p in pontos),
             daily="weather_code,precipitation_sum,wind_gusts_10m_max,temperature_2m_max,temperature_2m_min",
-            forecast_days=7, timezone="auto", wind_speed_unit="kmh"))
+            forecast_days=7, timezone="auto", wind_speed_unit="kmh"), len(pontos))
 
     # --- cache
     def _fonte(self, chave, buscar, agora):
@@ -725,42 +764,47 @@ class AlertasOficiais:
                 return salvo[1], "antigo", salvo[0]
             return [], "indisponivel", None
 
-    def _obter_previsao(self, agora):
-        if self._previsao and agora - self._previsao[0] < CACHE_PREVISAO:
-            return self._previsao[1], "sucesso"
-        try:
-            dados = self._buscar_previsao()
-            self._previsao = (agora, dados)
-            return dados, "sucesso"
-        except Exception as erro:
-            log.warning("Previsão Open-Meteo falhou (%s)", type(erro).__name__)
-            return (self._previsao[1], "antigo") if self._previsao else ({}, "indisponivel")
+    def _obter_previsao(self, pontos, agora):
+        """Previsão por ponto, com cache de 30 min por ponto. Busca de uma vez só os que faltam."""
+        faltam = [p for p in dict.fromkeys(pontos) if not (p in self._previsao and agora - self._previsao[p][0] < CACHE_PREVISAO)]
+        estado = "sucesso"
+        for i in range(0, len(faltam), 50):
+            lote = faltam[i:i + 50]
+            try:
+                for p, dias in zip(lote, self._buscar_previsao(lote)):
+                    self._previsao[p] = (agora, dias)
+            except Exception as erro:
+                log.warning("Previsão Open-Meteo falhou (%s)", type(erro).__name__)
+                estado = "antigo" if any(p in self._previsao for p in lote) else "indisponivel"
+        return {p: self._previsao[p][1] for p in pontos if p in self._previsao}, estado if pontos else "sucesso"
 
-    def obter(self):
+    def obter(self, lugares=None):
+        """lugares: os da pessoa (vêm do aparelho dela a cada pedido; o servidor não guarda)."""
+        meus = normalizar_lugares(lugares)
         with self._lock:  # um pedido de cada vez: os outros esperam e usam o cache
             agora = self._agora()
-            with ThreadPoolExecutor(max_workers=len(self._buscadores) + 1) as pool:
+            with ThreadPoolExecutor(max_workers=len(self._buscadores) or 1) as pool:
                 futuros = {k: pool.submit(self._fonte, k, b, agora) for k, (_, b) in self._buscadores.items()}
-                fut_prev = pool.submit(self._obter_previsao, agora)
                 resultados = {k: f.result() for k, f in futuros.items()}
-                previsao, estado_prev = fut_prev.result()
-            fontes, alertas = [], []
-            for chave, (nome, _) in self._buscadores.items():
-                lista, estado, momento = resultados[chave]
-                alertas += [a for a in lista if not _expirado(a.get("fim"), agora)]
-                fontes.append({"id": chave, "nome": nome, "estado": estado, "quantidade": len(lista),
-                               "atualizadoEm": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(momento)) if momento else None})
-            fontes.append({"id": "open-meteo", "nome": "Open-Meteo (previsão 7 dias)", "estado": estado_prev, "quantidade": len(previsao or {}), "atualizadoEm": None})
-            extras = []
-            if self._gdacs:
-                try:
-                    extras = gdacs_para_oficiais(self._gdacs())
-                except Exception:
-                    extras = []
-            alertas.sort(key=lambda a: (a["quando"] != "agora", NIVEL_ORDEM.get(a["severidade"], 3), -(_ts(a.get("inicio")) or 0)))
-            return {
-                "obtidoEm": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(agora)),
-                "fontes": fontes, "alertas": alertas,
-                "familia": resumo_familia(alertas + extras, previsao),
-                "aviso": "Alertas oficiais de cada país. Em perigo, siga sempre a Defesa Civil local (Brasil 199).",
-            }
+            previsao, estado_prev = self._obter_previsao([chave_ponto(c) for c in meus + self._padrao], agora)
+        fontes, alertas = [], []
+        for chave, (nome, _) in self._buscadores.items():
+            lista, estado, momento = resultados[chave]
+            alertas += [a for a in lista if not _expirado(a.get("fim"), agora)]
+            fontes.append({"id": chave, "nome": nome, "estado": estado, "quantidade": len(lista),
+                           "atualizadoEm": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(momento)) if momento else None})
+        fontes.append({"id": "open-meteo", "nome": "Open-Meteo (previsão 7 dias)", "estado": estado_prev, "quantidade": len(previsao), "atualizadoEm": None})
+        extras = []
+        if self._gdacs:
+            try:
+                extras = gdacs_para_oficiais(self._gdacs())
+            except Exception:
+                extras = []
+        alertas.sort(key=lambda a: (a["quando"] != "agora", NIVEL_ORDEM.get(a["severidade"], 3), -(_ts(a.get("inicio")) or 0)))
+        return {
+            "obtidoEm": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(agora)),
+            "fontes": fontes, "alertas": alertas,
+            "lugares": resumo_lugares(meus, alertas + extras, previsao),
+            "locaisPadrao": resumo_lugares(self._padrao, alertas + extras, previsao),
+            "aviso": "Alertas oficiais de cada país. Em perigo, siga sempre a Defesa Civil local (Brasil 199).",
+        }

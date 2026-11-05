@@ -40,23 +40,33 @@ test('selo diz se o perigo é aviso oficial ou só previsão', () => {
 
 test('guarda a última resposta e mostra sem internet', async () => {
   const armazem = memoria()
-  const resposta = { obtidoEm: '2026-11-05T12:00:00Z', fontes: [], alertas: [alerta('a', 'severo', 'agora', 'brasil')], familia: [] }
-  const ok = async () => ({ ok: true, json: async () => resposta })
-  const r = await buscarOficiais({ baseUrl: 'https://x', fetcher: ok, armazem })
+  const lugarResumo = id => ({ id, nome: id, pais: 'Brasil', latitude: 0, longitude: 0, nivel: null, alertas: [], previsao: [] })
+  const resposta = { obtidoEm: '2026-11-05T12:00:00Z', fontes: [], alertas: [alerta('a', 'severo', 'agora', 'brasil')], lugares: [lugarResumo('foz'), lugarResumo('lima')] }
+  const pedidos = []
+  const ok = async (url, init) => { pedidos.push({ url, init }); return { ok: true, json: async () => resposta } }
+  const meus = [{ id: 'foz', nome: 'Foz do Iguaçu', pais: 'Brasil', latitude: -25.5, longitude: -54.6 }, { id: 'lima', nome: 'Lima', pais: 'Peru', latitude: -12, longitude: -77 }]
+  const r = await buscarOficiais(meus, { baseUrl: 'https://x', fetcher: ok, armazem })
+  assert.equal(pedidos[0].url, 'https://x/api/v1/alerts/oficiais/lugares', 'os lugares não vão na URL')
+  assert.equal(pedidos[0].init.method, 'POST')
+  assert.equal(JSON.parse(pedidos[0].init.body).lugares.length, 2)
+  assert.deepEqual(r.locaisPadrao, [])
   assert.equal(r.alertas.length, 1)
   assert.equal(JSON.parse(armazem.m.get(CHAVE_GUARDADO)).alertas[0].poligono, null, 'guarda sem polígono (mais leve)')
   const semRede = async () => { throw new TypeError('Failed to fetch') }
-  const offline = await buscarOficiais({ baseUrl: 'https://x', fetcher: semRede, armazem })
+  const offline = await buscarOficiais(meus.slice(0, 1), { baseUrl: 'https://x', fetcher: semRede, armazem })
   assert.equal(offline.guardado, true)
+  assert.deepEqual(offline.lugares.map(l => l.id), ['foz'], 'sem internet mostra só os lugares que ainda estão na lista')
   assert.equal(lerGuardado(memoria()), null)
-  await assert.rejects(buscarOficiais({ baseUrl: 'https://x', fetcher: semRede, armazem: memoria() }))
+  await assert.rejects(buscarOficiais([], { baseUrl: 'https://x', fetcher: semRede, armazem: memoria() }))
 })
 
-test('Mapa de Riscos mostra a família e os alertas oficiais antes da NASA', () => {
+test('Mapa de Riscos mostra Meus lugares e os alertas oficiais antes da NASA', () => {
   const pagina = source('src/features/nasa/RiskMapPage.tsx')
   assert.ok(pagina.indexOf('<OficiaisSecao />') > -1 && pagina.indexOf('<OficiaisSecao />') < pagina.indexOf('<NasaEventsPanel />'))
   const secao = source('src/features/oficiais/OficiaisSecao.tsx')
-  assert.match(secao, /Minha família/)
+  assert.match(secao, /Meus lugares/)
+  assert.match(secao, /Locais monitorados/)
+  assert.doesNotMatch(source('src/features/oficiais/oficiais.ts'), /Tarapoto|Iquitos|Utah/)
   assert.match(secao, /Acontecendo agora/)
   assert.match(secao, /Vem aí/)
   assert.match(secao, /199/)

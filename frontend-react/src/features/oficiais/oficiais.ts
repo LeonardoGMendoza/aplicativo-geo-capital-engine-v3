@@ -1,4 +1,5 @@
-// Alertas OFICIAIS do mundo (INMET, NWS, MeteoAlarm, tsunami, USGS) + previsão das cidades da família.
+// Alertas OFICIAIS do mundo (INMET, NWS, MeteoAlarm, tsunami, USGS) + previsão de "Meus lugares".
+// Os lugares vão no corpo do pedido (não na URL) e o servidor não guarda: cada pessoa vê só os dela.
 // A última resposta boa fica guardada no aparelho: sem internet, mostra o que foi visto por último.
 export type Nivel = 'extremo' | 'severo' | 'moderado'
 export type Regiao = 'brasil' | 'americas' | 'europa' | 'asia' | 'mundo'
@@ -9,9 +10,10 @@ export type AlertaOficial = {
 }
 export type AlertaResumo = Pick<AlertaOficial, 'id' | 'evento' | 'severidade' | 'quando' | 'fonte' | 'inicio' | 'fim' | 'area' | 'instrucao' | 'link'>
 export type DiaPrevisao = { data: string; nivel: Nivel | null; motivos: string[]; codigo: number | null; tmax: number | null; tmin: number | null; chuva: number | null; rajada: number | null }
-export type CidadeFamilia = { id: string; nome: string; pais: string; latitude: number; longitude: number; nivel: Nivel | null; nivelOficial?: Nivel | null; alertas: AlertaResumo[]; previsao: DiaPrevisao[] }
+export type ResumoLugar = { id: string; nome: string; pais: string; latitude: number; longitude: number; nivel: Nivel | null; nivelOficial?: Nivel | null; alertas: AlertaResumo[]; previsao: DiaPrevisao[] }
 export type Fonte = { id: string; nome: string; estado: 'sucesso' | 'antigo' | 'indisponivel'; quantidade: number; atualizadoEm: string | null }
-export type RespostaOficiais = { obtidoEm: string; fontes: Fonte[]; alertas: AlertaOficial[]; familia: CidadeFamilia[]; aviso?: string; guardado?: boolean }
+export type RespostaOficiais = { obtidoEm: string; fontes: Fonte[]; alertas: AlertaOficial[]; lugares: ResumoLugar[]; locaisPadrao: ResumoLugar[]; aviso?: string; guardado?: boolean }
+export type LugarPedido = { id: string; nome: string; pais: string | null; latitude: number; longitude: number }
 
 export const CHAVE_GUARDADO = 'omni-oficiais-ultimo'
 export const COR_NIVEL: Record<Nivel, string> = { extremo: '#b91c1c', severo: '#ea580c', moderado: '#ca8a04' }
@@ -31,25 +33,33 @@ export function guardar(r: RespostaOficiais, armazem: Armazem = armazemPadrao())
 export function lerGuardado(armazem: Armazem = armazemPadrao()): RespostaOficiais | null {
   try {
     const r = JSON.parse(armazem?.getItem(CHAVE_GUARDADO) ?? 'null')
-    return r && Array.isArray(r.alertas) && Array.isArray(r.familia) ? { ...r, guardado: true } : null
+    return r && Array.isArray(r.alertas) && Array.isArray(r.lugares) ? { ...r, locaisPadrao: Array.isArray(r.locaisPadrao) ? r.locaisPadrao : [], guardado: true } : null
   } catch { return null }
 }
 
-/** Busca os alertas. Sem internet ou com o servidor fora: devolve a última cópia guardada (marcada guardado: true). */
-export async function buscarOficiais(options: Options = {}): Promise<RespostaOficiais> {
+/** Busca os alertas (e o resumo dos lugares da pessoa). Sem internet ou com o servidor fora: devolve a última cópia guardada.
+ * A cópia guardada só vale para a mesma lista de lugares (senão mostraria cidades que a pessoa já tirou). */
+export async function buscarOficiais(lugares: LugarPedido[] = [], options: Options = {}): Promise<RespostaOficiais> {
   const base = (options.baseUrl ?? import.meta.env?.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000').replace(/\/$/, '')
   const armazem = options.armazem === undefined ? armazemPadrao() : options.armazem
   const sinal = options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(40_000)]) : AbortSignal.timeout(40_000)
+  const pedido = lugares.slice(0, 12).map(l => ({ id: l.id, nome: l.nome, pais: l.pais, latitude: l.latitude, longitude: l.longitude }))
   try {
-    const resp = await (options.fetcher ?? fetch)(`${base}/api/v1/alerts/oficiais`, { signal: sinal, cache: 'no-store', headers: { Accept: 'application/json' } })
+    const resp = await (options.fetcher ?? fetch)(`${base}/api/v1/alerts/oficiais/lugares`, {
+      method: 'POST', signal: sinal, cache: 'no-store', headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lugares: pedido }) })
     const corpo = await resp.json().catch(() => null)
-    if (!resp.ok || !corpo || !Array.isArray(corpo.alertas) || !Array.isArray(corpo.familia)) throw new Error(corpo?.error?.message ?? 'Alertas oficiais indisponíveis agora.')
-    guardar(corpo, armazem)
-    return corpo as RespostaOficiais
+    if (!resp.ok || !corpo || !Array.isArray(corpo.alertas) || !Array.isArray(corpo.lugares)) throw new Error(corpo?.error?.message ?? 'Alertas oficiais indisponíveis agora.')
+    const r = { ...corpo, locaisPadrao: Array.isArray(corpo.locaisPadrao) ? corpo.locaisPadrao : [] } as RespostaOficiais
+    guardar(r, armazem)
+    return r
   } catch (erro) {
     if (options.signal?.aborted) throw erro
     const salvo = lerGuardado(armazem)
-    if (salvo) return salvo
+    if (salvo) {
+      const ids = new Set(pedido.map(l => l.id))
+      return { ...salvo, lugares: salvo.lugares.filter(l => ids.has(l.id)) }
+    }
     throw erro instanceof Error ? erro : new Error('Alertas oficiais indisponíveis agora.')
   }
 }
@@ -112,7 +122,7 @@ export function quandoTexto(a: Pick<AlertaOficial, 'quando' | 'inicio' | 'fim'>,
 }
 
 /** A frase principal do cartão da cidade: o alerta oficial mais grave; se não houver, o pior dia da previsão. */
-export function fraseCidade(c: CidadeFamilia) {
+export function fraseCidade(c: ResumoLugar) {
   const alerta = c.alertas[0]
   if (alerta) return `${emojiEvento(alerta.evento)} ${alerta.evento}${alerta.quando === 'vem' ? ' (vem aí)' : ' (agora)'}`
   const pior = c.previsao.filter(d => d.nivel).sort((a, b) => ORDEM[a.nivel as Nivel] - ORDEM[b.nivel as Nivel])[0]
@@ -121,7 +131,7 @@ export function fraseCidade(c: CidadeFamilia) {
 }
 
 /** Selo do cartão: deixa claro quando o nível vem só da previsão (e não de um aviso oficial). */
-export function seloCidade(c: Pick<CidadeFamilia, 'nivel' | 'nivelOficial'>) {
+export function seloCidade(c: Pick<ResumoLugar, 'nivel' | 'nivelOficial'>) {
   if (!c.nivel) return 'Tranquilo'
   return c.nivelOficial === c.nivel ? `${ROTULO_NIVEL[c.nivel]} · oficial` : `${ROTULO_NIVEL[c.nivel]} · previsão`
 }

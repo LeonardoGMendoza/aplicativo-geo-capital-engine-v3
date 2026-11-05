@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import './oficiais.css'
-import type { AlertaOficial, CidadeFamilia, Regiao, RespostaOficiais } from './oficiais'
+import type { AlertaOficial, Regiao, RespostaOficiais, ResumoLugar } from './oficiais'
+import { MeusLugaresEditor, useMeusLugares } from '../lugares/MeusLugaresEditor'
 import { BANDEIRA, buscarOficiais, COR_NIVEL, diaDaSemana, emojiEvento, emojiTempo, fraseCidade, quandoTexto, REGIOES, ROTULO_NIVEL, seloCidade, separar } from './oficiais'
 
 const Mapa = lazy(() => import('./OficiaisMapa'))
@@ -12,7 +13,7 @@ function horario(iso: string) {
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
-function CartaoCidade({ c }: { c: CidadeFamilia }) {
+function CartaoCidade({ c }: { c: ResumoLugar }) {
   const cor = c.nivel ? COR_NIVEL[c.nivel] : '#15803d'
   return <details className="ofc-cidade" style={{ borderColor: cor }}>
     <summary>
@@ -46,29 +47,39 @@ export function OficiaisSecao() {
   const [regiao, setRegiao] = useState<'todos' | Regiao>('todos')
   const [amarelos, setAmarelos] = useState(false)
   const [selecionadoId, setSelecionadoId] = useState<string | null>(null)
+  const [lugares, setLugares] = useMeusLugares()
+  const chaveLugares = lugares.map(l => `${l.id}:${l.latitude},${l.longitude}`).join('|')
   useEffect(() => {
     let abort = new AbortController()
-    const carregar = () => buscarOficiais({ signal: abort.signal }).then(r => { setDados(r); setErro(null) }).catch(e => { if (!abort.signal.aborted) setErro(e instanceof Error ? e.message : 'Alertas oficiais indisponíveis agora.') })
+    const carregar = () => buscarOficiais(lugares, { signal: abort.signal }).then(r => { setDados(r); setErro(null) }).catch(e => { if (!abort.signal.aborted) setErro(e instanceof Error ? e.message : 'Alertas oficiais indisponíveis agora.') })
     carregar()
     const timer = setInterval(() => { abort.abort(); abort = new AbortController(); carregar() }, ATUALIZAR_MS)
     return () => { clearInterval(timer); abort.abort() }
-  }, [])
+  }, [chaveLugares]) // busca de novo quando a lista de lugares muda
   const { agora, vem } = useMemo(() => separar(dados?.alertas ?? [], regiao, amarelos), [dados, regiao, amarelos])
   const noMapa = useMemo(() => [...agora, ...vem], [agora, vem])
   const selecionado = noMapa.find(a => a.id === selecionadoId) ?? null
-  const emPerigo = (dados?.familia ?? []).filter(c => c.nivel === 'extremo' || c.nivel === 'severo')
+  const todosLugares = [...(dados?.lugares ?? []), ...(dados?.locaisPadrao ?? [])]
+  const emPerigo = todosLugares.filter(c => c.nivel === 'extremo' || c.nivel === 'severo')
   const fora = (dados?.fontes ?? []).filter(f => f.estado !== 'sucesso')
 
   return <>
-    <section className="light-panel ofc-familia space-y-2 p-3" aria-label="Minha família: alertas e previsão">
+    {(dados?.locaisPadrao.length ?? 0) > 0 && <section className="light-panel space-y-2 p-3" aria-label="Locais monitorados">
+      <h2 className="text-lg font-semibold">🏛️ Locais monitorados</h2>
+      <p className="text-xs text-muted-foreground">Definidos por quem administra este Omni (por exemplo, a Defesa Civil da cidade).</p>
+      <div className="ofc-cidades">{dados!.locaisPadrao.map(c => <CartaoCidade key={c.id} c={c} />)}</div>
+    </section>}
+
+    <section className="light-panel ofc-familia space-y-2 p-3" aria-label="Meus lugares: alertas e previsão">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-semibold">🏠 Minha família</h2>
+        <h2 className="text-lg font-semibold">📍 Meus lugares</h2>
         {dados && <span className="text-xs text-muted-foreground">{dados.guardado ? `Sem conexão · última cópia de ${horario(dados.obtidoEm)}` : `Atualizado ${horario(dados.obtidoEm)}`}</span>}
       </div>
-      {emPerigo.length > 0 && <p role="alert" className="ofc-faixa">⚠️ Perigo agora ou nos próximos dias em: <b>{emPerigo.map(c => c.nome).join(', ')}</b>. Toque na cidade para ver o que fazer.</p>}
-      {!dados && !erro && <p role="status">Buscando alertas oficiais e previsão das cidades da família…</p>}
+      {emPerigo.length > 0 && <p role="alert" className="ofc-faixa">⚠️ Perigo agora ou nos próximos dias em: <b>{emPerigo.map(c => c.nome).join(', ')}</b>. Toque no lugar para ver o que fazer.</p>}
+      {lugares.length > 0 && !dados && !erro && <p role="status">Buscando alertas oficiais e previsão dos seus lugares…</p>}
       {!dados && erro && <p role="status">{erro} Isso não indica ausência de risco.</p>}
-      {dados && <div className="ofc-cidades">{dados.familia.map(c => <CartaoCidade key={c.id} c={c} />)}</div>}
+      {dados && dados.lugares.length > 0 && <div className="ofc-cidades">{dados.lugares.map(c => <CartaoCidade key={c.id} c={c} />)}</div>}
+      <MeusLugaresEditor lugares={lugares} onChange={setLugares} />
     </section>
 
     <section className="light-panel space-y-2 p-3" aria-label="Alertas oficiais do mundo">
@@ -84,7 +95,7 @@ export function OficiaisSecao() {
       {fora.length > 0 && <p role="status" className="text-xs text-amber-900">Fora do ar agora: {fora.map(f => `${f.nome}${f.estado === 'antigo' ? ' (mostrando a última lista)' : ''}`).join(' · ')}. Isso não indica ausência de risco.</p>}
       <div className="grid min-w-0 gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(260px,380px)]">
         <MapErrorBoundary message="Mapa indisponível. A lista ao lado continua valendo."><Suspense fallback={<p role="status" className="ofc-mapa flex items-center justify-center rounded border bg-secondary">Carregando mapa…</p>}>
-          <Mapa alertas={noMapa} familia={dados?.familia ?? []} selecionado={selecionado} onSelect={setSelecionadoId} />
+          <Mapa alertas={noMapa} lugares={todosLugares} selecionado={selecionado} onSelect={setSelecionadoId} />
         </Suspense></MapErrorBoundary>
         <div className="ofc-listas">
           <h3>🔴 Acontecendo agora <small>({agora.length})</small></h3>

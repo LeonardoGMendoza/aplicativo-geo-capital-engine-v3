@@ -75,13 +75,22 @@ USGS = {"features": [
 ]}
 
 
-def open_meteo(**por_cidade):
-    """Uma resposta multi-local do Open-Meteo: 7 dias tranquilos, com exceções por cidade."""
+LUGARES = [  # lugares de exemplo, como o aparelho manda
+    {"id": "foz", "nome": "Foz do Iguaçu", "pais": "Brasil", "latitude": -25.5469, "longitude": -54.5882},
+    {"id": "lima", "nome": "Lima", "pais": "Peru", "latitude": -12.0464, "longitude": -77.0428},
+    {"id": "iquitos", "nome": "Iquitos", "pais": "Peru", "latitude": -3.7437, "longitude": -73.2516},
+    {"id": "slc", "nome": "Salt Lake City (Utah)", "pais": "EUA", "latitude": 40.7608, "longitude": -111.891},
+    {"id": "bsb", "nome": "Brasília", "pais": "Brasil", "latitude": -15.7939, "longitude": -47.8828},
+]
+
+
+def open_meteo(n, excecoes=None):
+    """Resposta multi-local do Open-Meteo: 7 dias tranquilos; excecoes = {indice: {variavel: (dia, valor)}}."""
     saida = []
-    for c in ao.CIDADES_FAMILIA:
-        d = {"time": [f"2026-11-{5 + i:02d}" for i in range(7)], "weather_code": [3] * 7, "precipitation_sum": [0] * 7,
+    for i in range(n):
+        d = {"time": [f"2026-11-{5 + k:02d}" for k in range(7)], "weather_code": [3] * 7, "precipitation_sum": [0] * 7,
              "wind_gusts_10m_max": [20] * 7, "temperature_2m_max": [28] * 7, "temperature_2m_min": [18] * 7}
-        for chave, (dia, valor) in por_cidade.get(c["id"], {}).items():
+        for chave, (dia, valor) in (excecoes or {}).get(i, {}).items():
             d[chave][dia] = valor
         saida.append({"daily": d})
     return saida
@@ -141,58 +150,81 @@ class TestPrevisao(unittest.TestCase):
         self.assertEqual(ao.avaliar_dia(75, 0, 20, -2, -12)[0], "severo")
 
     def test_open_meteo_por_cidade(self):
-        previsao = ao.parse_open_meteo(open_meteo(foz={"weather_code": (1, 96), "wind_gusts_10m_max": (1, 92)}))
-        self.assertEqual(len(previsao), len(ao.CIDADES_FAMILIA))
-        self.assertEqual(previsao["foz"][1]["nivel"], "extremo")
-        self.assertIsNone(previsao["lima"][1]["nivel"])
+        previsao = ao.parse_open_meteo(open_meteo(3, {0: {"weather_code": (1, 96), "wind_gusts_10m_max": (1, 92)}}), 3)
+        self.assertEqual(len(previsao), 3)
+        self.assertEqual(previsao[0][1]["nivel"], "extremo")
+        self.assertIsNone(previsao[1][1]["nivel"])
         with self.assertRaises(ValueError):
-            ao.parse_open_meteo([{}])
+            ao.parse_open_meteo([{}], 2)
 
 
-class TestFamilia(unittest.TestCase):
-    def test_cidade_dentro_do_poligono_ou_pelo_nome(self):
+class TestLugares(unittest.TestCase):
+    def test_nenhum_lugar_escrito_no_codigo(self):
+        self.assertFalse(hasattr(ao, "CIDADES_FAMILIA"))
+        self.assertEqual(ao.lugares_do_ambiente(""), [])
+        padrao = ao.lugares_do_ambiente("Centro|-25.5469|-54.5882|Brasil; Vila C | -25.47 | -54.56 ;ruim|x|y")
+        self.assertEqual([p["nome"] for p in padrao], ["Centro", "Vila C"])
+        self.assertIsNone(padrao[1]["pais"])
+
+    def test_normaliza_o_que_vem_do_aparelho(self):
+        lugares = ao.normalizar_lugares(LUGARES + [{"id": "x", "nome": "Fora", "latitude": 99, "longitude": 0}, "lixo", {"id": "foz", "nome": "repetido", "latitude": 0, "longitude": 0}])
+        self.assertEqual([l["id"] for l in lugares], ["foz", "lima", "iquitos", "slc", "bsb"])
+        self.assertEqual(lugares[3]["nomes"], ["salt lake city"])
+        self.assertEqual(ao.normalizar_lugares([{"id": "c", "nome": "Onde eu moro", "latitude": 1, "longitude": 1}])[0]["nomes"], [])
+        self.assertEqual(len(ao.normalizar_lugares([{"id": str(i), "nome": "a", "latitude": i, "longitude": 0} for i in range(30)])), ao.MAX_LUGARES)
+
+    def test_lugar_dentro_do_poligono_ou_pelo_nome(self):
         inmet = ao.parse_inmet_json(INMET, AGORA)
-        foz = next(c for c in ao.CIDADES_FAMILIA if c["id"] == "foz")
-        ids = [a["id"] for a in ao.alertas_da_cidade(foz, inmet)]
+        [foz] = ao.normalizar_lugares(LUGARES[:1])
+        ids = [a["id"] for a in ao.alertas_do_lugar(foz, inmet)]
         self.assertIn("inmet-51002", ids, "achado pelo nome do município")
         self.assertIn("inmet-51010", ids, "achado pelo polígono")
         self.assertNotIn("inmet-51001", ids, "tempestade de Chapecó não é em Foz")
+        sem_pais = ao.normalizar_lugares([{**LUGARES[0], "pais": None}])[0]
+        self.assertNotIn("inmet-51002", [a["id"] for a in ao.alertas_do_lugar(sem_pais, inmet)], "sem país: não cruza pelo nome")
 
     def test_terremoto_perto_de_lima_e_neve_em_utah(self):
         alertas = ao.parse_usgs(USGS, AGORA) + ao.parse_nws(NWS, AGORA)
-        resumo = {c["id"]: c for c in ao.resumo_familia(alertas, {})}
+        resumo = {c["id"]: c for c in ao.resumo_lugares(ao.normalizar_lugares(LUGARES), alertas, {})}
         self.assertEqual(resumo["lima"]["nivel"], "extremo")
         self.assertIn("usgs-us1", [a["id"] for a in resumo["lima"]["alertas"]])
-        self.assertEqual(resumo["utah"]["nivel"], "severo")
-        self.assertEqual(resumo["utah"]["nivelOficial"], "severo")
-        self.assertIsNone(resumo["brasilia"]["nivelOficial"])
-        self.assertIsNone(resumo["brasilia"]["nivel"])
+        self.assertEqual((resumo["slc"]["nivel"], resumo["slc"]["nivelOficial"]), ("severo", "severo"))
+        self.assertIsNone(resumo["bsb"]["nivel"])
         self.assertEqual(resumo["iquitos"]["alertas"], [], "Iquitos fica a mais de 300 km")
 
-    def test_gdacs_entra_na_familia(self):
+    def test_gdacs_entra_nos_lugares(self):
         g = [{"id": "TC-1-1", "tipoNome": "Ciclone tropical", "nivel": "vermelho", "nome": "X", "latitude": -25.0, "longitude": -54.0}]
-        self.assertEqual(ao.resumo_familia(ao.gdacs_para_oficiais(g), {})[2]["nivel"], "extremo")  # Foz
+        self.assertEqual(ao.resumo_lugares(ao.normalizar_lugares(LUGARES[:1]), ao.gdacs_para_oficiais(g), {})[0]["nivel"], "extremo")
 
 
 class TestServico(unittest.TestCase):
     def test_uma_fonte_cai_e_as_outras_continuam(self):
-        chamadas = {"n": 0}
+        chamadas = {"nws": 0, "previsao": []}
         def nws():
-            chamadas["n"] += 1
-            if chamadas["n"] > 1:
+            chamadas["nws"] += 1
+            if chamadas["nws"] > 1:
                 raise RuntimeError("caiu")
             return ao.parse_nws(NWS, AGORA)
         def quebrada():
             raise RuntimeError("fora do ar")
+        def previsao(pontos):
+            chamadas["previsao"].append(list(pontos))
+            return ao.parse_open_meteo(open_meteo(len(pontos), {0: {"weather_code": (2, 95), "precipitation_sum": (2, 60)}}), len(pontos))
         relogio = {"t": AGORA}
         s = ao.AlertasOficiais(buscadores={"inmet": ("INMET", lambda: ao.parse_inmet_json(INMET, AGORA)), "nws": ("NWS", nws), "x": ("X", quebrada)},
-                               buscar_previsao=lambda: ao.parse_open_meteo(open_meteo()), agora=lambda: relogio["t"])
-        r = s.obter()
+                               buscar_previsao=previsao, agora=lambda: relogio["t"], padrao=[{"id": "p", "nome": "Centro", "pais": "Brasil", "latitude": -27.1, "longitude": -52.6}])
+        r = s.obter(LUGARES[:2])
         estados = {f["id"]: f["estado"] for f in r["fontes"]}
         self.assertEqual(estados, {"inmet": "sucesso", "nws": "sucesso", "x": "indisponivel", "open-meteo": "sucesso"})
-        self.assertEqual(r["alertas"][0]["quando"], "agora")
-        self.assertEqual(r["alertas"][0]["severidade"], "extremo")
-        self.assertEqual(len(r["familia"]), 9)
+        self.assertEqual((r["alertas"][0]["quando"], r["alertas"][0]["severidade"]), ("agora", "extremo"))
+        self.assertEqual([l["id"] for l in r["lugares"]], ["foz", "lima"])
+        self.assertEqual(r["lugares"][0]["previsao"][2]["nivel"], "severo")
+        self.assertEqual(r["locaisPadrao"][0]["nivelOficial"], "extremo", "Centro (oeste de SC) dentro da tempestade")
+        self.assertEqual(len(chamadas["previsao"]), 1, "uma chamada só para todos os pontos")
+        # sem lugares: só os locais padrão; e a previsão vem do cache por ponto
+        r2 = s.obter()
+        self.assertEqual(r2["lugares"], [])
+        self.assertEqual(len(chamadas["previsao"]), 1)
         relogio["t"] += ao.CACHE_ALERTAS + 1  # cache venceu e o NWS caiu: usa a última lista boa
         estados = {f["id"]: f["estado"] for f in s.obter()["fontes"]}
         self.assertEqual(estados["nws"], "antigo")
