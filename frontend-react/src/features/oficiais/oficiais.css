@@ -9,7 +9,8 @@
 .ofc-cidade-frase { font-size: 13px; font-weight: 600; color: #0b2235; }
 .ofc-dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: 2px; }
 .ofc-dia { display: flex; flex-direction: column; align-items: center; font-size: 16px; line-height: 1.1; }
-.ofc-dia small { font-size: 10px; color: #36536b; text-transform: capitalize; }
+.ofc-dia small { font-size: 10px; line-height: 1.15; text-align: center; color: #36536b; white-space: nowrap; }
+.ofc-pais { font-size: 12px; font-weight: 600; color: #64748b; }
 .ofc-dia i { display: block; width: 8px; height: 8px; border-radius: 999px; margin-top: 2px; }
 .ofc-dia i.is-ok { background: #cbd5e1; }
 .ofc-cidade-detalhe { margin-top: 6px; border-top: 1px solid #e2ecf2; padding-top: 6px; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }

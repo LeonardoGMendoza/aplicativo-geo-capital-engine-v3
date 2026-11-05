@@ -3,7 +3,7 @@ import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import './oficiais.css'
 import type { AlertaOficial, Regiao, RespostaOficiais, ResumoLugar } from './oficiais'
 import { MeusLugaresEditor, useMeusLugares } from '../lugares/MeusLugaresEditor'
-import { BANDEIRA, buscarOficiais, COR_NIVEL, diaDaSemana, emojiEvento, emojiTempo, fraseCidade, quandoTexto, REGIOES, ROTULO_NIVEL, seloCidade, separar } from './oficiais'
+import { buscarOficiais, COR_NIVEL, diaCurto, diaDaSemana, emojiEvento, emojiTempo, fraseCidade, quandoTexto, REGIOES, ROTULO_NIVEL, seloCidade, separar } from './oficiais'
 
 const Mapa = lazy(() => import('./OficiaisMapa'))
 const ATUALIZAR_MS = 10 * 60 * 1000
@@ -17,10 +17,10 @@ function CartaoCidade({ c }: { c: ResumoLugar }) {
   const cor = c.nivel ? COR_NIVEL[c.nivel] : '#15803d'
   return <details className="ofc-cidade" style={{ borderColor: cor }}>
     <summary>
-      <span className="ofc-cidade-topo"><b>{BANDEIRA[c.pais] ?? ''} {c.nome}</b><span className="ofc-selo" style={{ background: cor }}>{seloCidade(c)}</span></span>
+      <span className="ofc-cidade-topo"><b>{c.nome}{c.pais ? <small className="ofc-pais"> · {c.pais}</small> : null}</b><span className="ofc-selo" style={{ background: cor }}>{seloCidade(c)}</span></span>
       <span className="ofc-cidade-frase">{fraseCidade(c)}</span>
       {c.previsao.length > 0 && <span className="ofc-dias" aria-label="Próximos 7 dias">{c.previsao.map(d => <span key={d.data} className="ofc-dia" title={d.motivos.join(' · ') || 'Sem perigo previsto'}>
-        <small>{diaDaSemana(d.data)}</small><span>{emojiTempo(d.codigo)}</span>{d.nivel ? <i style={{ background: COR_NIVEL[d.nivel] }} /> : <i className="is-ok" />}
+        <small>{diaCurto(d.data).semana}<br />{diaCurto(d.data).dia}</small><span>{emojiTempo(d.codigo)}</span>{d.nivel ? <i style={{ background: COR_NIVEL[d.nivel] }} /> : <i className="is-ok" />}
       </span>)}</span>}
     </summary>
     <div className="ofc-cidade-detalhe">

@@ -105,6 +105,14 @@ export function emojiTempo(codigo: number | null) {
   return codigo === 2 ? '⛅' : '☁️'
 }
 
+/** Para a fileira de 7 dias: "Qui" em cima e "05" embaixo. */
+export function diaCurto(data: string) {
+  const d = new Date(`${data}T12:00:00`)
+  if (Number.isNaN(d.getTime())) return { semana: data, dia: '' }
+  const semana = d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')
+  return { semana: semana.charAt(0).toUpperCase() + semana.slice(1, 3), dia: String(d.getDate()).padStart(2, '0') }
+}
+
 export function diaDaSemana(data: string) {
   const d = new Date(`${data}T12:00:00`)
   return Number.isNaN(d.getTime()) ? data : d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit' }).replace('.', '')

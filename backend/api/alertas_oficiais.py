@@ -90,6 +90,18 @@ NWS_EVENTOS = {
     "hazardous materials warning": "Produtos perigosos",
 }
 
+# Tipos de aviso do MeteoAlarm (Europa) em português. O texto vem como "Severe rain-flood warning", "Red wind warning"...
+METEOALARM_TIPOS = [("rain-flood", "Chuva e enchente"), ("flooding", "Enchente"), ("thunderstorm", "Tempestade"), ("snow-ice", "Neve e gelo"),
+                    ("high-temperature", "Calor extremo"), ("low-temperature", "Frio extremo"), ("coastalevent", "Ressaca no litoral"),
+                    ("coastal", "Ressaca no litoral"), ("forest-fire", "Risco de incêndio florestal"), ("avalanche", "Avalanche"),
+                    ("fog", "Neblina"), ("rain", "Chuva forte"), ("wind", "Vento forte"), ("snow", "Neve")]
+
+
+def evento_meteoalarm(texto):
+    t = _sem_acento(texto)
+    return next((pt for chave, pt in METEOALARM_TIPOS if chave in t), None)
+
+
 # Códigos de tempo do Open-Meteo (WMO)
 TEMPESTADE = {95, 96, 99}
 GRANIZO = {96, 99}
@@ -431,10 +443,11 @@ def parse_meteoalarm(dados, pais_feed, agora=None):
         if _expirado(fim, agora):
             continue
         inicio = _data_iso(info.get("onset") or info.get("effective"))
-        evento = _texto(info.get("event"), 80) or "Aviso"
+        original = _texto(info.get("event"), 80) or "Aviso"
+        evento = evento_meteoalarm(original) or original
         alertas.append(_alerta(
             id=f"meteoalarm-{alerta.get('identifier') or w.get('uuid') or len(alertas)}"[:120], fonte="MeteoAlarm (Europa)",
-            fonteUrl="https://meteoalarm.org/", pais=nome, regiao="europa", evento=evento, eventoOriginal=evento,
+            fonteUrl="https://meteoalarm.org/", pais=nome, regiao="europa", evento=evento, eventoOriginal=original,
             severidade=severidade, quando=_quando(inicio, agora), inicio=inicio, fim=fim,
             area=_texto([a.get("areaDesc") for a in info.get("area") or [] if isinstance(a, dict)], 400),
             titulo=_texto(info.get("headline"), 200) or f"{evento} · {nome}", descricao=_texto(info.get("description"), 600),

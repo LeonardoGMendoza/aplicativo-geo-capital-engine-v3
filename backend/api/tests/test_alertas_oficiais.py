@@ -126,6 +126,9 @@ class TestFontes(unittest.TestCase):
         [a] = ao.parse_meteoalarm(METEOALARM, "portugal", AGORA)
         self.assertEqual((a["pais"], a["evento"], a["severidade"]), ("Portugal", "Aviso vermelho de vento", "extremo"))
         self.assertIsNotNone(a["latitude"])
+        self.assertEqual(ao.evento_meteoalarm("Severe rain-flood warning"), "Chuva e enchente")
+        self.assertEqual(ao.evento_meteoalarm("Red wind warning"), "Vento forte")
+        self.assertIsNone(ao.evento_meteoalarm("Aviso desconhecido"))
 
     def test_tsunami_e_terremoto(self):
         [t] = ao.parse_tsunami(TSUNAMI, AGORA)
