@@ -1,0 +1,30 @@
+/* Alertas oficiais + Minha família (Mapa de Riscos) */
+.ofc-faixa { background: #fef2f2; border: 2px solid #b91c1c; color: #7f1d1d; border-radius: 10px; padding: 8px 10px; font-size: 14px; }
+.ofc-cidades { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; }
+.ofc-cidade { border: 2px solid; border-left-width: 8px; border-radius: 12px; background: #fff; padding: 8px 10px; }
+.ofc-cidade summary { list-style: none; cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
+.ofc-cidade summary::-webkit-details-marker { display: none; }
+.ofc-cidade-topo { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 15px; }
+.ofc-selo { color: #fff; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.ofc-cidade-frase { font-size: 13px; font-weight: 600; color: #0b2235; }
+.ofc-dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: 2px; }
+.ofc-dia { display: flex; flex-direction: column; align-items: center; font-size: 16px; line-height: 1.1; }
+.ofc-dia small { font-size: 10px; color: #36536b; text-transform: capitalize; }
+.ofc-dia i { display: block; width: 8px; height: 8px; border-radius: 999px; margin-top: 2px; }
+.ofc-dia i.is-ok { background: #cbd5e1; }
+.ofc-cidade-detalhe { margin-top: 6px; border-top: 1px solid #e2ecf2; padding-top: 6px; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+.ofc-nota { color: #64748b; font-size: 11px; }
+.ofc-mapa { height: 340px; }
+@media (min-width: 640px) { .ofc-mapa { height: 440px; } }
+.ofc-listas { max-height: 440px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 4px; border-radius: 8px; background: #f4f9fc; }
+.ofc-listas h3 { font-size: 14px; font-weight: 800; margin-top: 4px; color: #0b2235; }
+.ofc-listas h3 small { font-weight: 600; color: #64748b; }
+.ofc-item { display: flex; flex-direction: column; gap: 1px; text-align: left; background: #fff; border: 1px solid #e2ecf2; border-left: 6px solid; border-radius: 8px; padding: 6px 8px; font-size: 12px; }
+.ofc-item.is-ativo { box-shadow: 0 0 0 2px #0b2235; }
+.ofc-item-titulo { font-weight: 800; font-size: 13px; color: #0b2235; }
+.ofc-item-info { font-weight: 700; }
+.ofc-item-area { color: #475569; }
+.ofc-selecionado { border: 2px solid; border-radius: 10px; padding: 8px 10px; font-size: 13px; display: flex; flex-direction: column; gap: 4px; background: #fff; }
+.ofc-selecionado a { font-weight: 700; color: #087b88; }
+.ofc-casa-icon { background: none; border: 0; }
+.ofc-casa { display: block; font-size: 20px; line-height: 28px; text-align: center; filter: drop-shadow(0 0 2px #fff); }
