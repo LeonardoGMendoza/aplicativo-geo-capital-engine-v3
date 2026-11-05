@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Mic, Square, UserRound, Volume2 } from 'lucide-react'
 import type { Assistente, NomeAssistente } from './avatar'
+import { FOTO_ASSISTENTE } from './CartaoAssistente'
 import { BrandSymbol } from '@/components/shared/Brand'
 import { guias } from '../preparar/conteudo'
 import type { Guia } from '../preparar/conteudo'
@@ -89,8 +90,10 @@ export function ModoAcessivelPage() {
         if (cancelado) { a.destruir(); return }
         assistente.current = a
         setCarregando(null)
-      } catch {
-        if (!cancelado) { setComAssistente(false); setCarregando(null); setMsg('Não consegui abrir o assistente neste aparelho. A voz do celular continua funcionando.') }
+      } catch (erro) {
+        const detalhe = erro instanceof Error ? erro.message : String(erro)
+        console.error('assistente', erro)
+        if (!cancelado) { setComAssistente(false); setCarregando(null); setMsg(`Não consegui abrir o assistente neste aparelho. A voz do celular continua funcionando. (detalhe: ${detalhe.slice(0, 120)})`) }
       }
     })()
     return () => { cancelado = true }
@@ -200,6 +203,7 @@ export function ModoAcessivelPage() {
           <i className={`ac-ponto ${carregando === null ? 'is-pronto' : ''}`} aria-hidden="true" />
         </header>
         <div className="ac-palco">
+          {carregando !== null && nomeAssistente === 'Clara' && <img className="ac-poster" src={FOTO_ASSISTENTE} alt="" aria-hidden="true" />}
           <div ref={palco} className="ac-palco-3d" role="img" aria-label={`Rosto da assistente ${nomeAssistente}`} />
           {carregando !== null && <p className="ac-palco-carregando" role="status">Abrindo {nomeAssistente === 'Clara' ? 'a Clara' : 'o Rafael'}… {carregando > 0 ? `${carregando}%` : ''}</p>}
           {carregando === null && !resposta && !falando && <p className="ac-balao">Oi! Eu sou {nomeAssistente === 'Clara' ? 'a Clara' : 'o Rafael'}. Toque no botão azul e fale comigo.</p>}
