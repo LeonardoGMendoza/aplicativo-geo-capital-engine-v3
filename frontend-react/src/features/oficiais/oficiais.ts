@@ -9,7 +9,7 @@ export type AlertaOficial = {
 }
 export type AlertaResumo = Pick<AlertaOficial, 'id' | 'evento' | 'severidade' | 'quando' | 'fonte' | 'inicio' | 'fim' | 'area' | 'instrucao' | 'link'>
 export type DiaPrevisao = { data: string; nivel: Nivel | null; motivos: string[]; codigo: number | null; tmax: number | null; tmin: number | null; chuva: number | null; rajada: number | null }
-export type CidadeFamilia = { id: string; nome: string; pais: string; latitude: number; longitude: number; nivel: Nivel | null; alertas: AlertaResumo[]; previsao: DiaPrevisao[] }
+export type CidadeFamilia = { id: string; nome: string; pais: string; latitude: number; longitude: number; nivel: Nivel | null; nivelOficial?: Nivel | null; alertas: AlertaResumo[]; previsao: DiaPrevisao[] }
 export type Fonte = { id: string; nome: string; estado: 'sucesso' | 'antigo' | 'indisponivel'; quantidade: number; atualizadoEm: string | null }
 export type RespostaOficiais = { obtidoEm: string; fontes: Fonte[]; alertas: AlertaOficial[]; familia: CidadeFamilia[]; aviso?: string; guardado?: boolean }
 
@@ -118,4 +118,10 @@ export function fraseCidade(c: CidadeFamilia) {
   const pior = c.previsao.filter(d => d.nivel).sort((a, b) => ORDEM[a.nivel as Nivel] - ORDEM[b.nivel as Nivel])[0]
   if (pior) return `${emojiTempo(pior.codigo)} ${diaDaSemana(pior.data)}: ${pior.motivos[0] ?? 'tempo perigoso'}`
   return c.previsao.length ? '✅ Sem alerta oficial e sem perigo previsto em 7 dias' : '✅ Sem alerta oficial agora'
+}
+
+/** Selo do cartão: deixa claro quando o nível vem só da previsão (e não de um aviso oficial). */
+export function seloCidade(c: Pick<CidadeFamilia, 'nivel' | 'nivelOficial'>) {
+  if (!c.nivel) return 'Tranquilo'
+  return c.nivelOficial === c.nivel ? `${ROTULO_NIVEL[c.nivel]} · oficial` : `${ROTULO_NIVEL[c.nivel]} · previsão`
 }

@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { buscarOficiais, CHAVE_GUARDADO, emojiEvento, emojiTempo, fraseCidade, lerGuardado, quandoTexto, separar } from '../src/features/oficiais/oficiais.ts'
+import { buscarOficiais, CHAVE_GUARDADO, seloCidade, emojiEvento, emojiTempo, fraseCidade, lerGuardado, quandoTexto, separar } from '../src/features/oficiais/oficiais.ts'
 
 const source = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8')
 const alerta = (id, severidade, quando, regiao, extra = {}) => ({ id, fonte: 'INMET', fonteUrl: null, pais: 'Brasil', regiao, evento: 'Tempestade', eventoOriginal: null, severidade, quando, inicio: null, fim: null, area: null, titulo: null, descricao: null, instrucao: null, latitude: -27, longitude: -52, poligono: [[-26, -53], [-26, -52], [-27, -52]], link: null, ...extra })
@@ -30,6 +30,12 @@ test('ícones e frases simples', () => {
   assert.match(fraseCidade(cidade), /Sem alerta oficial/)
   assert.match(fraseCidade({ ...cidade, alertas: [{ id: 'x', evento: 'Vendaval', severidade: 'severo', quando: 'vem' }] }), /Vendaval \(vem aí\)/)
   assert.match(fraseCidade({ ...cidade, previsao: [{ data: '2026-11-06', nivel: 'extremo', motivos: ['Rajadas de até 95 km/h'], codigo: 99 }] }), /Rajadas de até 95 km\/h/)
+})
+
+test('selo diz se o perigo é aviso oficial ou só previsão', () => {
+  assert.equal(seloCidade({ nivel: 'severo', nivelOficial: 'severo' }), 'Perigo · oficial')
+  assert.equal(seloCidade({ nivel: 'severo', nivelOficial: 'moderado' }), 'Perigo · previsão')
+  assert.equal(seloCidade({ nivel: null, nivelOficial: null }), 'Tranquilo')
 })
 
 test('guarda a última resposta e mostra sem internet', async () => {

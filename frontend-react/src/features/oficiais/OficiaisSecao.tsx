@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import './oficiais.css'
 import type { AlertaOficial, CidadeFamilia, Regiao, RespostaOficiais } from './oficiais'
-import { BANDEIRA, buscarOficiais, COR_NIVEL, diaDaSemana, emojiEvento, emojiTempo, fraseCidade, quandoTexto, REGIOES, ROTULO_NIVEL, separar } from './oficiais'
+import { BANDEIRA, buscarOficiais, COR_NIVEL, diaDaSemana, emojiEvento, emojiTempo, fraseCidade, quandoTexto, REGIOES, ROTULO_NIVEL, seloCidade, separar } from './oficiais'
 
 const Mapa = lazy(() => import('./OficiaisMapa'))
 const ATUALIZAR_MS = 10 * 60 * 1000
@@ -16,7 +16,7 @@ function CartaoCidade({ c }: { c: CidadeFamilia }) {
   const cor = c.nivel ? COR_NIVEL[c.nivel] : '#15803d'
   return <details className="ofc-cidade" style={{ borderColor: cor }}>
     <summary>
-      <span className="ofc-cidade-topo"><b>{BANDEIRA[c.pais] ?? ''} {c.nome}</b><span className="ofc-selo" style={{ background: cor }}>{c.nivel ? ROTULO_NIVEL[c.nivel] : 'Tranquilo'}</span></span>
+      <span className="ofc-cidade-topo"><b>{BANDEIRA[c.pais] ?? ''} {c.nome}</b><span className="ofc-selo" style={{ background: cor }}>{seloCidade(c)}</span></span>
       <span className="ofc-cidade-frase">{fraseCidade(c)}</span>
       {c.previsao.length > 0 && <span className="ofc-dias" aria-label="Próximos 7 dias">{c.previsao.map(d => <span key={d.data} className="ofc-dia" title={d.motivos.join(' · ') || 'Sem perigo previsto'}>
         <small>{diaDaSemana(d.data)}</small><span>{emojiTempo(d.codigo)}</span>{d.nivel ? <i style={{ background: COR_NIVEL[d.nivel] }} /> : <i className="is-ok" />}

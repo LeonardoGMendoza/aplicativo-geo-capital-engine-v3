@@ -130,8 +130,13 @@ class TestPrevisao(unittest.TestCase):
     def test_avaliar_dia(self):
         self.assertEqual(ao.avaliar_dia(99, 40, 95, 30, 18)[0], "extremo")
         nivel, motivos = ao.avaliar_dia(95, 10, 40, 30, 18)
-        self.assertEqual(nivel, "severo")
-        self.assertIn("Tempestade com raios", motivos)
+        self.assertEqual(nivel, "moderado", "trovoada comum é só amarelo")
+        self.assertIn("Pancadas de chuva com trovoada", motivos)
+        self.assertEqual(ao.avaliar_dia(96, 10, 40, 30, 18)[0], "moderado", "granizo do modelo não vira laranja")
+        self.assertEqual(ao.avaliar_dia(95, 51, 40, 30, 18)[0], "severo", "trovoada com chuva forte")
+        self.assertEqual(ao.avaliar_dia(3, 0, 55, 28, 18), (None, []), "55 km/h é vento normal de temporal")
+        # Casos reais de 05/11/2026 (Brasília, Foz): ficam amarelos, não laranja
+        self.assertEqual(ao.avaliar_dia(96, 12, 45, 30, 19)[0], "moderado")
         self.assertEqual(ao.avaliar_dia(3, 0, 20, 28, 18), (None, []))
         self.assertEqual(ao.avaliar_dia(75, 0, 20, -2, -12)[0], "severo")
 
@@ -159,6 +164,8 @@ class TestFamilia(unittest.TestCase):
         self.assertEqual(resumo["lima"]["nivel"], "extremo")
         self.assertIn("usgs-us1", [a["id"] for a in resumo["lima"]["alertas"]])
         self.assertEqual(resumo["utah"]["nivel"], "severo")
+        self.assertEqual(resumo["utah"]["nivelOficial"], "severo")
+        self.assertIsNone(resumo["brasilia"]["nivelOficial"])
         self.assertIsNone(resumo["brasilia"]["nivel"])
         self.assertEqual(resumo["iquitos"]["alertas"], [], "Iquitos fica a mais de 300 km")
 

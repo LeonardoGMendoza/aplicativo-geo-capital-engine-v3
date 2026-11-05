@@ -532,14 +532,21 @@ def avaliar_dia(codigo, chuva, rajada, tmax, tmin):
     motivos, niveis = [], []
     def add(nivel, texto):
         niveis.append(nivel); motivos.append(texto)
+    # Régua parecida com a do INMET. Trovoada sozinha é comum (primavera, Amazônia): só amarelo.
+    # Laranja/vermelho só quando a previsão junta trovoada com vento forte ou muita chuva.
+    # O "granizo" do modelo (códigos 96/99) só é confiável na Europa Central: não anunciamos granizo pela previsão.
     if codigo in TEMPESTADE:
-        forte = (rajada or 0) >= 80
-        add("extremo" if forte else "severo", ("Tempestade com granizo" if codigo in GRANIZO else "Tempestade com raios")
-            + (" e vento muito forte: risco de vendaval/tornado" if forte else ""))
+        g, c = rajada or 0, chuva or 0
+        if g >= 90 or c >= 100:
+            add("extremo", "Tempestade forte com vento e chuva: risco de vendaval/tornado")
+        elif g >= 70 or c >= 50:
+            add("severo", "Tempestade forte")
+        else:
+            add("moderado", "Pancadas de chuva com trovoada")
     if rajada is not None:
-        if rajada >= 90: add("extremo", f"Rajadas de até {round(rajada)} km/h")
-        elif rajada >= 65: add("severo", f"Rajadas de até {round(rajada)} km/h")
-        elif rajada >= 50: add("moderado", f"Vento forte ({round(rajada)} km/h)")
+        if rajada >= 100: add("extremo", f"Rajadas de até {round(rajada)} km/h")
+        elif rajada >= 75: add("severo", f"Rajadas de até {round(rajada)} km/h")
+        elif rajada >= 60: add("moderado", f"Vento forte ({round(rajada)} km/h)")
     if chuva is not None:
         if chuva >= 100: add("extremo", f"Chuva muito forte: {round(chuva)} mm (risco de enchente)")
         elif chuva >= 50: add("severo", f"Chuva forte: {round(chuva)} mm")
@@ -604,8 +611,9 @@ def resumo_familia(alertas, previsao):
         dias = previsao.get(c["id"], []) if previsao else []
         niveis = [a["severidade"] for a in dele] + [d["nivel"] for d in dias if d.get("nivel")]
         nivel = min(niveis, key=NIVEL_ORDEM.get) if niveis else None
+        oficial = min((a["severidade"] for a in dele), key=NIVEL_ORDEM.get) if dele else None
         saida.append({"id": c["id"], "nome": c["nome"], "pais": c["pais"], "latitude": c["lat"], "longitude": c["lon"],
-                      "nivel": nivel, "previsao": dias,
+                      "nivel": nivel, "nivelOficial": oficial, "previsao": dias,
                       "alertas": [{k: a.get(k) for k in ("id", "evento", "severidade", "quando", "fonte", "inicio", "fim", "area", "instrucao", "link")}
                                   for a in dele][:10]})
     return saida
