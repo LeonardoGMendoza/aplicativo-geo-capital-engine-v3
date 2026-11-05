@@ -11,7 +11,8 @@ import { ask } from '../intelligence/intelligence'
 import { buscarOficiais } from '../oficiais/oficiais'
 import { lerLugares } from '../lugares/meusLugares'
 import type { IdiomaVoz } from '../oficiais/voz'
-import { falar, fraseDoLugar, gravarIdiomaVoz, IDIOMAS_VOZ, lerIdiomaVoz, vozDisponivel } from '../oficiais/voz'
+import { falar, fraseDoLugar, gravarIdiomaVoz, idiomaDoSite, IDIOMAS_VOZ, lerIdiomaVoz, vozDisponivel } from '../oficiais/voz'
+import { useLanguage } from '@/i18n'
 import './acessivel.css'
 
 /** Perguntas prontas: cada uma tem um guia que funciona sem internet. */
@@ -69,6 +70,8 @@ export function ModoAcessivelPage() {
   const temMicrofone = typeof window !== 'undefined' && !!criarReconhecedor()
   const bcp = IDIOMAS_VOZ.find(i => i.id === idioma)!.bcp
   useEffect(() => () => { parar.current?.(); rec.current?.stop() }, [])
+  const { language } = useLanguage()
+  useEffect(() => { const v = idiomaDoSite(language); setIdioma(v); gravarIdiomaVoz(v) }, [language])
 
   function dizer(texto: string, lingua: IdiomaVoz = idioma) {
     parar.current?.()

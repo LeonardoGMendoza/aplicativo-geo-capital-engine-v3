@@ -37,6 +37,24 @@ const CONSELHO: Record<IdiomaVoz, string> = {
   en: 'If you are in danger, call emergency services.',
 }
 
+/** Idioma do site -> idioma da voz (as frases existem em pt, es e en; os outros idiomas ouvem em inglês). */
+export function idiomaDoSite(lang: string): IdiomaVoz {
+  return lang === 'pt' ? 'pt' : lang === 'es' ? 'es' : 'en'
+}
+
+// Conselho curto por tipo de aviso, para quem ouve em espanhol ou inglês (a instrução oficial vem em português)
+const DICAS: { re: RegExp; es: string; en: string }[] = [
+  { re: /tornado/i, es: 'Busque abrigo en un lugar cerrado, lejos de ventanas.', en: 'Take shelter indoors, away from windows.' },
+  { re: /tempestade de neve|nevasca|neve|frio|geada/i, es: 'Abríguese, evite viajar y protéjase del frío.', en: 'Stay indoors, avoid travel and keep warm.' },
+  { re: /tempestade|trovoada/i, es: 'No se refugie debajo de árboles y desconecte los aparatos eléctricos.', en: 'Do not shelter under trees and unplug electrical devices.' },
+  { re: /chuva|enchente|enxurrada|inunda/i, es: 'No cruce calles inundadas y aléjese de ríos y laderas.', en: 'Do not cross flooded roads and stay away from rivers and slopes.' },
+  { re: /vento|vendaval/i, es: 'Aléjese de árboles, postes y carteles.', en: 'Stay away from trees, poles and billboards.' },
+  { re: /calor|umidade/i, es: 'Beba agua y evite el sol en las horas más calientes.', en: 'Drink water and avoid the sun at the hottest hours.' },
+  { re: /terremoto/i, es: 'Agáchese, cúbrase y sujétese. Después, salga con cuidado.', en: 'Drop, cover and hold on. Then leave carefully.' },
+  { re: /tsunami/i, es: 'Si está en la costa, vaya a un lugar alto ahora.', en: 'If you are on the coast, move to high ground now.' },
+]
+function dica(evento: string, idioma: 'es' | 'en') { return DICAS.find(d => d.re.test(evento))?.[idioma] ?? '' }
+
 export function eventoNoIdioma(evento: string, idioma: IdiomaVoz) {
   if (idioma === 'pt') return evento
   const achado = EVENTOS.find(e => e.re.test(evento))
@@ -68,10 +86,12 @@ export function fraseDoAlerta(a: Pick<AlertaOficial, 'evento' | 'severidade' | '
     partes.push(`Alerta de ${ev.toLowerCase()}, nivel ${nivel}${lugar ? `, en ${lugar}` : ''}.`)
     if (a.quando === 'vem' && ini) partes.push(`Comienza ${ini}.`)
     else if (fim) partes.push(`Vigente hasta ${fim}.`)
+    if (dica(a.evento, 'es')) partes.push(dica(a.evento, 'es'))
   } else {
     partes.push(`${ev.charAt(0).toUpperCase() + ev.slice(1)} alert, ${nivel} level${lugar ? `, in ${lugar}` : ''}.`)
     if (a.quando === 'vem' && ini) partes.push(`Starts ${ini}.`)
     else if (fim) partes.push(`Valid until ${fim}.`)
+    if (dica(a.evento, 'en')) partes.push(dica(a.evento, 'en'))
   }
   partes.push(CONSELHO[idioma])
   return partes.join(' ')

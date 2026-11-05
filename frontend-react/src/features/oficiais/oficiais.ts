@@ -186,3 +186,29 @@ export function tabelaPorEstado(alertas: AlertaOficial[]): LinhaUF[] {
   }
   return [...linhas.values()].sort((a, b) => (a.max ? ORDEM[a.max] : 9) - (b.max ? ORDEM[b.max] : 9) || a.nome.localeCompare(b.nome, 'pt-BR'))
 }
+
+// ---------- Tabela por país (fora do Brasil), mesmo estilo ----------
+const CODIGO_PAIS: Record<string, string> = {
+  Brasil: 'BR', EUA: 'US', Paraguai: 'PY', Peru: 'PE', Argentina: 'AR', Chile: 'CL', Bolívia: 'BO', Uruguai: 'UY', México: 'MX', Canadá: 'CA',
+  Áustria: 'AT', Bélgica: 'BE', Bósnia: 'BA', Bulgária: 'BG', Croácia: 'HR', Chipre: 'CY', Tchéquia: 'CZ', Dinamarca: 'DK', Estônia: 'EE',
+  Finlândia: 'FI', França: 'FR', Alemanha: 'DE', Grécia: 'GR', Hungria: 'HU', Islândia: 'IS', Irlanda: 'IE', Israel: 'IL', Itália: 'IT',
+  Letônia: 'LV', Lituânia: 'LT', Luxemburgo: 'LU', Malta: 'MT', Moldávia: 'MD', Montenegro: 'ME', Holanda: 'NL', 'Macedônia do Norte': 'MK',
+  Noruega: 'NO', Polônia: 'PL', Portugal: 'PT', Romênia: 'RO', Sérvia: 'RS', Eslováquia: 'SK', Eslovênia: 'SI', Espanha: 'ES', Suécia: 'SE',
+  Suíça: 'CH', 'Reino Unido': 'GB', Ucrânia: 'UA', Japão: 'JP',
+}
+
+/** Uma linha por país com aviso (os avisos sem país, como terremotos no mar, ficam só na lista). */
+export function tabelaPorPais(alertas: AlertaOficial[]): LinhaUF[] {
+  const linhas = new Map<string, LinhaUF>()
+  for (const a of alertas) {
+    if (!a.pais) continue
+    const l = linhas.get(a.pais) ?? { uf: CODIGO_PAIS[a.pais] ?? a.pais.slice(0, 2).toUpperCase(), nome: a.pais, tipos: {}, max: null, alertas: [] }
+    const tipo = tipoDoAlerta(a.evento)
+    const atual = l.tipos[tipo]
+    if (!atual || ORDEM[a.severidade] < ORDEM[atual]) l.tipos[tipo] = a.severidade
+    if (!l.max || ORDEM[a.severidade] < ORDEM[l.max]) l.max = a.severidade
+    l.alertas.push(a.id)
+    linhas.set(a.pais, l)
+  }
+  return [...linhas.values()].sort((a, b) => ORDEM[a.max!] - ORDEM[b.max!] || b.alertas.length - a.alertas.length || a.nome.localeCompare(b.nome, 'pt-BR'))
+}

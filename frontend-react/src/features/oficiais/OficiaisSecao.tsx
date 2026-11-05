@@ -6,11 +6,13 @@ import type { LucideIcon } from 'lucide-react'
 import { Cloud, CloudDrizzle, CloudFog, CloudLightning, CloudRain, CloudSun, ExternalLink, MapPin, ShieldAlert, Snowflake, Square, Sun, TriangleAlert, Volume2 } from 'lucide-react'
 import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import './oficiais.css'
-import type { AlertaOficial, Nivel, Regiao, RespostaOficiais, ResumoLugar } from './oficiais'
-import { buscarOficiais, COR_NIVEL, diaCurto, quandoTexto, REGIOES, ROTULO_NIVEL, separar, tabelaPorEstado, TIPOS } from './oficiais'
+import type { AlertaOficial, LinhaUF, Nivel, Regiao, RespostaOficiais, ResumoLugar } from './oficiais'
+import { buscarOficiais, COR_NIVEL, diaCurto, quandoTexto, REGIOES, ROTULO_NIVEL, separar, tabelaPorEstado, tabelaPorPais, TIPOS } from './oficiais'
 import type { IdiomaVoz } from './voz'
 import { falar, fraseDoAlerta, fraseDoLugar, gravarIdiomaVoz, IDIOMAS_VOZ, lerIdiomaVoz, vozDisponivel } from './voz'
 import { MeusLugaresEditor, useMeusLugares } from '../lugares/MeusLugaresEditor'
+import { useLanguage } from '@/i18n'
+import { idiomaDoSite } from './voz'
 import { IconeEvento } from './icones'
 
 const Mapa = lazy(() => import('./OficiaisMapa'))
@@ -80,22 +82,27 @@ function CelulaUF({ nivel, tipo }: { nivel?: Nivel; tipo: string }) {
     <IconeEvento evento={tipo} className="size-3.5" /></span></td>
 }
 
-function TabelaEstados({ alertas, onEstado, estado }: { alertas: AlertaOficial[]; onEstado: (uf: string | null) => void; estado: string | null }) {
-  const todas = useMemo(() => tabelaPorEstado(alertas), [alertas])
+/** Tabela no estilo MeteoAlarm: por estado (Brasil) ou por país (resto do mundo). */
+function TabelaNiveis({ modo, alertas, onFiltro, filtro }: { modo: 'estado' | 'pais'; alertas: AlertaOficial[]; onFiltro: (k: string | null) => void; filtro: string | null }) {
+  const todas = useMemo(() => modo === 'estado' ? tabelaPorEstado(alertas) : tabelaPorPais(alertas), [alertas, modo])
   const [verTodos, setVerTodos] = useState(false)
   const comAviso = todas.filter(l => l.max).length
-  const linhas = verTodos ? todas : todas.filter(l => l.max || l.uf === estado)
+  const chave = (l: LinhaUF) => modo === 'estado' ? l.uf : l.nome
+  const linhas = modo === 'pais' || verTodos ? todas : todas.filter(l => l.max || l.uf === filtro)
   return <div className="ofc-tabela-wrap">
-    <div className="ofc-bloco-titulo"><h3>Avisos em vigor por estado</h3><p>{comAviso} de 27 estados com aviso · cor = nível mais alto de cada tipo</p></div>
-    <table className="ofc-tabela">
-      <thead><tr><th scope="col">UF</th><th scope="col" className="is-esq">Estado</th>{TIPOS.map(t => <th key={t.id} scope="col">{t.nome}</th>)}</tr></thead>
-      <tbody>{linhas.map(l => <tr key={l.uf} className={estado === l.uf ? 'is-ativo' : ''} onClick={() => onEstado(estado === l.uf ? null : l.uf)}>
+    <div className="ofc-bloco-titulo"><h3>{modo === 'estado' ? 'Avisos em vigor por estado' : 'Avisos em vigor por país'}</h3>
+      <p>{modo === 'estado' ? `${comAviso} de 27 estados com aviso` : `${comAviso} ${comAviso === 1 ? 'país' : 'países'} com aviso nesta região`} · cor = nível mais alto de cada tipo · toque numa linha para filtrar</p></div>
+    {modo === 'pais' && todas.length === 0 && <p className="ofc-vazio">Nenhum país com aviso oficial nesta região agora.</p>}
+    {todas.length > 0 && <table className="ofc-tabela">
+      <thead><tr><th scope="col">{modo === 'estado' ? 'UF' : 'País'}</th><th scope="col" className="is-esq">{modo === 'estado' ? 'Estado' : 'Nome'}</th>{TIPOS.map(t => <th key={t.id} scope="col">{t.nome}</th>)}<th scope="col">Avisos</th></tr></thead>
+      <tbody>{linhas.map(l => <tr key={chave(l)} className={filtro === chave(l) ? 'is-ativo' : ''} onClick={() => onFiltro(filtro === chave(l) ? null : chave(l))}>
         <td><span className="ofc-uf" style={{ borderLeftColor: l.max ? COR_NIVEL[l.max] : COR_OK }}>{l.uf}</span></td>
-        <td className="is-esq"><button type="button" className="ofc-uf-nome" aria-pressed={estado === l.uf}>{l.nome}</button></td>
+        <td className="is-esq"><button type="button" className="ofc-uf-nome" aria-pressed={filtro === chave(l)}>{l.nome}</button></td>
         {TIPOS.map(t => <CelulaUF key={t.id} nivel={l.tipos[t.id]} tipo={t.nome} />)}
+        <td className="ofc-qtd">{l.alertas.length || '–'}</td>
       </tr>)}</tbody>
-    </table>
-    <button type="button" className="ofc-ver-todos" onClick={() => setVerTodos(v => !v)}>{verTodos ? 'Mostrar só os estados com aviso' : `Ver os 27 estados (${27 - comAviso} sem aviso)`}</button>
+    </table>}
+    {modo === 'estado' && <button type="button" className="ofc-ver-todos" onClick={() => setVerTodos(v => !v)}>{verTodos ? 'Mostrar só os estados com aviso' : `Ver os 27 estados (${27 - comAviso} sem aviso)`}</button>}
   </div>
 }
 
@@ -142,13 +149,16 @@ export function OficiaisSecao() {
 
   const doBrasil = useMemo(() => (dados?.alertas ?? []).filter(a => a.regiao === 'brasil' && a.quando === 'agora'), [dados])
   const { agora, vem } = useMemo(() => separar(dados?.alertas ?? [], regiao, amarelos), [dados, regiao, amarelos])
-  const filtrarUF = (l: AlertaOficial[]) => estado ? l.filter(a => a.ufs?.includes(estado)) : l
+  const filtrarUF = (l: AlertaOficial[]) => !estado ? l : regiao === 'brasil' ? l.filter(a => a.ufs?.includes(estado)) : l.filter(a => a.pais === estado)
   const lista = filtrarUF(aba === 'agora' ? agora : vem)
   const noMapa = useMemo(() => [...agora, ...vem], [agora, vem])
   const selecionado = noMapa.find(a => a.id === selecionadoId) ?? lista[0] ?? null
   const todosLugares = [...(dados?.lugares ?? []), ...(dados?.locaisPadrao ?? [])]
   const fontes = dados?.fontes ?? []
   function trocarIdioma(v: IdiomaVoz) { setIdioma(v); gravarIdiomaVoz(v) }
+  // A voz acompanha o idioma do site (menu "Idioma" na lateral)
+  const { language } = useLanguage()
+  useEffect(() => { trocarIdioma(idiomaDoSite(language)) }, [language]) // eslint-disable-line
 
   return <div className="ofc space-y-3">
     {(dados?.locaisPadrao.length ?? 0) > 0 && <section className="ofc-painel" aria-label="Locais monitorados">
@@ -204,7 +214,8 @@ export function OficiaisSecao() {
         </div>
       </div>
       {selecionado && <Detalhe a={selecionado} idioma={idioma} />}
-      {regiao === 'brasil' && <TabelaEstados alertas={doBrasil} estado={estado} onEstado={uf => { setEstado(uf); setAba('agora'); setSelecionadoId(null) }} />}
+      <TabelaNiveis modo={regiao === 'brasil' ? 'estado' : 'pais'} alertas={regiao === 'brasil' ? doBrasil : agora} filtro={estado}
+        onFiltro={k => { setEstado(k); setAba('agora'); setSelecionadoId(null) }} />
       <footer className="ofc-rodape"><span>Fontes oficiais de cada país. Este painel não substitui as orientações da Defesa Civil local.</span><span>Brasil: Defesa Civil 199 · Bombeiros 193 · SAMU 192</span></footer>
     </section>
   </div>
